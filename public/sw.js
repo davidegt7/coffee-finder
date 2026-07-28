@@ -12,9 +12,14 @@
  * places.json is deliberately NOT cached here — it's network-first via the
  * fetch handler, because stale dietary data is worse than no data.
  */
+// Bump this on any deploy that must invalidate cached assets. Note the cache
+// names below were briefly `vitalmap-*`: this file was copied wholesale from the
+// previous app and the rebrand's find-and-replace missed the unseparated form.
+// Both apps are served from the same origin, so they were sharing one cache
+// namespace and could evict each other's entries.
 const VERSION = "v1";
-const SHELL = `vitalmap-shell-${VERSION}`;
-const TILES = `vitalmap-tiles-${VERSION}`;
+const SHELL = `coffeefinder-shell-${VERSION}`;
+const TILES = `coffeefinder-tiles-${VERSION}`;
 const MAX_TILES = 400;
 
 const SHELL_ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./favicon.svg"];
