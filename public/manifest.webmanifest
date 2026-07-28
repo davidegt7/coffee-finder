@@ -1,0 +1,23 @@
+{
+  "name": "Coffee Finder",
+  "short_name": "Coffee Finder",
+  "description": "Comida real en Santiago. Sin gluten, sin azúcar, sin aceites de semillas, orgánico.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17110d",
+  "theme_color": "#17110d",
+  "lang": "es-CL",
+  "categories": ["food", "health", "navigation"],
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

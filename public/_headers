@@ -1,0 +1,22 @@
+# Read by BOTH Netlify and Cloudflare Pages, which is the point: hosting stays a
+# dashboard choice rather than a code change. Keep host-specific config out of
+# here unless it genuinely has no portable equivalent.
+
+/sw.js
+  # A cached service worker pins users to an old build permanently and takes the
+  # ability to ship a fix with it. Never cache it.
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+
+/data/places.json
+  # The service worker is already network-first for this file; this stops a CDN
+  # edge from undoing that and serving month-old dietary claims.
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Vite fingerprints these filenames, so a new build is a new URL — they can be
+# cached hard and forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

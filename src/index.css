@@ -1,0 +1,104 @@
+:root {
+  --bg: #17110d;
+  --surface: #211812;
+  --surface-2: #2a1e16;
+  --line: #3d2c20;
+  --text: #f4ece4;
+  --muted: #b6a08c;
+  --accent: #c88a4a;
+  --accent-dim: #6b4526;
+  --verified: #7fb069;
+  --claimed: #e0b357;
+  --unknown: #8a7663;
+  --no: #d4736b;
+  --radius: 14px;
+  --shadow: 0 8px 30px rgb(0 0 0 / 0.35);
+
+  color-scheme: dark;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #faf6f1;
+    --surface: #ffffff;
+    --surface-2: #f2e9de;
+    --line: #e3d5c5;
+    --text: #241a12;
+    --muted: #7a6552;
+    --accent: #8b5a2b;
+    --accent-dim: #e8d5bd;
+    --verified: #4a7c3f;
+    --claimed: #a4720d;
+    --unknown: #9c8b7a;
+    --no: #b4362c;
+    --shadow: 0 8px 30px rgb(60 40 25 / 0.12);
+    color-scheme: light;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--accent);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* Leaflet paints its own light chrome; keep it from fighting the dark theme. */
+.leaflet-container {
+  background: var(--surface-2);
+  font: inherit;
+}
+
+.leaflet-control-attribution {
+  background: rgb(0 0 0 / 0.5) !important;
+  color: var(--muted) !important;
+  font-size: 10px;
+}
+
+.leaflet-control-attribution a {
+  color: var(--muted) !important;
+}
+
+@media (prefers-color-scheme: light) {
+  .leaflet-control-attribution {
+    background: rgb(255 255 255 / 0.8) !important;
+  }
+}

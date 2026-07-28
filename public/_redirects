@@ -1,0 +1,4 @@
+# SPA fallback, read by both Netlify and Cloudflare Pages.
+# Redundant today (one route) but required the moment a place detail gets a real
+# URL — without it a deep link 404s on hard refresh.
+/*  /index.html  200

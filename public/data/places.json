@@ -1,0 +1,339 @@
+[
+  {
+    "id": "cur_cafe_cascanueces",
+    "name": "Café Cascanueces",
+    "category": "roastery",
+    "lat": -33.4273342,
+    "lng": -70.6190283,
+    "address": "General Flores",
+    "comuna": "Providencia",
+    "city": "Santiago",
+    "items": [
+      "Espresso",
+      "Grano"
+    ],
+    "claims": {
+      "roastsOnSite": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://cafecascanueces.cl/",
+        "note": "Se presentan como café artesanal tostado por ellos.",
+        "checkedAt": "2026-07-22"
+      },
+      "specialty": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://cafecascanueces.cl/",
+        "checkedAt": "2026-07-22"
+      },
+      "glutenFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "seedOilFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      }
+    },
+    "flags": [
+      "sellsBeans"
+    ],
+    "caveat": "El geocodificador ubicó la calle pero no el número — confirma la dirección antes de ir.",
+    "sources": [
+      "https://cafecascanueces.cl/",
+      "https://www.openstreetmap.org/way/20907275"
+    ],
+    "addedAt": "2026-07-22"
+  },
+  {
+    "id": "cur_cafe_triciclo",
+    "name": "Café Triciclo",
+    "category": "cafe",
+    "lat": -33.4357263,
+    "lng": -70.6457713,
+    "address": "Santo Domingo 598",
+    "comuna": "Santiago",
+    "city": "Santiago",
+    "items": [
+      "Espresso"
+    ],
+    "claims": {
+      "roastsOnSite": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "specialty": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://www.cafetriciclo.cl/",
+        "checkedAt": "2026-07-22"
+      },
+      "glutenFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "seedOilFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      }
+    },
+    "flags": [],
+    "caveat": "Su tostaduría (3 Ciclos) es una operación aparte — no está confirmado que tuesten en este local.",
+    "sources": [
+      "https://www.cafetriciclo.cl/",
+      "https://www.openstreetmap.org/way/409005085"
+    ],
+    "addedAt": "2026-07-22"
+  },
+  {
+    "id": "cur_cafe_triciclo_nunoa",
+    "name": "Café Triciclo Ñuñoa",
+    "category": "cafe",
+    "lat": -33.448738,
+    "lng": -70.6236763,
+    "address": "Girardi 1569",
+    "comuna": "Ñuñoa",
+    "city": "Santiago",
+    "items": [
+      "Espresso"
+    ],
+    "claims": {
+      "roastsOnSite": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "specialty": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://www.cafetriciclo.cl/",
+        "checkedAt": "2026-07-22"
+      },
+      "glutenFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "seedOilFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      }
+    },
+    "flags": [],
+    "sources": [
+      "https://www.cafetriciclo.cl/",
+      "https://www.openstreetmap.org/node/11515170669"
+    ],
+    "addedAt": "2026-07-22"
+  },
+  {
+    "id": "cur_la_huerfana",
+    "name": "La Huérfana",
+    "category": "cafe",
+    "lat": -33.4402327,
+    "lng": -70.658112,
+    "address": "Huérfanos 1515",
+    "comuna": "Santiago",
+    "city": "Santiago",
+    "items": [
+      "Espresso"
+    ],
+    "claims": {
+      "roastsOnSite": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "specialty": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://www.terra.cl/nacionales/2026/1/13/cuales-son-las-mejores-cafeterias-de-santiago-por-que-fueron-reconocidas-nivel-mundial-44289.html",
+        "note": "Reconocida entre las mejores cafeterías de Chile, The Best Coffee Shops 2025.",
+        "checkedAt": "2026-07-22"
+      },
+      "glutenFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "seedOilFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      }
+    },
+    "flags": [],
+    "caveat": "Está dentro del Palacio Pereira. Tienen un segundo local en Barrio Italia.",
+    "sources": [
+      "https://www.terra.cl/nacionales/2026/1/13/cuales-son-las-mejores-cafeterias-de-santiago-por-que-fueron-reconocidas-nivel-mundial-44289.html",
+      "https://www.openstreetmap.org/node/10695868007"
+    ],
+    "addedAt": "2026-07-22"
+  },
+  {
+    "id": "cur_la_huerfana_barrio_italia",
+    "name": "La Huérfana Barrio Italia",
+    "category": "cafe",
+    "lat": -33.4456672,
+    "lng": -70.6230863,
+    "address": "Avenida Santa Isabel 598",
+    "comuna": "Providencia",
+    "city": "Santiago",
+    "items": [
+      "Espresso"
+    ],
+    "claims": {
+      "roastsOnSite": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "specialty": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://www.terra.cl/nacionales/2026/1/13/cuales-son-las-mejores-cafeterias-de-santiago-por-que-fueron-reconocidas-nivel-mundial-44289.html",
+        "checkedAt": "2026-07-22"
+      },
+      "glutenFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "seedOilFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      }
+    },
+    "flags": [],
+    "sources": [
+      "https://www.terra.cl/nacionales/2026/1/13/cuales-son-las-mejores-cafeterias-de-santiago-por-que-fueron-reconocidas-nivel-mundial-44289.html",
+      "https://www.openstreetmap.org/way/108391528"
+    ],
+    "addedAt": "2026-07-22"
+  },
+  {
+    "id": "cur_la_pastora_coffee_antonio_varas",
+    "name": "La Pastora Coffee — Antonio Varas",
+    "category": "cafe",
+    "lat": -33.443055,
+    "lng": -70.6124173,
+    "address": "Avenida Antonio Varas",
+    "comuna": "Providencia",
+    "city": "Santiago",
+    "items": [
+      "Espresso",
+      "Grano"
+    ],
+    "claims": {
+      "roastsOnSite": {
+        "scope": "none",
+        "confidence": "claimed",
+        "source": "https://www.theclinic.cl/2026/07/22/la-pastora-coffee-alista-una-cuarta-apertura-en-providencia-la-cafeteria-inaugurara-este-mes-un-local-frente-a-parque-bustamante/",
+        "note": "Tuestan en su tostaduría de Barrio Italia, no en este local.",
+        "checkedAt": "2026-07-22"
+      },
+      "specialty": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://www.theclinic.cl/2026/07/22/la-pastora-coffee-alista-una-cuarta-apertura-en-providencia-la-cafeteria-inaugurara-este-mes-un-local-frente-a-parque-bustamante/",
+        "checkedAt": "2026-07-22"
+      },
+      "glutenFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "seedOilFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      }
+    },
+    "flags": [
+      "sellsBeans"
+    ],
+    "sources": [
+      "https://www.theclinic.cl/2026/07/22/la-pastora-coffee-alista-una-cuarta-apertura-en-providencia-la-cafeteria-inaugurara-este-mes-un-local-frente-a-parque-bustamante/",
+      "https://www.openstreetmap.org/way/242748642"
+    ],
+    "addedAt": "2026-07-22"
+  },
+  {
+    "id": "cur_la_pastora_coffee_suecia",
+    "name": "La Pastora Coffee — Suecia",
+    "category": "cafe",
+    "lat": -33.4229862,
+    "lng": -70.6068029,
+    "address": "Avenida Suecia 264",
+    "comuna": "Providencia",
+    "city": "Santiago",
+    "items": [
+      "Espresso",
+      "Grano"
+    ],
+    "claims": {
+      "roastsOnSite": {
+        "scope": "none",
+        "confidence": "claimed",
+        "source": "https://www.theclinic.cl/2026/07/22/la-pastora-coffee-alista-una-cuarta-apertura-en-providencia-la-cafeteria-inaugurara-este-mes-un-local-frente-a-parque-bustamante/",
+        "note": "Tuestan en su tostaduría de Barrio Italia, no en este local.",
+        "checkedAt": "2026-07-22"
+      },
+      "specialty": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://www.theclinic.cl/2026/07/22/la-pastora-coffee-alista-una-cuarta-apertura-en-providencia-la-cafeteria-inaugurara-este-mes-un-local-frente-a-parque-bustamante/",
+        "checkedAt": "2026-07-22"
+      },
+      "glutenFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "seedOilFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      }
+    },
+    "flags": [
+      "sellsBeans"
+    ],
+    "sources": [
+      "https://www.theclinic.cl/2026/07/22/la-pastora-coffee-alista-una-cuarta-apertura-en-providencia-la-cafeteria-inaugurara-este-mes-un-local-frente-a-parque-bustamante/",
+      "https://www.openstreetmap.org/node/2967020280"
+    ],
+    "addedAt": "2026-07-22"
+  },
+  {
+    "id": "cur_wonderland_cafe",
+    "name": "Wonderland Café",
+    "category": "cafe",
+    "lat": -33.4380561,
+    "lng": -70.642146,
+    "address": "Rosal 361",
+    "comuna": "Santiago",
+    "city": "Santiago",
+    "items": [
+      "Espresso",
+      "Flat white",
+      "Latte"
+    ],
+    "claims": {
+      "roastsOnSite": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "specialty": {
+        "scope": "all",
+        "confidence": "claimed",
+        "source": "https://www.fmdos.cl/noticias/cafeterias-en-santiago-donde-comer-precios-y-especialidades",
+        "note": "Cafetería temática en Barrio Lastarria con café de especialidad.",
+        "checkedAt": "2026-07-22"
+      },
+      "glutenFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      },
+      "seedOilFree": {
+        "scope": "unknown",
+        "confidence": "unverified"
+      }
+    },
+    "flags": [],
+    "sources": [
+      "https://www.fmdos.cl/noticias/cafeterias-en-santiago-donde-comer-precios-y-especialidades",
+      "https://www.openstreetmap.org/way/728835919"
+    ],
+    "addedAt": "2026-07-22"
+  }
+]
