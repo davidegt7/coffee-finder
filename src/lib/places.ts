@@ -1,4 +1,4 @@
-import type { Place, Review } from "../types";
+import { CATEGORIES, UNKNOWN_CLAIM, type Place, type Review } from "../types";
 import { isSupabaseConfigured, supabase } from "./auth";
 
 /**
@@ -37,6 +37,11 @@ interface PlaceRow {
   added_at: string;
 }
 
+/**
+ * Defensive: a row missing a claim key would crash the first component that
+ * reads `place.claims[key]`. Filling the gap with an explicit unknown is both
+ * safer and more honest than trusting the database to be fully migrated.
+ */
 const rowToPlace = (r: PlaceRow): Place => ({
   id: r.id,
   name: r.name,
@@ -49,12 +54,33 @@ const rowToPlace = (r: PlaceRow): Place => ({
   website: r.website ?? undefined,
   instagram: r.instagram ?? undefined,
   items: r.items ?? [],
-  claims: r.claims,
-  flags: r.flags ?? [],
+  claims: {
+    roastsOnSite: r.claims?.roastsOnSite ?? { ...UNKNOWN_CLAIM },
+    specialty: r.claims?.specialty ?? { ...UNKNOWN_CLAIM },
+    glutenFree: r.claims?.glutenFree ?? { ...UNKNOWN_CLAIM },
+    seedOilFree: r.claims?.seedOilFree ?? { ...UNKNOWN_CLAIM },
+  },
+  flags: Array.isArray(r.flags) ? r.flags : [],
   caveat: r.caveat ?? undefined,
   sources: r.sources ?? [],
   addedAt: r.added_at?.slice(0, 10) ?? "",
 });
+
+/**
+ * Is this row from a migrated, coffee-shaped table?
+ *
+ * The JSON fallback below only used to trigger on a query *error* — but a table
+ * that still holds the previous app's schema answers happily with rows that are
+ * simply the wrong shape. Those crashed the render and white-screened the whole
+ * app, which is a far worse failure than showing slightly stale data. Shape is
+ * checked explicitly so "the database hasn't been migrated yet" degrades exactly
+ * like "the database is unreachable".
+ */
+const isCoffeeRow = (r: PlaceRow): boolean =>
+  r != null &&
+  typeof r.claims === "object" &&
+  r.claims !== null &&
+  CATEGORIES.includes(r.category as Place["category"]);
 
 const placeToRow = (p: Place) => ({
   id: p.id,
@@ -89,10 +115,23 @@ export function loadPlaces(): Promise<Place[]> {
       if (isSupabaseConfigured()) {
         const sb = await supabase();
         const { data, error } = await sb!.from("places").select("*").order("name");
-        if (!error && data) return (data as PlaceRow[]).map(rowToPlace);
-        // Fall through to the seed rather than show an error page. A slightly
-        // stale map beats no map when someone is standing on a street corner.
-        console.warn("Supabase read failed, falling back to seed JSON:", error?.message);
+        if (error) {
+          // Fall through to the seed rather than show an error page. A slightly
+          // stale map beats no map when someone is standing on a street corner.
+          console.warn("Supabase read failed, falling back to seed JSON:", error.message);
+        } else if (data) {
+          const rows = data as PlaceRow[];
+          // An empty table is a legitimate answer (nothing seeded yet); a table
+          // full of the wrong shape is not.
+          if (rows.length === 0 || rows.every(isCoffeeRow)) {
+            return rows.map(rowToPlace);
+          }
+          console.warn(
+            `Supabase returned ${rows.length} rows that aren't coffee-shaped — ` +
+              "the table probably still holds the previous app's schema. " +
+              "Run supabase/schema.sql. Falling back to seed JSON.",
+          );
+        }
       }
       return fetchSeedJson();
     })().catch((err) => {
