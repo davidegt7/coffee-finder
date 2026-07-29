@@ -12,7 +12,13 @@ export function PlaceList() {
   const select = useStore((s) => s.select);
   const resetFilters = useStore((s) => s.resetFilters);
   const { t, lang } = useT();
-  const visible = useMemo(() => applyFilters(places, filters), [places, filters]);
+  const favorites = useStore((s) => s.favorites);
+  const toggleFavorite = useStore((s) => s.toggleFavorite);
+  const session = useStore((s) => s.session);
+  const visible = useMemo(
+    () => applyFilters(places, filters, favorites),
+    [places, filters, favorites],
+  );
 
   if (visible.length === 0) {
     return (
@@ -37,10 +43,34 @@ export function PlaceList() {
               <span className="card__cat" aria-hidden="true">
                 {CATEGORY_LABELS[place.category].icon}
               </span>
-              <div>
+              <div className="card__title">
                 <h3>{place.name}</h3>
                 <p className="card__comuna">{place.comuna ?? place.city}</p>
               </div>
+              {session && (
+                // A span, not a button: this sits inside the card's own <button>
+                // and nesting buttons is invalid HTML that browsers silently
+                // restructure, which breaks the click target.
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className={`fav fav--card ${favorites.includes(place.id) ? "is-on" : ""}`}
+                  aria-pressed={favorites.includes(place.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void toggleFavorite(place.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      void toggleFavorite(place.id);
+                    }
+                  }}
+                >
+                  {favorites.includes(place.id) ? "♥" : "♡"}
+                </span>
+              )}
             </div>
             <div className="card__badges">
               {CLAIM_KEYS.map((key) => (

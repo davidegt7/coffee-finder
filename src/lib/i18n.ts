@@ -156,6 +156,16 @@ const ES = {
   "review.signInCta": "Entrar",
   "review.signedInAs": "Estás como",
 
+  "fav.save": "Guardar",
+  "fav.saved": "Guardado",
+  "fav.onlySaved": "Solo mis guardados",
+  "fav.onlySavedDesc": "Tienes {n} guardados.",
+  "fav.signInToSave": "Entra para guardar cafés.",
+
+  "auth.or": "o",
+  "auth.google": "Continuar con Google",
+  "auth.apple": "Continuar con Apple",
+
   "submit.cta": "¿Tienes una cafetería?",
   "submit.eyebrow": "Para dueños",
   "submit.title": "Súmate al mapa",
@@ -321,6 +331,16 @@ const EN: Record<keyof typeof ES, string> = {
   "review.signInWhy": "To review, sign in with your email. No account, no password — we send you a link.",
   "review.signInCta": "Sign in",
   "review.signedInAs": "Signed in as",
+
+  "fav.save": "Save",
+  "fav.saved": "Saved",
+  "fav.onlySaved": "Only my saved",
+  "fav.onlySavedDesc": "You have {n} saved.",
+  "fav.signInToSave": "Sign in to save cafés.",
+
+  "auth.or": "or",
+  "auth.google": "Continue with Google",
+  "auth.apple": "Continue with Apple",
 
   "submit.cta": "Own a café?",
   "submit.eyebrow": "For owners",

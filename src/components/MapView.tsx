@@ -63,7 +63,11 @@ export function MapView() {
   const filters = useStore((s) => s.filters);
   const select = useStore((s) => s.select);
   const { t } = useT();
-  const visible = useMemo(() => applyFilters(places, filters), [places, filters]);
+  const favorites = useStore((s) => s.favorites);
+  const visible = useMemo(
+    () => applyFilters(places, filters, favorites),
+    [places, filters, favorites],
+  );
 
   return (
     <div className="map">

@@ -4,6 +4,7 @@ import type { Category, ClaimKey, FlagKey, Place } from "./types";
 import { loadPlaces, savePlace } from "./lib/places";
 import { addReview, loadReviews, type Review } from "./lib/reviews";
 import { loadSubmissions, type Submission } from "./lib/submissions";
+import { addFavorite, loadFavorites, removeFavorite } from "./lib/favorites";
 import { EMPTY_FILTERS, type ClaimStrictness, type Filters } from "./lib/filters";
 import { checkIsEditor, getSession, isSupabaseConfigured, onAuthChange } from "./lib/auth";
 import { initialLang, persistLang, type Lang } from "./lib/i18n";
@@ -25,6 +26,8 @@ interface State {
   isEditor: boolean;
   authReady: boolean;
   editing: Place | "new" | null;
+  /** Place ids the signed-in user has saved. Empty when signed out. */
+  favorites: string[];
   submissions: Submission[];
   /** The public "list your café" form. */
   submitOpen: boolean;
@@ -36,6 +39,7 @@ interface State {
   toggleItem: (itemId: string) => void;
   setQuery: (query: string) => void;
   setVerifiedOnly: (value: boolean) => void;
+  setSavedOnly: (value: boolean) => void;
   resetFilters: () => void;
   select: (id: string | null) => void;
   setLang: (lang: Lang) => void;
@@ -49,6 +53,8 @@ interface State {
   refreshReviews: () => Promise<void>;
   setSubmitOpen: (open: boolean) => void;
   refreshSubmissions: () => Promise<void>;
+  toggleFavorite: (placeId: string) => Promise<void>;
+  refreshFavorites: () => Promise<void>;
 
   refreshAuth: () => Promise<void>;
   setEditing: (p: Place | "new" | null) => void;
@@ -69,6 +75,7 @@ export const useStore = create<State>((set, get) => ({
   isEditor: false,
   authReady: false,
   editing: null,
+  favorites: [],
   submissions: [],
   submitOpen: false,
 
@@ -100,6 +107,10 @@ export const useStore = create<State>((set, get) => ({
     set({ session, isEditor, authReady: true });
     // RLS returns nothing to non-editors, so this is safe to call regardless.
     if (isEditor) void get().refreshSubmissions();
+    // Favorites follow the session: signing out must empty the list rather than
+    // leave the previous account's saves on screen.
+    if (session) void get().refreshFavorites();
+    else set({ favorites: [] });
   },
 
   setEditing: (editing) => set({ editing }),
@@ -154,6 +165,7 @@ export const useStore = create<State>((set, get) => ({
 
   setQuery: (query) => set((s) => ({ filters: { ...s.filters, query } })),
   setVerifiedOnly: (verifiedOnly) => set((s) => ({ filters: { ...s.filters, verifiedOnly } })),
+  setSavedOnly: (savedOnly) => set((s) => ({ filters: { ...s.filters, savedOnly } })),
   resetFilters: () => set({ filters: EMPTY_FILTERS }),
   select: (selectedId) => set({ selectedId }),
 
@@ -180,6 +192,29 @@ export const useStore = create<State>((set, get) => ({
   },
 
   setSubmitOpen: (submitOpen) => set({ submitOpen }),
+
+  refreshFavorites: async () => {
+    try {
+      set({ favorites: await loadFavorites() });
+    } catch {
+      /* ignore */
+    }
+  },
+
+  toggleFavorite: async (placeId) => {
+    const on = get().favorites.includes(placeId);
+    // Optimistic: a heart that waits on a round-trip feels broken. Reverted
+    // below if the write actually fails.
+    set((s) => ({
+      favorites: on ? s.favorites.filter((p) => p !== placeId) : [...s.favorites, placeId],
+    }));
+    const { error } = on ? await removeFavorite(placeId) : await addFavorite(placeId);
+    if (error) {
+      set((s) => ({
+        favorites: on ? [...s.favorites, placeId] : s.favorites.filter((p) => p !== placeId),
+      }));
+    }
+  },
 
   refreshSubmissions: async () => {
     try {

@@ -4,6 +4,7 @@ import { reviewsFor, type Review } from "../lib/reviews";
 import { signInWithEmail, signOut } from "../lib/auth";
 import { useT } from "../lib/useT";
 import { ClaimRow } from "./ClaimBadge";
+import { OAuthButtons } from "./OAuthButtons";
 import { AdSlot } from "./AdSlot";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
 
@@ -42,6 +43,7 @@ function SignInToReview() {
       }}
     >
       <p className="review-signin__why">{t("review.signInWhy")}</p>
+      <OAuthButtons />
       <div className="review-signin__row">
         <input
           type="email"
@@ -172,6 +174,8 @@ export function PlaceSheet() {
   const session = useStore((s) => s.session);
   const setEditing = useStore((s) => s.setEditing);
   const refreshAuth = useStore((s) => s.refreshAuth);
+  const favorites = useStore((s) => s.favorites);
+  const toggleFavorite = useStore((s) => s.toggleFavorite);
   const { t, lang } = useT();
   const [writing, setWriting] = useState(false);
 
@@ -185,6 +189,7 @@ export function PlaceSheet() {
 
   const unknownCount = CLAIM_KEYS.filter((k) => place.claims[k].scope === "unknown").length;
   const teamCount = reviews.filter((r) => r.isTeam).length;
+  const isFav = favorites.includes(place.id);
 
   return (
     <div className="sheet" role="dialog" aria-label={place.name}>
@@ -196,7 +201,19 @@ export function PlaceSheet() {
         <span className="sheet__cat">
           {CATEGORY_LABELS[place.category].icon} {CATEGORY_LABELS[place.category][lang]}
         </span>
-        <h2>{place.name}</h2>
+        <div className="sheet__title-row">
+          <h2>{place.name}</h2>
+          {session && (
+            <button
+              className={`fav ${isFav ? "is-on" : ""}`}
+              onClick={() => toggleFavorite(place.id)}
+              aria-pressed={isFav}
+              title={isFav ? t("fav.saved") : t("fav.save")}
+            >
+              {isFav ? "♥" : "♡"}
+            </button>
+          )}
+        </div>
         {place.address && (
           <p className="sheet__addr">
             {place.address}

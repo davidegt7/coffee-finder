@@ -96,6 +96,26 @@ two active projects and Vision holds the other slot. `supabase/*.sql`
 migrates the table in place: `diet` → `claims`, adds `flags`, swaps the category
 vocabulary, and keeps the editors allowlist and auth users intact.
 
+### Sign-in
+
+Magic link plus Google OAuth. Apple is deliberately absent: Sign in with Apple
+requires a paid Apple Developer membership (~USD 99/year), where Google costs
+nothing beyond creating credentials. Adding `"apple"` to `OAUTH_PROVIDERS` in
+`src/lib/auth.ts` is the whole client-side change once that account exists.
+
+Google setup (dashboard, one-time):
+1. Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web).
+2. Authorised redirect URI: `https://<ref>.supabase.co/auth/v1/callback`
+3. Supabase → Authentication → Providers → Google → paste client ID + secret.
+
+### Favorites
+
+`supabase/04-favorites.sql`. The strictest table in the app: `user_id` defaults
+from the JWT and RLS re-checks it, so a client can't write into someone else's
+list even if it tried. Saved places live server-side rather than in localStorage
+because the point of saving a café is that it's there on the phone you're
+holding when you're near it.
+
 Add a teammate:
 
 ```sql

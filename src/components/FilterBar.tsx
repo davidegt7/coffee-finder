@@ -28,8 +28,11 @@ export function FilterBar() {
     toggleItem,
     setQuery,
     setVerifiedOnly,
+    setSavedOnly,
     resetFilters,
     places,
+    favorites,
+    session,
   } = useStore();
   const { t, lang } = useT();
   const [open, setOpen] = useState<Menu>(null);
@@ -45,7 +48,8 @@ export function FilterBar() {
   const attrCount =
     Object.values(filters.claims).filter((v) => v !== "off").length +
     filters.flags.length +
-    (filters.verifiedOnly ? 1 : 0);
+    (filters.verifiedOnly ? 1 : 0) +
+    (filters.savedOnly ? 1 : 0);
   const catCount = filters.categories.length;
   const itemCount = filters.items.length;
 
@@ -226,6 +230,22 @@ export function FilterBar() {
               <small>{t("verified.desc")}</small>
             </span>
           </label>
+
+          {/* Only offered when signed in — "my saved places" is a promise the
+              app can't keep for an anonymous visitor. */}
+          {session && (
+            <label className="menu-panel__verified">
+              <input
+                type="checkbox"
+                checked={filters.savedOnly}
+                onChange={(e) => setSavedOnly(e.target.checked)}
+              />
+              <span>
+                {t("fav.onlySaved")}
+                <small>{t("fav.onlySavedDesc", { n: favorites.length })}</small>
+              </span>
+            </label>
+          )}
         </div>
       )}
 

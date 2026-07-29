@@ -19,6 +19,8 @@ export interface Filters {
   query: string;
   /** Only count a claim if someone actually checked it. */
   verifiedOnly: boolean;
+  /** Only places the signed-in user saved. Meaningless signed out, so the UI hides it. */
+  savedOnly: boolean;
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -28,6 +30,7 @@ export const EMPTY_FILTERS: Filters = {
   items: [],
   query: "",
   verifiedOnly: false,
+  savedOnly: false,
 };
 
 export function matchesClaim(
@@ -53,12 +56,13 @@ function matchesQuery(place: Place, query: string): boolean {
   return q.split(/\s+/).every((term) => haystack.includes(term));
 }
 
-export function applyFilters(places: Place[], filters: Filters): Place[] {
+export function applyFilters(places: Place[], filters: Filters, favorites: string[] = []): Place[] {
   const activeClaims = (Object.entries(filters.claims) as [ClaimKey, ClaimStrictness][]).filter(
     ([, want]) => want !== "off",
   );
 
   return places.filter((place) => {
+    if (filters.savedOnly && !favorites.includes(place.id)) return false;
     if (filters.categories.length && !filters.categories.includes(place.category)) return false;
     if (!matchesQuery(place, filters.query)) return false;
     if (filters.items.length && !filters.items.some((id) => placeHasItem(place, id))) return false;
@@ -85,6 +89,7 @@ export function activeFilterCount(filters: Filters): number {
   const claims = Object.values(filters.claims).filter((v) => v !== "off").length;
   return (
     claims +
+    (filters.savedOnly ? 1 : 0) +
     filters.flags.length +
     filters.categories.length +
     filters.items.length +

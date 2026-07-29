@@ -75,6 +75,35 @@ export async function signInWithEmail(email: string): Promise<{ error: string | 
   return { error: error?.message ?? null };
 }
 
+/**
+ * OAuth providers offered alongside the magic link.
+ *
+ * Google only, for now, and the reason is money rather than code: Sign in with
+ * Apple requires a paid Apple Developer membership (~USD 99/year), while Google
+ * costs nothing beyond creating credentials. Adding "apple" to this array is the
+ * entire client-side change once that account exists and the provider is enabled
+ * in the Supabase dashboard.
+ *
+ * A provider listed here but not enabled in Supabase renders a button that
+ * errors on click, so this list must mirror the dashboard.
+ */
+export type OAuthProvider = "google" | "apple";
+
+export const OAUTH_PROVIDERS: OAuthProvider[] = ["google"];
+
+export async function signInWithProvider(
+  provider: OAuthProvider,
+): Promise<{ error: string | null }> {
+  const sb = await supabase();
+  if (!sb) return { error: "Sign-in no está configurado todavía." };
+  const { error } = await sb.auth.signInWithOAuth({
+    provider,
+    // Land back exactly where the user was, minus any stale auth fragment.
+    options: { redirectTo: window.location.href.split("#")[0] },
+  });
+  return { error: error?.message ?? null };
+}
+
 export async function signOut(): Promise<void> {
   const sb = await supabase();
   await sb?.auth.signOut();

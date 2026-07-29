@@ -1274,3 +1274,84 @@
   font-size: 11px;
   text-decoration: underline;
 }
+
+/* ---------- favorites ---------- */
+
+.fav {
+  border: none;
+  background: none;
+  padding: 0 4px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.12s, transform 0.12s;
+}
+
+.fav:hover {
+  color: var(--no);
+}
+
+.fav.is-on {
+  color: var(--no);
+}
+
+.fav--card {
+  font-size: 19px;
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.sheet__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card__title {
+  min-width: 0;
+}
+
+/* ---------- oauth ---------- */
+
+.oauth {
+  margin-bottom: 10px;
+}
+
+.oauth__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.oauth__btn:hover {
+  border-color: var(--accent);
+}
+
+.oauth__mark {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.oauth__btn--google .oauth__mark {
+  color: #4285f4;
+}
+
+.oauth__or {
+  margin: 8px 0 2px;
+  text-align: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
