@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useStore } from "./store";
 import { MapView } from "./components/MapView";
+import { ListSheet } from "./components/ListSheet";
 import { FilterBar } from "./components/FilterBar";
-import { PlaceList } from "./components/PlaceList";
 import { PlaceSheet } from "./components/PlaceSheet";
 import { AdminBar } from "./components/AdminBar";
 import { PlaceEditor } from "./components/PlaceEditor";
@@ -32,16 +32,6 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app__head">
-        <div className="app__title">
-          <h1>
-            Coffee<span>Finder</span>
-          </h1>
-          <LangToggle />
-        </div>
-        <p>{t("app.tagline")}</p>
-      </header>
-
       {status === "loading" && <div className="app__state">{t("app.loading")}</div>}
       {status === "error" && (
         <div className="app__state app__state--error">
@@ -50,16 +40,24 @@ export default function App() {
         </div>
       )}
 
-      <AdminBar />
-      {isEditor && <SubmissionsQueue />}
-
       {status === "ready" && (
         <>
-          <FilterBar />
-          <main className="app__body">
-            <MapView />
-            <PlaceList />
-          </main>
+          {/* Map is the canvas, not a panel. Everything else floats on it. */}
+          <MapView />
+
+          <div className="topbar">
+            <div className="topbar__brand">
+              <h1>
+                Coffee<span>Finder</span>
+              </h1>
+              <LangToggle />
+            </div>
+            <AdminBar />
+            {isEditor && <SubmissionsQueue />}
+            <FilterBar />
+          </div>
+
+          <ListSheet />
         </>
       )}
 

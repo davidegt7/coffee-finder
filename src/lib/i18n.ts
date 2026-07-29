@@ -65,6 +65,7 @@ const ES = {
   "list.emptyHint": "Prueba con menos filtros, o cuéntanos de un café que conozcas.",
   "list.clearFilters": "Limpiar filtros",
 
+  "sheet.dragHandle": "Arrastra para ver más o menos",
   "sheet.directions": "Cómo llegar",
   "sheet.website": "Sitio web",
   "sheet.whatYouFind": "Qué encuentras",
@@ -247,6 +248,7 @@ const EN: Record<keyof typeof ES, string> = {
   "list.emptyHint": "Try fewer filters, or tell us about a café you know.",
   "list.clearFilters": "Clear filters",
 
+  "sheet.dragHandle": "Drag to show more or less",
   "sheet.directions": "Directions",
   "sheet.website": "Website",
   "sheet.whatYouFind": "What you'll find",
