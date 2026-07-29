@@ -99,6 +99,7 @@ const ES = {
   "claim.confClaimed": "lo dice el local",
   "claim.confUnverified": "sin comprobar",
   "claim.gap": "¿Sabes la respuesta? Esto es justo lo que falta.",
+  "claim.uncheckedWhy": "Nadie publica si tuesta de verdad ni con qué aceite cocina. Esa respuesta solo la trae alguien que pregunta en el local.",
   "claim.source": "Fuente:",
 
   "badge.scope100": "· 100%",
@@ -289,6 +290,7 @@ const EN: Record<keyof typeof ES, string> = {
   "claim.confClaimed": "the place says so",
   "claim.confUnverified": "unchecked",
   "claim.gap": "Know the answer? This is exactly what's missing.",
+  "claim.uncheckedWhy": "Nobody publishes whether they really roast, or what oil they cook with. That answer only comes from someone who asks in person.",
   "claim.source": "Source:",
 
   "badge.scope100": "· 100%",

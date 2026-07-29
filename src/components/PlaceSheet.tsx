@@ -3,7 +3,7 @@ import { useStore } from "../store";
 import { reviewsFor, type Review } from "../lib/reviews";
 import { signInWithEmail, signOut } from "../lib/auth";
 import { useT } from "../lib/useT";
-import { ClaimRow } from "./ClaimBadge";
+import { ClaimRow, UnknownClaims } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
 import { AdSlot } from "./AdSlot";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
@@ -187,7 +187,6 @@ export function PlaceSheet() {
 
   if (!place) return null;
 
-  const unknownCount = CLAIM_KEYS.filter((k) => place.claims[k].scope === "unknown").length;
   const teamCount = reviews.filter((r) => r.isTeam).length;
   const isFav = favorites.includes(place.id);
 
@@ -288,12 +287,12 @@ export function PlaceSheet() {
             </button>
           )}
         </h3>
+        {/* Known facts first and in colour; everything unchecked collapses into
+            one block below rather than repeating itself per row. */}
         {CLAIM_KEYS.map((key) => (
           <ClaimRow key={key} claimKey={key} claim={place.claims[key]} />
         ))}
-        {unknownCount > 0 && (
-          <p className="sheet__gap-note">{t("sheet.gapNote", { n: unknownCount })}</p>
-        )}
+        <UnknownClaims keys={CLAIM_KEYS.filter((k) => place.claims[k].scope === "unknown")} />
       </section>
 
       {place.flags.length > 0 && (

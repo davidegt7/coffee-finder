@@ -1710,3 +1710,132 @@
   margin-top: 4px;
   background: var(--surface-2);
 }
+
+/* ---------- claims: known vs unchecked ---------- */
+
+/* Tinted by confidence. The data model went to the trouble of distinguishing
+   "someone checked" from "the shop says so"; rendering both as identical grey
+   rows threw that away at the last step. */
+.claim-card {
+  padding: 12px 13px;
+  margin-bottom: 8px;
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--line);
+  border-radius: var(--r-sm) var(--r-md) var(--r-md) var(--r-sm);
+  background: var(--surface);
+}
+
+.claim-card--verified {
+  border-left-color: var(--verified);
+  background: color-mix(in srgb, var(--verified) 8%, var(--surface));
+}
+
+.claim-card--claimed {
+  border-left-color: var(--claimed);
+  background: color-mix(in srgb, var(--claimed) 8%, var(--surface));
+}
+
+.claim-card--no {
+  border-left-color: var(--no);
+  background: color-mix(in srgb, var(--no) 7%, var(--surface));
+}
+
+.claim-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.claim-card__label {
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.claim-card__scope {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.claim-card__note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.claim-card__meta {
+  margin: 7px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.claim-card__conf {
+  font-weight: 650;
+}
+
+.claim-card__conf--verified {
+  color: var(--verified);
+}
+
+.claim-card__conf--claimed {
+  color: var(--claimed);
+}
+
+.claim-card__conf--no {
+  color: var(--no);
+}
+
+/* The unchecked block is deliberately the quietest thing in the section — it's
+   the absence of information, and it shouldn't outshout what's actually known. */
+.claim-unknown {
+  margin-top: 4px;
+  padding: 12px 13px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.claim-unknown__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.claim-unknown__title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.claim-unknown__n {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.claim-unknown__list {
+  margin: 7px 0 0;
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
+.claim-unknown__why {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
