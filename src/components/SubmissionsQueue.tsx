@@ -52,6 +52,7 @@ function submissionToPlace(s: Submission, today: string): Place {
     website: s.website,
     instagram: s.instagram,
     items: s.items,
+    photoUrl: s.photoUrl,
     claims,
     flags: s.asserts.filter((a): a is FlagKey => (FLAG_KEYS as readonly string[]).includes(a)),
     sources: [`Solicitud del local, ${s.contactEmail}, ${s.createdAt.slice(0, 10)}`],

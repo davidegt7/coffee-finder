@@ -137,6 +137,13 @@ export interface Place {
   claims: Record<ClaimKey, Claim>;
   /** Only what's true. Absent ≠ false, it means nobody has said. */
   flags: FlagKey[];
+  /**
+   * Absolute https URL. Absent is normal and renders a designed placeholder —
+   * never a stock image. A generic latte on a real café is a small lie about a
+   * specific business, and this app's whole claim is that it doesn't do that.
+   */
+  photoUrl?: string;
+  photoCredit?: string;
   /** A known problem the reader deserves to see — usually sources disagreeing. */
   caveat?: string;
   /** Where this record came from. Every place must cite at least one. */

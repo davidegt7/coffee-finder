@@ -703,15 +703,26 @@
   align-items: center;
 }
 
+/* Photo and placeholder occupy the identical box, so a list of mixed cards
+   doesn't jump around as images load or fail. */
+.card__photo,
+.card__cat {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-md);
+  flex-shrink: 0;
+}
+
+.card__photo {
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
 .card__cat {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-md);
   background: var(--surface-2);
-  font-size: 19px;
-  flex-shrink: 0;
+  font-size: 22px;
 }
 
 .card__title {
@@ -1648,4 +1659,48 @@
 .ad__body small {
   font-size: 11px;
   color: var(--muted);
+}
+
+/* ---------- photos ---------- */
+
+.sheet__photo {
+  margin: -22px -18px 18px;
+  position: relative;
+}
+
+.sheet__photo img {
+  display: block;
+  width: 100%;
+  /* Fixed ratio so the sheet doesn't reflow when the image arrives. */
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--surface-2);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+
+@media (min-width: 900px) {
+  .sheet__photo img {
+    border-radius: 0;
+  }
+}
+
+.sheet__photo figcaption {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 10px;
+}
+
+.editor__photo-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  margin-top: 4px;
+  background: var(--surface-2);
 }

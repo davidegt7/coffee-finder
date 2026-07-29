@@ -41,9 +41,23 @@ export function PlaceList() {
         <div key={place.id}>
           <button className="card" onClick={() => select(place.id)}>
             <div className="card__head">
-              <span className="card__cat" aria-hidden="true">
-                {CATEGORY_LABELS[place.category].icon}
-              </span>
+              {place.photoUrl ? (
+                <img
+                  className="card__photo"
+                  src={place.photoUrl}
+                  alt=""
+                  loading="lazy"
+                  // A dead link would otherwise leave a broken-image glyph,
+                  // which looks worse than never having had a photo.
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <span className="card__cat" aria-hidden="true">
+                  {CATEGORY_LABELS[place.category].icon}
+                </span>
+              )}
               <div className="card__title">
                 <h3>{place.name}</h3>
                 <p className="card__comuna">{place.comuna ?? place.city}</p>

@@ -41,6 +41,7 @@ export function SubmitPlace() {
   const [contactName, setContactName] = useState("");
   const [asserts, setAsserts] = useState<string[]>([]);
   const [items, setItems] = useState<string[]>([]);
+  const [photoUrl, setPhotoUrl] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -126,6 +127,15 @@ export function SubmitPlace() {
         <label className="field">
           <span>Instagram</span>
           <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@…" />
+        </label>
+        <label className="field">
+          <span>{t("submit.photo")}</span>
+          <input
+            value={photoUrl}
+            onChange={(e) => setPhotoUrl(e.target.value)}
+            placeholder="https://…"
+          />
+          <small className="field__hint">{t("submit.photoNote")}</small>
         </label>
       </section>
 
@@ -226,6 +236,7 @@ export function SubmitPlace() {
               contactName,
               asserts,
               items,
+              photoUrl,
               note,
             });
             setBusy(false);

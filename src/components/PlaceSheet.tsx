@@ -197,6 +197,22 @@ export function PlaceSheet() {
         ✕
       </button>
 
+      {place.photoUrl && (
+        <figure className="sheet__photo">
+          <img
+            src={place.photoUrl}
+            alt={place.name}
+            loading="lazy"
+            onError={(e) => {
+              // Hide the whole figure, not just the img — a caption under a
+              // broken image is worse than no photo at all.
+              (e.currentTarget.closest("figure") as HTMLElement).style.display = "none";
+            }}
+          />
+          {place.photoCredit && <figcaption>{place.photoCredit}</figcaption>}
+        </figure>
+      )}
+
       <header className="sheet__head">
         <span className="sheet__cat">
           {CATEGORY_LABELS[place.category].icon} {CATEGORY_LABELS[place.category][lang]}

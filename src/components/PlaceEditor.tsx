@@ -333,6 +333,33 @@ export function PlaceEditor() {
       </section>
 
       <section className="sheet__section">
+        <h3>{t("editor.photo")}</h3>
+        <label className="field">
+          <span>{t("editor.photoUrl")}</span>
+          <input
+            value={place.photoUrl ?? ""}
+            onChange={(e) => patch({ photoUrl: e.target.value || undefined })}
+            placeholder="https://…"
+          />
+        </label>
+        <label className="field">
+          <span>{t("editor.photoCredit")}</span>
+          <input
+            value={place.photoCredit ?? ""}
+            onChange={(e) => patch({ photoCredit: e.target.value || undefined })}
+            placeholder={t("editor.photoCreditPlaceholder")}
+          />
+        </label>
+        {/* Said plainly in the UI, not just in a code comment: a stock photo on
+            a real business is a small lie, and this app's claim is that it
+            doesn't tell those. */}
+        <p className="field__hint">{t("editor.photoNote")}</p>
+        {place.photoUrl && (
+          <img className="editor__photo-preview" src={place.photoUrl} alt="" />
+        )}
+      </section>
+
+      <section className="sheet__section">
         <h3>{t("editor.sourcesAndCaveats")}</h3>
         <label className="field">
           <span>{t("editor.sourcesLabel")}</span>

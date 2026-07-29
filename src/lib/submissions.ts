@@ -27,6 +27,7 @@ export interface Submission {
   /** Claim/flag keys the owner says apply. Their word, recorded as their word. */
   asserts: string[];
   items: string[];
+  photoUrl?: string;
   note?: string;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
@@ -44,6 +45,7 @@ interface SubmissionRow {
   contact_name: string | null;
   asserts: string[] | null;
   items: string[] | null;
+  photo_url: string | null;
   note: string | null;
   status: Submission["status"];
   created_at: string;
@@ -61,6 +63,7 @@ const rowToSubmission = (r: SubmissionRow): Submission => ({
   contactName: r.contact_name ?? undefined,
   asserts: r.asserts ?? [],
   items: r.items ?? [],
+  photoUrl: r.photo_url ?? undefined,
   note: r.note ?? undefined,
   status: r.status,
   createdAt: r.created_at,
@@ -77,6 +80,7 @@ export async function submitPlace(input: {
   contactName?: string;
   asserts: string[];
   items: string[];
+  photoUrl?: string;
   note?: string;
 }): Promise<{ error: string | null }> {
   if (!isSupabaseConfigured()) return { error: "Supabase no está configurado." };
@@ -92,6 +96,7 @@ export async function submitPlace(input: {
     contact_name: input.contactName?.trim() || null,
     asserts: input.asserts,
     items: input.items,
+    photo_url: input.photoUrl?.trim() || null,
     note: input.note?.trim() || null,
   });
   return { error: error?.message ?? null };

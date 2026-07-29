@@ -32,6 +32,8 @@ interface PlaceRow {
   items: string[];
   claims: Place["claims"];
   flags: Place["flags"];
+  photo_url: string | null;
+  photo_credit: string | null;
   caveat: string | null;
   sources: string[];
   added_at: string;
@@ -61,6 +63,8 @@ const rowToPlace = (r: PlaceRow): Place => ({
     seedOilFree: r.claims?.seedOilFree ?? { ...UNKNOWN_CLAIM },
   },
   flags: Array.isArray(r.flags) ? r.flags : [],
+  photoUrl: r.photo_url ?? undefined,
+  photoCredit: r.photo_credit ?? undefined,
   caveat: r.caveat ?? undefined,
   sources: r.sources ?? [],
   addedAt: r.added_at?.slice(0, 10) ?? "",
@@ -96,6 +100,8 @@ const placeToRow = (p: Place) => ({
   items: p.items,
   claims: p.claims,
   flags: p.flags,
+  photo_url: p.photoUrl ?? null,
+  photo_credit: p.photoCredit ?? null,
   caveat: p.caveat ?? null,
   sources: p.sources,
 });
