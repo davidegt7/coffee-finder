@@ -83,8 +83,16 @@ the claim's own source, which readers then see.
 
 ### Supabase
 
+The SQL is split into numbered steps because the order is load-bearing, not
+cosmetic: a CHECK constraint is validated against every existing row the moment
+it's added, so `02-cleanup.sql` must remove the previous app's grocery/market/
+restaurant rows *before* `03-constraints.sql` introduces the coffee-only category
+check. Concatenating them the other way round fails with a 23514.
+Run `full-setup.sql` (generated) to get all of it in the right order.
+
+
 This reuses the **same project as the old Vital Map** — the free tier allows only
-two active projects and Vision holds the other slot. `supabase/schema.sql`
+two active projects and Vision holds the other slot. `supabase/*.sql`
 migrates the table in place: `diet` → `claims`, adds `flags`, swaps the category
 vocabulary, and keeps the editors allowlist and auth users intact.
 
