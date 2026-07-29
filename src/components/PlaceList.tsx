@@ -11,6 +11,7 @@ export function PlaceList() {
   const filters = useStore((s) => s.filters);
   const select = useStore((s) => s.select);
   const resetFilters = useStore((s) => s.resetFilters);
+  const setSubmitOpen = useStore((s) => s.setSubmitOpen);
   const { t, lang } = useT();
   const favorites = useStore((s) => s.favorites);
   const toggleFavorite = useStore((s) => s.toggleFavorite);
@@ -92,6 +93,13 @@ export function PlaceList() {
           {i === 2 && <AdSlot where="list" />}
         </div>
       ))}
+
+      {/* Owner CTA lives at the end of the list rather than floating over it.
+          It's a rare action for a different audience, and a fixed pill in the
+          thumb zone was covering a card on every screen. */}
+      <button className="owner-cta" onClick={() => setSubmitOpen(true)}>
+        {t("submit.cta")}
+      </button>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { addFavorite, loadFavorites, removeFavorite } from "./lib/favorites";
 import { EMPTY_FILTERS, type ClaimStrictness, type Filters } from "./lib/filters";
 import { checkIsEditor, getSession, isSupabaseConfigured, onAuthChange } from "./lib/auth";
 import { initialLang, persistLang, type Lang } from "./lib/i18n";
+import { applyTheme, initialTheme, type Theme } from "./lib/theme";
 
 interface State {
   places: Place[];
@@ -17,6 +18,7 @@ interface State {
   filters: Filters;
   selectedId: string | null;
   lang: Lang;
+  theme: Theme;
 
   // --- admin ---
   /** Admin mode is a URL flag (?admin=1), NOT a secret. It reveals a form; the
@@ -45,6 +47,7 @@ interface State {
   resetFilters: () => void;
   select: (id: string | null) => void;
   setLang: (lang: Lang) => void;
+  setTheme: (theme: Theme) => void;
   submitReview: (review: {
     placeId: string;
     rating: number;
@@ -71,6 +74,7 @@ export const useStore = create<State>((set, get) => ({
   filters: EMPTY_FILTERS,
   selectedId: null,
   lang: initialLang(),
+  theme: initialTheme(),
 
   adminMode: new URLSearchParams(window.location.search).has("admin"),
   session: null,
@@ -184,6 +188,11 @@ export const useStore = create<State>((set, get) => ({
     })),
   resetFilters: () => set({ filters: EMPTY_FILTERS }),
   select: (selectedId) => set({ selectedId }),
+
+  setTheme: (theme) => {
+    applyTheme(theme);
+    set({ theme });
+  },
 
   setLang: (lang) => {
     persistLang(lang);

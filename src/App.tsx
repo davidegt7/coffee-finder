@@ -70,12 +70,6 @@ export default function App() {
         </>
       )}
 
-      {status === "ready" && (
-        <button className="owner-cta" onClick={() => setSubmitOpen(true)}>
-          {t("submit.cta")}
-        </button>
-      )}
-
       {submitOpen && (
         <>
           <div className="scrim" onClick={() => setSubmitOpen(false)} />
