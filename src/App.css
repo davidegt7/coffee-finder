@@ -1259,3 +1259,18 @@
   padding: 6px 10px;
   font-size: 12px;
 }
+
+.review-whoami {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.linkish {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 11px;
+  text-decoration: underline;
+}

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../store";
 import { reviewsFor, type Review } from "../lib/reviews";
-import { signInWithEmail } from "../lib/auth";
+import { signInWithEmail, signOut } from "../lib/auth";
 import { useT } from "../lib/useT";
 import { ClaimRow } from "./ClaimBadge";
 import { AdSlot } from "./AdSlot";
@@ -171,6 +171,7 @@ export function PlaceSheet() {
   const isEditor = useStore((s) => s.isEditor);
   const session = useStore((s) => s.session);
   const setEditing = useStore((s) => s.setEditing);
+  const refreshAuth = useStore((s) => s.refreshAuth);
   const { t, lang } = useT();
   const [writing, setWriting] = useState(false);
 
@@ -300,9 +301,27 @@ export function PlaceSheet() {
         {writing ? (
           <ReviewForm placeId={place.id} onDone={() => setWriting(false)} />
         ) : session ? (
-          <button className="btn" onClick={() => setWriting(true)}>
-            {t("sheet.writeReview")}
-          </button>
+          <>
+            <button className="btn" onClick={() => setWriting(true)}>
+              {t("sheet.writeReview")}
+            </button>
+            {/* Whoever is signed in needs to be able to see that, and to get out
+                of it. Without this a reader who signed in once to review is
+                stuck as that identity forever, with nothing on screen saying so
+                — and on a shared phone the next person reviews as them. */}
+            <p className="review-whoami">
+              {t("review.signedInAs")} <strong>{session.user.email}</strong>{" "}
+              <button
+                className="linkish"
+                onClick={async () => {
+                  await signOut();
+                  await refreshAuth();
+                }}
+              >
+                {t("admin.signOut")}
+              </button>
+            </p>
+          </>
         ) : (
           <SignInToReview />
         )}

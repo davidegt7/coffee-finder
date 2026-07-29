@@ -154,6 +154,7 @@ const ES = {
   "review.willBePinned": "Tu reseña se marcará como del equipo y quedará fijada arriba.",
   "review.signInWhy": "Para reseñar necesitas entrar con tu email. Sin cuenta, sin contraseña — te llega un link.",
   "review.signInCta": "Entrar",
+  "review.signedInAs": "Estás como",
 
   "submit.cta": "¿Tienes una cafetería?",
   "submit.eyebrow": "Para dueños",
@@ -319,6 +320,7 @@ const EN: Record<keyof typeof ES, string> = {
   "review.willBePinned": "Your review will be marked as the team's and pinned to the top.",
   "review.signInWhy": "To review, sign in with your email. No account, no password — we send you a link.",
   "review.signInCta": "Sign in",
+  "review.signedInAs": "Signed in as",
 
   "submit.cta": "Own a café?",
   "submit.eyebrow": "For owners",
