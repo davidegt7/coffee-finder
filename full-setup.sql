@@ -1,16 +1,17 @@
 -- ============================================================
 -- Coffee Finder — complete setup. Paste the WHOLE thing, run once.
 --
--- Order matters and is the reason this is one file. A CHECK constraint is
--- validated against every existing row the instant it is added, so the old
--- grocery/market/restaurant rows must be deleted BEFORE the new category
--- constraint exists — otherwise Postgres aborts with 23514.
+-- Order is load-bearing, in both directions:
+--   * OLD constraints must be dropped before data is touched (the previous
+--     app's inline category CHECK rejects 'roastery').
+--   * NEW constraints must be added after, since a CHECK is validated
+--     against every existing row the instant it is created.
 --
 -- No BEGIN/COMMIT: the Supabase SQL editor wraps the buffer in its own
 -- transaction, and a stray COMMIT closes it early.
 -- ============================================================
 
--- ========== tables + diet→claims migration ==========
+-- ========== tables, unshackle, diet→claims ==========
 -- Coffee Finder — step 1: tables and column migration.
 -- Deliberately contains NO constraints. Existing rows must be made to
 -- conform (see 02-cleanup.sql) before 03-constraints.sql can run, or
@@ -55,6 +56,23 @@ create table if not exists public.places (
   updated_at timestamptz not null default now(),
   updated_by text
 );
+
+-- ---------------------------------------------------------------- unshackle
+--
+-- Drop every constraint before touching data. The previous app declared its
+-- category CHECK inline, so Postgres auto-named it `places_category_check` —
+-- and it still enforces the food vocabulary (restaurant/grocery/market/…).
+-- Retagging Coffee Culture as a 'roastery' in step 2 fails against it with a
+-- 23514 unless it's gone first.
+--
+-- The table stays unconstrained for exactly two steps; 03-constraints.sql puts
+-- the real rules back, validated against rows that by then conform.
+
+alter table public.places drop constraint if exists places_category_check;
+alter table public.places drop constraint if exists places_category_valid;
+alter table public.places drop constraint if exists places_in_santiago;
+alter table public.places drop constraint if exists places_claims_sourced;
+alter table public.places drop constraint if exists places_flags_valid;
 
 -- --- migration from the Vital Map shape -------------------------------------
 -- `diet` (4 dietary axes) becomes `claims` (4 coffee/food axes), and `flags`
