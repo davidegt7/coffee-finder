@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { geocode, type GeocodeHit } from "../lib/geocode";
+import { uploadPlacePhoto } from "../lib/photos";
 import { ITEMS } from "../lib/items";
 import { useT } from "../lib/useT";
 import type { StringKey } from "../lib/i18n";
@@ -77,6 +78,8 @@ export function PlaceEditor() {
   const [geoErr, setGeoErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
+  const [upBusy, setUpBusy] = useState(false);
+  const [upErr, setUpErr] = useState<string | null>(null);
 
   if (!editing) return null;
 
@@ -334,6 +337,35 @@ export function PlaceEditor() {
 
       <section className="sheet__section">
         <h3>{t("editor.photo")}</h3>
+        {/* Camera first, URL second. Someone standing in the café has a photo
+            on their phone, not a hosted image — asking for a URL is asking them
+            to solve hosting before they can contribute. */}
+        <label className="photo-pick">
+          <input
+            type="file"
+            accept="image/*"
+            // Opens the camera directly on a phone rather than the file browser.
+            capture="environment"
+            disabled={upBusy}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setUpBusy(true);
+              setUpErr(null);
+              const { url, error } = await uploadPlacePhoto(file, place.id || slug(place.name));
+              setUpBusy(false);
+              if (error) setUpErr(error);
+              else if (url) patch({ photoUrl: url });
+              // Let the same file be picked again after an error.
+              e.target.value = "";
+            }}
+          />
+          <span className="photo-pick__face">
+            {upBusy ? t("editor.photoUploading") : t("editor.photoPick")}
+          </span>
+        </label>
+        {upErr && <p className="field__err">{upErr}</p>}
+
         <label className="field">
           <span>{t("editor.photoUrl")}</span>
           <input
@@ -355,7 +387,16 @@ export function PlaceEditor() {
             doesn't tell those. */}
         <p className="field__hint">{t("editor.photoNote")}</p>
         {place.photoUrl && (
-          <img className="editor__photo-preview" src={place.photoUrl} alt="" />
+          <div className="editor__photo-wrap">
+            <img className="editor__photo-preview" src={place.photoUrl} alt="" />
+            <button
+              type="button"
+              className="editor__photo-clear"
+              onClick={() => patch({ photoUrl: undefined })}
+            >
+              {t("editor.photoRemove")}
+            </button>
+          </div>
         )}
       </section>
 
