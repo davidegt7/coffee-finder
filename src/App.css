@@ -1093,3 +1093,169 @@
   font-size: 11px;
   opacity: 0.8;
 }
+
+/* ---------- team-pinned reviews ---------- */
+
+/* The team badge has to look earned, not decorative — it's set by the database
+   from the editors allowlist, never by the client. */
+.review--team {
+  border-left: 2px solid var(--accent);
+  padding-left: 10px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 4px;
+}
+
+.review__team-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #1b1008;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.review__divider {
+  margin: 14px 0 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.review-signin {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.review-signin__why {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.review-signin__row {
+  display: flex;
+  gap: 6px;
+}
+
+.review-signin__row input {
+  flex: 1;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.review-signin__msg {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.review-form__team {
+  margin: 0 0 4px;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+/* ---------- owner CTA + submissions queue ---------- */
+
+.owner-cta {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 800;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  box-shadow: var(--shadow);
+}
+
+.owner-cta:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+@media (min-width: 900px) {
+  .owner-cta {
+    left: auto;
+    right: 16px;
+    transform: none;
+  }
+}
+
+.queue {
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+}
+
+.queue__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.queue__list {
+  padding: 0 16px 12px;
+}
+
+.queue__item {
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.queue__item h4 {
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.queue__addr,
+.queue__asserts,
+.queue__contact {
+  margin: 2px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.queue__note {
+  margin: 6px 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.queue__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.queue__actions .btn {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 12px;
+}

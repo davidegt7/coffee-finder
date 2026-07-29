@@ -1,19 +1,19 @@
-import { CATEGORIES, UNKNOWN_CLAIM, type Place, type Review } from "../types";
+import { CATEGORIES, UNKNOWN_CLAIM, type Place } from "../types";
 import { isSupabaseConfigured, supabase } from "./auth";
 
 /**
  * The data-layer seam.
  *
- * Everything above this file talks to loadPlaces / savePlace / loadReviews /
- * addReview and knows nothing about where the bytes come from: Supabase when
- * it's configured, the static JSON when it isn't.
+ * Everything above this file talks to loadPlaces / savePlace and knows nothing
+ * about where the bytes come from: Supabase when it's configured, the static
+ * JSON when it isn't. (Reviews moved to lib/reviews.ts when they stopped being
+ * device-local.)
  *
  * The JSON fallback isn't dead weight — it's what makes the app work before the
  * project exists, in a fork, and if Supabase is down. A map that reads a
  * CDN-cached file when the database is unreachable beats a map that errors.
  */
 
-const REVIEWS_KEY = "coffeefinder.reviews.v1";
 
 let placesCache: Promise<Place[]> | null = null;
 
@@ -161,30 +161,4 @@ export async function savePlace(place: Place): Promise<{ error: string | null }>
   const { error } = await sb!.from("places").upsert(placeToRow(place), { onConflict: "id" });
   if (!error) invalidatePlaces();
   return { error: error?.message ?? null };
-}
-
-export function loadReviews(): Review[] {
-  try {
-    const raw = localStorage.getItem(REVIEWS_KEY);
-    return raw ? (JSON.parse(raw) as Review[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function addReview(review: Omit<Review, "id" | "createdAt">): Review {
-  const full: Review = {
-    ...review,
-    id: `r_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-    createdAt: new Date().toISOString(),
-  };
-  const all = [...loadReviews(), full];
-  localStorage.setItem(REVIEWS_KEY, JSON.stringify(all));
-  return full;
-}
-
-export function reviewsFor(placeId: string, all: Review[]): Review[] {
-  return all
-    .filter((r) => r.placeId === placeId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

@@ -144,13 +144,3 @@ export interface Place {
   addedAt: string;
 }
 
-export interface Review {
-  id: string;
-  placeId: string;
-  rating: number;
-  body: string;
-  author: string;
-  createdAt: string;
-  /** Which claims this reviewer can speak to — a coeliac's GF note carries weight. */
-  speaksTo: ClaimKey[];
-}

@@ -1,43 +1,99 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../store";
-import { reviewsFor } from "../lib/places";
+import { reviewsFor, type Review } from "../lib/reviews";
+import { signInWithEmail } from "../lib/auth";
 import { useT } from "../lib/useT";
 import { ClaimRow } from "./ClaimBadge";
 import { AdSlot } from "./AdSlot";
-import {
-  CATEGORY_LABELS,
-  CLAIM_KEYS,
-  CLAIM_LABELS,
-  FLAG_LABELS,
-  type ClaimKey,
-} from "../types";
+import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
+
+/**
+ * Signing in is required to review. That's friction on purpose: an open write
+ * endpoint on a public map is a spam magnet, and an unattributable review is
+ * worth little to a reader. Magic link is the cheapest real identity there is.
+ */
+function SignInToReview() {
+  const { t } = useT();
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  if (sent) {
+    return (
+      <p className="review-signin__msg">
+        {t("admin.linkSentA")} <strong>{email}</strong>
+        {t("admin.linkSentB")}
+      </p>
+    );
+  }
+
+  return (
+    <form
+      className="review-signin"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        setErr(null);
+        const { error } = await signInWithEmail(email);
+        setBusy(false);
+        if (error) setErr(error);
+        else setSent(true);
+      }}
+    >
+      <p className="review-signin__why">{t("review.signInWhy")}</p>
+      <div className="review-signin__row">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t("admin.emailPlaceholder")}
+          aria-label="Email"
+        />
+        <button className="btn btn--primary" disabled={busy}>
+          {busy ? "…" : t("review.signInCta")}
+        </button>
+      </div>
+      {err && <p className="field__err">{err}</p>}
+    </form>
+  );
+}
 
 function ReviewForm({ placeId, onDone }: { placeId: string; onDone: () => void }) {
   const submitReview = useStore((s) => s.submitReview);
+  const isEditor = useStore((s) => s.isEditor);
   const { t, lang } = useT();
   const [rating, setRating] = useState(5);
   const [body, setBody] = useState("");
   const [author, setAuthor] = useState("");
   const [speaksTo, setSpeaksTo] = useState<ClaimKey[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
-  const canSubmit = body.trim().length > 2;
+  const canSubmit = body.trim().length > 2 && !busy;
 
   return (
     <form
       className="review-form"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         if (!canSubmit) return;
-        submitReview({
+        setBusy(true);
+        setErr(null);
+        const res = await submitReview({
           placeId,
           rating,
           body: body.trim(),
           author: author.trim() || t("common.anon"),
           speaksTo,
         });
-        onDone();
+        setBusy(false);
+        if (res.error) setErr(res.error);
+        else onDone();
       }}
     >
+      {isEditor && <p className="review-form__team">{t("review.willBePinned")}</p>}
       <div className="review-form__stars">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
@@ -79,11 +135,31 @@ function ReviewForm({ placeId, onDone }: { placeId: string; onDone: () => void }
           </label>
         ))}
       </fieldset>
+      {err && <p className="field__err">{err}</p>}
       <button type="submit" className="btn btn--primary" disabled={!canSubmit}>
-        {t("review.publish")}
+        {busy ? t("editor.saving") : t("review.publish")}
       </button>
-      <p className="review-form__local">{t("review.localNote")}</p>
     </form>
+  );
+}
+
+function ReviewCard({ review }: { review: Review }) {
+  const { t, lang } = useT();
+  return (
+    <article className={`review ${review.isTeam ? "review--team" : ""}`}>
+      <div className="review__head">
+        <strong>{review.author}</strong>
+        {review.isTeam && <span className="review__team-badge">{t("review.teamBadge")}</span>}
+        <span className="review__stars">{"★".repeat(review.rating)}</span>
+        <time>{review.createdAt.slice(0, 10)}</time>
+      </div>
+      <p>{review.body}</p>
+      {review.speaksTo.length > 0 && (
+        <p className="review__speaks">
+          {t("sheet.speaksOf")} {review.speaksTo.map((k) => CLAIM_LABELS[k][lang]).join(", ")}
+        </p>
+      )}
+    </article>
   );
 }
 
@@ -93,6 +169,7 @@ export function PlaceSheet() {
   const allReviews = useStore((s) => s.reviews);
   const select = useStore((s) => s.select);
   const isEditor = useStore((s) => s.isEditor);
+  const session = useStore((s) => s.session);
   const setEditing = useStore((s) => s.setEditing);
   const { t, lang } = useT();
   const [writing, setWriting] = useState(false);
@@ -106,6 +183,7 @@ export function PlaceSheet() {
   if (!place) return null;
 
   const unknownCount = CLAIM_KEYS.filter((k) => place.claims[k].scope === "unknown").length;
+  const teamCount = reviews.filter((r) => r.isTeam).length;
 
   return (
     <div className="sheet" role="dialog" aria-label={place.name}>
@@ -204,28 +282,29 @@ export function PlaceSheet() {
           {t("sheet.reviews")}{" "}
           {reviews.length > 0 && <span className="count">{reviews.length}</span>}
         </h3>
+
         {reviews.length === 0 && !writing && <p className="sheet__empty">{t("sheet.noReviews")}</p>}
-        {reviews.map((r) => (
-          <article key={r.id} className="review">
-            <div className="review__head">
-              <strong>{r.author}</strong>
-              <span className="review__stars">{"★".repeat(r.rating)}</span>
-              <time>{r.createdAt.slice(0, 10)}</time>
-            </div>
-            <p>{r.body}</p>
-            {r.speaksTo.length > 0 && (
-              <p className="review__speaks">
-                {t("sheet.speaksOf")} {r.speaksTo.map((k) => CLAIM_LABELS[k][lang]).join(", ")}
-              </p>
+
+        {/* Team reviews render first with a badge. The pinning is real:
+            reviewsFor() returns them as a separate leading block, and `isTeam`
+            comes from the database, not from anything the client can set. */}
+        {reviews.map((r, i) => (
+          <div key={r.id}>
+            {i === teamCount && teamCount > 0 && (
+              <p className="review__divider">{t("review.fromEveryone")}</p>
             )}
-          </article>
+            <ReviewCard review={r} />
+          </div>
         ))}
+
         {writing ? (
           <ReviewForm placeId={place.id} onDone={() => setWriting(false)} />
-        ) : (
+        ) : session ? (
           <button className="btn" onClick={() => setWriting(true)}>
             {t("sheet.writeReview")}
           </button>
+        ) : (
+          <SignInToReview />
         )}
       </section>
 

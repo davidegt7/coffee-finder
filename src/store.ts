@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import type { Session } from "@supabase/supabase-js";
-import type { Category, ClaimKey, FlagKey, Place, Review } from "./types";
-import { addReview, loadPlaces, loadReviews, savePlace } from "./lib/places";
+import type { Category, ClaimKey, FlagKey, Place } from "./types";
+import { loadPlaces, savePlace } from "./lib/places";
+import { addReview, loadReviews, type Review } from "./lib/reviews";
+import { loadSubmissions, type Submission } from "./lib/submissions";
 import { EMPTY_FILTERS, type ClaimStrictness, type Filters } from "./lib/filters";
 import { checkIsEditor, getSession, isSupabaseConfigured, onAuthChange } from "./lib/auth";
 import { initialLang, persistLang, type Lang } from "./lib/i18n";
@@ -23,6 +25,9 @@ interface State {
   isEditor: boolean;
   authReady: boolean;
   editing: Place | "new" | null;
+  submissions: Submission[];
+  /** The public "list your café" form. */
+  submitOpen: boolean;
 
   init: () => Promise<void>;
   setClaim: (key: ClaimKey, value: ClaimStrictness) => void;
@@ -34,7 +39,16 @@ interface State {
   resetFilters: () => void;
   select: (id: string | null) => void;
   setLang: (lang: Lang) => void;
-  submitReview: (review: Omit<Review, "id" | "createdAt">) => void;
+  submitReview: (review: {
+    placeId: string;
+    rating: number;
+    body: string;
+    author: string;
+    speaksTo: ClaimKey[];
+  }) => Promise<{ error: string | null }>;
+  refreshReviews: () => Promise<void>;
+  setSubmitOpen: (open: boolean) => void;
+  refreshSubmissions: () => Promise<void>;
 
   refreshAuth: () => Promise<void>;
   setEditing: (p: Place | "new" | null) => void;
@@ -55,17 +69,24 @@ export const useStore = create<State>((set, get) => ({
   isEditor: false,
   authReady: false,
   editing: null,
+  submissions: [],
+  submitOpen: false,
 
   init: async () => {
     if (get().status === "loading" || get().status === "ready") return;
     set({ status: "loading", error: null });
     try {
       const places = await loadPlaces();
-      set({ places, reviews: loadReviews(), status: "ready" });
+      set({ places, status: "ready" });
+      // Reviews are secondary — never let them delay or break the map.
+      void loadReviews().then((reviews) => set({ reviews })).catch(() => {});
     } catch (err) {
       set({ status: "error", error: err instanceof Error ? err.message : String(err) });
     }
-    if (get().adminMode && isSupabaseConfigured()) {
+    // Auth is no longer admin-only: anyone signed in can leave a review, so the
+    // session has to be resolved on the public site too. Non-editors simply get
+    // isEditor:false and see no admin chrome.
+    if (isSupabaseConfigured()) {
       await get().refreshAuth();
       void onAuthChange(() => void get().refreshAuth());
     } else {
@@ -77,6 +98,8 @@ export const useStore = create<State>((set, get) => ({
     const session = await getSession();
     const isEditor = session ? await checkIsEditor() : false;
     set({ session, isEditor, authReady: true });
+    // RLS returns nothing to non-editors, so this is safe to call regardless.
+    if (isEditor) void get().refreshSubmissions();
   },
 
   setEditing: (editing) => set({ editing }),
@@ -140,8 +163,29 @@ export const useStore = create<State>((set, get) => ({
     set({ lang });
   },
 
-  submitReview: (review) => {
-    const saved = addReview(review);
-    set((s) => ({ reviews: [...s.reviews, saved] }));
+  submitReview: async (review) => {
+    const res = await addReview(review);
+    // Re-read rather than patch: is_team is decided by the database, so the
+    // stored row is the truth and the optimistic version would be a guess.
+    if (!res.error) await get().refreshReviews();
+    return res;
+  },
+
+  refreshReviews: async () => {
+    try {
+      set({ reviews: await loadReviews() });
+    } catch {
+      /* reviews are secondary; never break the map over them */
+    }
+  },
+
+  setSubmitOpen: (submitOpen) => set({ submitOpen }),
+
+  refreshSubmissions: async () => {
+    try {
+      set({ submissions: await loadSubmissions() });
+    } catch {
+      /* ignore */
+    }
   },
 }));

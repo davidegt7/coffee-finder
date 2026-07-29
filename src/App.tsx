@@ -7,11 +7,14 @@ import { PlaceSheet } from "./components/PlaceSheet";
 import { AdminBar } from "./components/AdminBar";
 import { PlaceEditor } from "./components/PlaceEditor";
 import { LangToggle } from "./components/LangToggle";
+import { SubmitPlace } from "./components/SubmitPlace";
+import { SubmissionsQueue } from "./components/SubmissionsQueue";
 import { useT } from "./lib/useT";
 import "./App.css";
 
 export default function App() {
-  const { status, error, init, selectedId, select, editing } = useStore();
+  const { status, error, init, selectedId, select, editing, submitOpen, setSubmitOpen, isEditor } =
+    useStore();
   const { t } = useT();
 
   useEffect(() => {
@@ -48,6 +51,7 @@ export default function App() {
       )}
 
       <AdminBar />
+      {isEditor && <SubmissionsQueue />}
 
       {status === "ready" && (
         <>
@@ -63,6 +67,19 @@ export default function App() {
         <>
           <div className="scrim" onClick={() => select(null)} />
           <PlaceSheet />
+        </>
+      )}
+
+      {status === "ready" && (
+        <button className="owner-cta" onClick={() => setSubmitOpen(true)}>
+          {t("submit.cta")}
+        </button>
+      )}
+
+      {submitOpen && (
+        <>
+          <div className="scrim" onClick={() => setSubmitOpen(false)} />
+          <SubmitPlace />
         </>
       )}
 
