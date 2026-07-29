@@ -3,7 +3,7 @@ import { useStore } from "../store";
 import { reviewsFor, type Review } from "../lib/reviews";
 import { signInWithEmail, signOut } from "../lib/auth";
 import { useT } from "../lib/useT";
-import { ClaimRow, UnknownClaims } from "./ClaimBadge";
+import { ClaimBadge, ClaimRow, UnknownClaims } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
 import { AdSlot } from "./AdSlot";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
@@ -178,6 +178,9 @@ export function PlaceSheet() {
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const { t, lang } = useT();
   const [writing, setWriting] = useState(false);
+  // Collapsed by default: the evidence is long, and the summary in the header
+  // already answers the question the section exists to answer.
+  const [claimsOpen, setClaimsOpen] = useState(false);
 
   const place = places.find((p) => p.id === selectedId);
   const reviews = useMemo(
@@ -188,6 +191,7 @@ export function PlaceSheet() {
   if (!place) return null;
 
   const teamCount = reviews.filter((r) => r.isTeam).length;
+  const unknownKeys = CLAIM_KEYS.filter((k) => place.claims[k].scope === "unknown");
   const isFav = favorites.includes(place.id);
 
   return (
@@ -235,11 +239,6 @@ export function PlaceSheet() {
             {place.comuna && `, ${place.comuna}`}
           </p>
         )}
-        {place.caveat && (
-          <p className="sheet__caveat">
-            <strong>{t("sheet.caveat")}</strong> {place.caveat}
-          </p>
-        )}
         <div className="sheet__links">
           <a
             href={`https://www.openstreetmap.org/directions?to=${place.lat},${place.lng}`}
@@ -279,20 +278,47 @@ export function PlaceSheet() {
       )}
 
       <section className="sheet__section">
-        <h3>
-          {t("sheet.whatWeKnow")}
+        <div className="claims-head">
+          <button
+            className="claims-toggle"
+            onClick={() => setClaimsOpen((o) => !o)}
+            aria-expanded={claimsOpen}
+            aria-controls="claims-body"
+          >
+            <h3>{t("sheet.whatWeKnow")}</h3>
+            <span className={`claims-toggle__caret ${claimsOpen ? "is-open" : ""}`} aria-hidden="true" />
+          </button>
           {isEditor && (
             <button className="sheet__edit" onClick={() => setEditing(place)}>
               {t("sheet.edit")}
             </button>
           )}
-        </h3>
-        {/* Known facts first and in colour; everything unchecked collapses into
-            one block below rather than repeating itself per row. */}
-        {CLAIM_KEYS.map((key) => (
-          <ClaimRow key={key} claimKey={key} claim={place.claims[key]} />
-        ))}
-        <UnknownClaims keys={CLAIM_KEYS.filter((k) => place.claims[k].scope === "unknown")} />
+        </div>
+
+        {/* Collapsed still shows WHAT is known — only the evidence (notes,
+            sources, dates) is behind the tap. Hiding the answer itself would
+            trade clutter for uselessness. */}
+        {!claimsOpen && (
+          <div className="claims-summary" onClick={() => setClaimsOpen(true)}>
+            {CLAIM_KEYS.map((key) => (
+              <ClaimBadge key={key} claimKey={key} claim={place.claims[key]} />
+            ))}
+            {unknownKeys.length > 0 && (
+              <span className="badge badge--flag">
+                {unknownKeys.length} {t("claim.uncheckedShort")}
+              </span>
+            )}
+          </div>
+        )}
+
+        {claimsOpen && (
+          <div id="claims-body">
+            {CLAIM_KEYS.map((key) => (
+              <ClaimRow key={key} claimKey={key} claim={place.claims[key]} />
+            ))}
+            <UnknownClaims keys={unknownKeys} />
+          </div>
+        )}
       </section>
 
       {place.flags.length > 0 && (
@@ -358,6 +384,15 @@ export function PlaceSheet() {
           <SignInToReview />
         )}
       </section>
+
+      {/* Caveats sit at the end rather than under the address. They're a
+          footnote about the record, and interrupting the header with one pushed
+          the actual content down on every place that had it. */}
+      {place.caveat && (
+        <p className="sheet__caveat">
+          <strong>{t("sheet.caveat")}</strong> {place.caveat}
+        </p>
+      )}
 
       <footer className="sheet__sources">
         <h4>{t("sheet.sources")}</h4>
