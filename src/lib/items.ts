@@ -1,70 +1,188 @@
 import type { Place } from "../types";
 
 /**
- * The item taxonomy: WHAT you can order. Never a property of the place.
+ * The item taxonomy, two levels deep.
  *
- * The rule inherited from this app's dietary ancestor, and still load-bearing:
- * **items are plain nouns, never claims.** There is no "pastelería sin gluten"
- * item — there is `pastelería`, and the Características menu supplies "sin
- * gluten". Composing the two is the whole design; duplicating a claim into an
- * item name would let a café listing plain "pastelería" match a gluten-free
- * filter it never claimed.
+ * The top level is an *intent* — am I drinking here, buying beans, or buying
+ * gear? Those are three different errands, and someone after a bag of beans has
+ * no use for a list of espresso drinks. The old flat list put all of it on one
+ * screen and made you read past most of it.
  *
- * Grouped by what you're doing — drinking here, eating here, taking home —
- * rather than by place type. Unlike a food map (where chucrut is a shop question
- * and brunch is a restaurant question), every café plausibly does all three, so
- * all groups always show.
+ * The rule inherited from this app's dietary ancestor is unchanged and still
+ * load-bearing: **items are plain nouns, never claims.** There is no "pastelería
+ * sin gluten" item — there is `pastelería`, and the Características menu supplies
+ * "sin gluten". Duplicating a claim into an item name would let a café listing
+ * plain "pastelería" match a gluten-free filter it never made.
  */
-export type ItemGroup = "drink" | "eat" | "take";
 
 export interface ItemDef {
   id: string;
   label: { es: string; en: string };
-  group: ItemGroup;
   /** Extra spellings found in free-text Place.items. Never the bare noun of a
    *  more specific item — that's how false positives get in. */
   aliases?: string[];
 }
 
-export const GROUP_LABELS: Record<ItemGroup, { es: string; en: string }> = {
-  drink: { es: "Para tomar", en: "To drink" },
-  eat: { es: "Para comer", en: "To eat" },
-  take: { es: "Para llevar", en: "To take home" },
-};
+export interface ItemSection {
+  id: string;
+  /** Omitted when the intent has a single, self-evident section. */
+  label?: { es: string; en: string };
+  items: ItemDef[];
+}
 
-export const ITEMS: ItemDef[] = [
-  // ---- para tomar ----
-  { id: "espresso", label: { es: "Espresso", en: "Espresso" }, group: "drink", aliases: ["expreso"] },
-  { id: "cortado", label: { es: "Cortado", en: "Cortado" }, group: "drink" },
-  { id: "flat-white", label: { es: "Flat white", en: "Flat white" }, group: "drink" },
-  { id: "cappuccino", label: { es: "Cappuccino", en: "Cappuccino" }, group: "drink", aliases: ["capuchino"] },
-  { id: "latte", label: { es: "Latte", en: "Latte" }, group: "drink" },
-  { id: "americano", label: { es: "Americano", en: "Americano" }, group: "drink" },
-  { id: "filtrado", label: { es: "Filtrado / V60", en: "Pour over / V60" }, group: "drink", aliases: ["v60", "chemex", "pour over", "filtro"] },
-  { id: "aeropress", label: { es: "Aeropress", en: "Aeropress" }, group: "drink" },
-  { id: "cold-brew", label: { es: "Cold brew", en: "Cold brew" }, group: "drink", aliases: ["frio", "iced"] },
-  { id: "matcha", label: { es: "Matcha", en: "Matcha" }, group: "drink" },
-  { id: "chai", label: { es: "Chai", en: "Chai" }, group: "drink" },
-  { id: "te", label: { es: "Té", en: "Tea" }, group: "drink" },
-  { id: "leches-vegetales", label: { es: "Leches vegetales", en: "Plant milks" }, group: "drink", aliases: ["leche de almendra", "avena", "oat"] },
+export interface ItemIntent {
+  id: "drink" | "beans" | "gear";
+  label: { es: string; en: string };
+  icon: string;
+  sections: ItemSection[];
+}
 
-  // ---- para comer ----
-  { id: "pasteleria", label: { es: "Pastelería", en: "Pastries" }, group: "eat", aliases: ["reposteria", "pasteles"] },
-  { id: "croissant", label: { es: "Croissant", en: "Croissant" }, group: "eat" },
-  { id: "sandwiches", label: { es: "Sándwiches", en: "Sandwiches" }, group: "eat", aliases: ["sandwich", "sanguche"] },
-  { id: "tostadas", label: { es: "Tostadas", en: "Toast" }, group: "eat", aliases: ["avocado toast"] },
-  { id: "huevos", label: { es: "Huevos", en: "Eggs" }, group: "eat" },
-  { id: "torta", label: { es: "Torta / kuchen", en: "Cake" }, group: "eat", aliases: ["kuchen", "pie"] },
-  { id: "granola", label: { es: "Granola / yogurt", en: "Granola / yoghurt" }, group: "eat", aliases: ["yoghurt", "yogur"] },
-  { id: "ensaladas", label: { es: "Ensaladas", en: "Salads" }, group: "eat", aliases: ["ensalada"] },
-
-  // ---- para llevar ----
-  { id: "grano", label: { es: "Grano", en: "Whole beans" }, group: "take", aliases: ["granos", "beans", "en grano"] },
-  { id: "molido", label: { es: "Café molido", en: "Ground coffee" }, group: "take", aliases: ["molienda"] },
-  { id: "equipamiento", label: { es: "Equipamiento", en: "Brew gear" }, group: "take", aliases: ["cafeteras", "prensa", "molinillo"] },
+export const INTENTS: ItemIntent[] = [
+  {
+    id: "drink",
+    label: { es: "Café para tomar", en: "Coffee to drink" },
+    icon: "☕",
+    sections: [
+      {
+        id: "coffee",
+        label: { es: "El café", en: "The coffee" },
+        items: [
+          { id: "espresso", label: { es: "Espresso", en: "Espresso" }, aliases: ["expreso"] },
+          { id: "cortado", label: { es: "Cortado", en: "Cortado" } },
+          { id: "flat-white", label: { es: "Flat white", en: "Flat white" } },
+          {
+            id: "cappuccino",
+            label: { es: "Cappuccino", en: "Cappuccino" },
+            aliases: ["capuchino"],
+          },
+          { id: "latte", label: { es: "Latte", en: "Latte" } },
+          { id: "americano", label: { es: "Americano", en: "Americano" } },
+          {
+            id: "filtrado",
+            label: { es: "Filtrado / V60", en: "Pour over / V60" },
+            aliases: ["v60", "chemex", "pour over", "filtro"],
+          },
+          { id: "aeropress", label: { es: "Aeropress", en: "Aeropress" } },
+          {
+            id: "cold-brew",
+            label: { es: "Cold brew", en: "Cold brew" },
+            aliases: ["frio", "iced"],
+          },
+          { id: "matcha", label: { es: "Matcha", en: "Matcha" } },
+          { id: "chai", label: { es: "Chai", en: "Chai" } },
+          { id: "te", label: { es: "Té", en: "Tea" } },
+          {
+            id: "leches-vegetales",
+            label: { es: "Leches vegetales", en: "Plant milks" },
+            aliases: ["leche de almendra", "avena", "oat"],
+          },
+        ],
+      },
+      {
+        // Food sits under "to drink" because that's when it's relevant: you're
+        // sitting down and the question is whether there's something to eat with
+        // the coffee. It isn't a separate errand.
+        id: "food",
+        label: { es: "Para comer", en: "To eat" },
+        items: [
+          {
+            id: "pasteleria",
+            label: { es: "Pastelería", en: "Pastries" },
+            aliases: ["reposteria", "pasteles"],
+          },
+          { id: "croissant", label: { es: "Croissant", en: "Croissant" } },
+          {
+            id: "sandwiches",
+            label: { es: "Sándwiches", en: "Sandwiches" },
+            aliases: ["sandwich", "sanguche"],
+          },
+          { id: "tostadas", label: { es: "Tostadas", en: "Toast" }, aliases: ["avocado toast"] },
+          { id: "huevos", label: { es: "Huevos", en: "Eggs" } },
+          { id: "torta", label: { es: "Torta / kuchen", en: "Cake" }, aliases: ["kuchen", "pie"] },
+          {
+            id: "granola",
+            label: { es: "Granola / yogurt", en: "Granola / yoghurt" },
+            aliases: ["yoghurt", "yogur"],
+          },
+          { id: "ensaladas", label: { es: "Ensaladas", en: "Salads" }, aliases: ["ensalada"] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "beans",
+    label: { es: "Café en grano", en: "Coffee beans" },
+    icon: "🫘",
+    sections: [
+      {
+        id: "grind",
+        items: [
+          {
+            id: "grano-entero",
+            label: { es: "Entero", en: "Whole bean" },
+            // "grano" alone denotes whole bean — that's what "café en grano"
+            // means — so it belongs here rather than on molido.
+            aliases: ["grano", "en grano", "granos", "beans", "whole bean"],
+          },
+          {
+            id: "grano-molido",
+            label: { es: "Molido", en: "Ground" },
+            aliases: ["molienda", "ground"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "gear",
+    label: { es: "Equipamiento", en: "Brew gear" },
+    icon: "⚙️",
+    sections: [
+      {
+        id: "gear",
+        items: [
+          {
+            id: "equipo-cafeteras",
+            label: { es: "Cafeteras / drippers", en: "Brewers / drippers" },
+            aliases: ["cafetera", "dripper"],
+          },
+          {
+            id: "equipo-prensa",
+            label: { es: "Prensa francesa", en: "French press" },
+            aliases: ["prensa"],
+          },
+          {
+            id: "equipo-molinillo",
+            label: { es: "Molinillo", en: "Grinder" },
+            aliases: ["molino", "grinder"],
+          },
+          {
+            id: "equipo-filtros",
+            label: { es: "Filtros", en: "Filter papers" },
+            aliases: ["filtros de papel"],
+          },
+          { id: "equipo-balanza", label: { es: "Balanza", en: "Scale" }, aliases: ["pesa"] },
+          {
+            id: "equipo-hervidor",
+            label: { es: "Hervidor", en: "Kettle" },
+            aliases: ["pava", "kettle"],
+          },
+        ],
+      },
+    ],
+  },
 ];
 
+/** Flattened, for lookups. */
+export const ITEMS: ItemDef[] = INTENTS.flatMap((i) => i.sections.flatMap((s) => s.items));
+
 const ITEMS_BY_ID = new Map(ITEMS.map((i) => [i.id, i]));
+
+/** Every item id under an intent — used to select or clear it wholesale. */
+export function itemIdsForIntent(intentId: ItemIntent["id"]): string[] {
+  const intent = INTENTS.find((i) => i.id === intentId);
+  return intent ? intent.sections.flatMap((s) => s.items.map((it) => it.id)) : [];
+}
 
 /** Accent- and case-insensitive: Place.items is hand-written, "Té" must match "te". */
 const norm = (s: string) =>
@@ -76,8 +194,8 @@ const norm = (s: string) =>
 /**
  * One-directional on purpose: the place's text must CONTAIN the item, never the
  * reverse. "flat white de especialidad" contains "flat white" → match. But a
- * place listing plain "café" must not match every coffee drink just because the
- * needle contains the haystack. That direction invents claims.
+ * place listing plain "café" must not match every drink just because the needle
+ * contains the haystack. That direction invents claims.
  */
 export function placeHasItem(place: Place, itemId: string): boolean {
   const def = ITEMS_BY_ID.get(itemId);
@@ -92,10 +210,6 @@ export function placeHasItem(place: Place, itemId: string): boolean {
     const hay = norm(raw);
     return needles.some((n) => hay.includes(n));
   });
-}
-
-export function itemsForGroup(group: ItemGroup): ItemDef[] {
-  return ITEMS.filter((i) => i.group === group);
 }
 
 export function itemLabel(id: string, lang: "es" | "en" = "es"): string {

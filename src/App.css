@@ -1355,3 +1355,67 @@
   letter-spacing: 0.08em;
   color: var(--muted);
 }
+
+/* ---------- two-level item menu ---------- */
+
+.intents {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.intent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.intent.is-open {
+  border-color: var(--accent);
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+/* A collapsed intent that still has selections has to say so — otherwise a
+   filter is narrowing the map from behind a closed branch. */
+.intent.is-active {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.intent__icon {
+  font-size: 18px;
+}
+
+.intent__label {
+  font-weight: 500;
+}
+
+.intent__n {
+  font-size: 10px;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.intent-panel {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  animation: menu-in 0.12s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intent-panel {
+    animation: none;
+  }
+}

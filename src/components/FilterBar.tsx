@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
 import { activeFilterCount, flagCounts, itemCounts, type ClaimStrictness } from "../lib/filters";
-import { GROUP_LABELS, ITEMS, itemsForGroup, type ItemGroup } from "../lib/items";
+import { INTENTS, ITEMS, itemIdsForIntent, type ItemIntent } from "../lib/items";
 import { useT } from "../lib/useT";
 import {
   ATTR_GROUPS,
@@ -14,8 +14,6 @@ import {
 
 /** off → some → all → off. One tap deepens, three taps clears. */
 const NEXT: Record<ClaimStrictness, ClaimStrictness> = { off: "some", some: "all", all: "off" };
-
-const ITEM_GROUPS: ItemGroup[] = ["drink", "eat", "take"];
 
 type Menu = "attrs" | "category" | "item" | null;
 
@@ -36,6 +34,8 @@ export function FilterBar() {
   } = useStore();
   const { t, lang } = useT();
   const [open, setOpen] = useState<Menu>(null);
+  // Which top-level intent is expanded inside the "Qué buscas" menu.
+  const [intent, setIntent] = useState<ItemIntent["id"] | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const strictnessHint: Record<ClaimStrictness, string> = {
@@ -132,37 +132,76 @@ export function FilterBar() {
 
       {open === "item" && (
         <div className="menu-panel menu-panel--scroll" id="menu-item">
-          {ITEM_GROUPS.map((group) => (
-            <div key={group} className="menu-panel__group">
-              <h4 className="menu-panel__group-title">{GROUP_LABELS[group][lang]}</h4>
-              <div className="menu-panel__chips">
-                {itemsForGroup(group)
-                  // Real options first: with most of the map untagged, alphabetical
-                  // would bury the few that work under a wall of zeros.
-                  .sort((a, b) => (iCounts.get(b.id) ?? 0) - (iCounts.get(a.id) ?? 0))
-                  .map((item) => {
-                    const n = iCounts.get(item.id) ?? 0;
-                    const on = filters.items.includes(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        className={`chip chip--item ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
-                        onClick={() => toggleItem(item.id)}
-                        aria-pressed={on}
-                        title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
-                      >
-                        {item.label[lang]}
-                        <span className="chip__n">{n}</span>
-                      </button>
-                    );
-                  })}
-              </div>
+          {/* Top level is the errand: drinking here, buying beans, buying gear.
+              Someone after a bag of beans has no use for a list of espresso
+              drinks, so only the chosen branch expands. */}
+          <div className="intents">
+            {INTENTS.map((it) => {
+              const ids = itemIdsForIntent(it.id);
+              const chosen = ids.filter((id) => filters.items.includes(id)).length;
+              const total = ids.reduce((n, id) => n + (iCounts.get(id) ?? 0), 0);
+              return (
+                <button
+                  key={it.id}
+                  className={`intent ${intent === it.id ? "is-open" : ""} ${chosen ? "is-active" : ""}`}
+                  onClick={() => setIntent(intent === it.id ? null : it.id)}
+                  aria-expanded={intent === it.id}
+                >
+                  <span className="intent__icon" aria-hidden="true">
+                    {it.icon}
+                  </span>
+                  <span className="intent__label">{it.label[lang]}</span>
+                  {chosen > 0 ? (
+                    <span className="menu-btn__count">{chosen}</span>
+                  ) : (
+                    <span className="intent__n">{total}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {INTENTS.filter((it) => it.id === intent).map((it) => (
+            <div key={it.id} className="intent-panel">
+              {it.sections.map((section) => (
+                <div key={section.id} className="menu-panel__group">
+                  {section.label && (
+                    <h4 className="menu-panel__group-title">{section.label[lang]}</h4>
+                  )}
+                  <div className="menu-panel__chips">
+                    {[...section.items]
+                      // Real options first: with most of the map untagged,
+                      // alphabetical would bury the few that work under zeros.
+                      .sort((a, b) => (iCounts.get(b.id) ?? 0) - (iCounts.get(a.id) ?? 0))
+                      .map((item) => {
+                        const n = iCounts.get(item.id) ?? 0;
+                        const on = filters.items.includes(item.id);
+                        return (
+                          <button
+                            key={item.id}
+                            className={`chip chip--item ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
+                            onClick={() => toggleItem(item.id)}
+                            aria-pressed={on}
+                            title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
+                          >
+                            {item.label[lang]}
+                            <span className="chip__n">{n}</span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
-          <p className="menu-panel__hint">
-            {t("item.hintA")} <strong>{t("menu.attrs")}</strong> {t("item.hintB")}{" "}
-            <strong>0</strong> {t("item.hintC")}
-          </p>
+
+          {intent === null && <p className="menu-panel__hint">{t("item.pickIntent")}</p>}
+          {intent !== null && (
+            <p className="menu-panel__hint">
+              {t("item.hintA")} <strong>{t("menu.attrs")}</strong> {t("item.hintB")}{" "}
+              <strong>0</strong> {t("item.hintC")}
+            </p>
+          )}
         </div>
       )}
 

@@ -32,6 +32,7 @@ const ES = {
 
   "item.emptyTitle": "Nadie ha registrado esto todavía",
   "item.countTitle": "{n} lugares",
+  "item.pickIntent": "Elige qué andas buscando.",
   "item.hintA": "Combínalo con",
   "item.hintB": "— filtrado + tuesta acá. Los",
   "item.hintC": "son lo que nadie ha registrado todavía.",
@@ -208,6 +209,7 @@ const EN: Record<keyof typeof ES, string> = {
 
   "item.emptyTitle": "Nobody has logged this yet",
   "item.countTitle": "{n} places",
+  "item.pickIntent": "Pick what you\u2019re after.",
   "item.hintA": "Combine it with",
   "item.hintB": "— pour over + roasts on-site. The",
   "item.hintC": "are what nobody has logged yet.",
