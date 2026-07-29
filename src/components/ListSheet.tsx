@@ -30,6 +30,9 @@ export function ListSheet() {
   const { t } = useT();
 
   const [snap, setSnap] = useState<Snap>("half");
+  // The controls change height as admin rows appear, so measure rather than
+  // guess. Without this the sheet at full snap reaches up over the filters.
+  const [topbarH, setTopbarH] = useState(0);
   const [drag, setDrag] = useState<number | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const startRef = useRef({ y: 0, offset: 0 });
@@ -38,6 +41,16 @@ export function ListSheet() {
     () => applyFilters(places, filters, favorites),
     [places, filters, favorites],
   );
+
+  useEffect(() => {
+    const bar = document.querySelector(".topbar");
+    if (!bar) return;
+    const measure = () => setTopbarH(bar.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, []);
 
   const height = () => sheetRef.current?.offsetHeight ?? 1;
 
@@ -84,7 +97,14 @@ export function ListSheet() {
     <div
       ref={sheetRef}
       className={`list-sheet is-${snap} ${drag !== null ? "is-dragging" : ""}`}
-      style={{ transform: `translateY(${offsetPx}px)` }}
+      style={
+        {
+          transform: `translateY(${offsetPx}px)`,
+          // 18px of overlap with the gradient's transparent tail, so the sheet
+          // tucks under the fade instead of leaving a visible seam.
+          "--sheet-h": topbarH ? `calc(100% - ${Math.max(0, topbarH - 18)}px)` : undefined,
+        } as React.CSSProperties
+      }
     >
       <div
         className="list-sheet__grip"

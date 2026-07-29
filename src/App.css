@@ -25,7 +25,10 @@
 
 .topbar {
   position: absolute;
-  z-index: 600;
+  /* Above the results sheet. At its full snap the sheet's top edge reaches into
+     the controls, and at a lower z-index it silently swallowed every tap on the
+     filter row. */
+  z-index: 800;
   top: 0;
   left: 0;
   right: 0;
@@ -94,7 +97,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 88vh;
+  /* Height is set from JS to whatever is left below the controls, so the sheet
+     can't cover them however tall they grow (the admin bar and the submissions
+     queue both add rows). Fallback for first paint only. */
+  height: var(--sheet-h, 76vh);
   display: flex;
   flex-direction: column;
   background: var(--bg);
