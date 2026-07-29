@@ -10,6 +10,15 @@ import { placeHasItem } from "./items";
 export type ClaimStrictness = "off" | "some" | "all";
 
 export interface Filters {
+  /**
+   * Where you're going. Deliberately the first filter in the UI: a national map
+   * with 600 places and no geography is a list nobody can use. null means the
+   * whole country, which is honest at 10 places and useless at 600 — hence the
+   * prominence.
+   */
+  city: string | null;
+  /** Comunas within the chosen city. OR'd; empty means the whole city. */
+  comunas: string[];
   claims: Record<ClaimKey, ClaimStrictness>;
   /** AND'd — "wifi + enchufes" means you need both to actually work there. */
   flags: FlagKey[];
@@ -24,6 +33,8 @@ export interface Filters {
 }
 
 export const EMPTY_FILTERS: Filters = {
+  city: null,
+  comunas: [],
   claims: { roastsOnSite: "off", specialty: "off", glutenFree: "off", seedOilFree: "off" },
   flags: [],
   categories: [],
@@ -62,6 +73,8 @@ export function applyFilters(places: Place[], filters: Filters, favorites: strin
   );
 
   return places.filter((place) => {
+    if (filters.city && place.city !== filters.city) return false;
+    if (filters.comunas.length && !filters.comunas.includes(place.comuna ?? "")) return false;
     if (filters.savedOnly && !favorites.includes(place.id)) return false;
     if (filters.categories.length && !filters.categories.includes(place.category)) return false;
     if (!matchesQuery(place, filters.query)) return false;
@@ -89,6 +102,8 @@ export function activeFilterCount(filters: Filters): number {
   const claims = Object.values(filters.claims).filter((v) => v !== "off").length;
   return (
     claims +
+    (filters.city ? 1 : 0) +
+    filters.comunas.length +
     (filters.savedOnly ? 1 : 0) +
     filters.flags.length +
     filters.categories.length +
@@ -114,4 +129,27 @@ export function itemCounts(places: Place[], filters: Filters, ids: string[]): Ma
 export function flagCounts(places: Place[], filters: Filters, keys: FlagKey[]): Map<FlagKey, number> {
   const base = applyFilters(places, { ...filters, flags: [] });
   return new Map(keys.map((k) => [k, base.filter((p) => p.flags.includes(k)).length]));
+}
+
+/**
+ * Cities present in the data, with how many places each holds under every OTHER
+ * active filter. Derived rather than hard-coded so adding a place in Valparaíso
+ * makes Valparaíso appear on its own.
+ */
+export function cityCounts(places: Place[], filters: Filters): Map<string, number> {
+  const base = applyFilters(places, { ...filters, city: null, comunas: [] });
+  const out = new Map<string, number>();
+  for (const p of base) out.set(p.city, (out.get(p.city) ?? 0) + 1);
+  return new Map([...out.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "es")));
+}
+
+/** Comunas within a city, same faceting. */
+export function comunaCounts(places: Place[], filters: Filters, city: string): Map<string, number> {
+  const base = applyFilters(places, { ...filters, city, comunas: [] });
+  const out = new Map<string, number>();
+  for (const p of base) {
+    if (!p.comuna) continue;
+    out.set(p.comuna, (out.get(p.comuna) ?? 0) + 1);
+  }
+  return new Map([...out.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "es")));
 }

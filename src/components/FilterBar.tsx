@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
-import { activeFilterCount, flagCounts, itemCounts, type ClaimStrictness } from "../lib/filters";
+import {
+  activeFilterCount,
+  cityCounts,
+  comunaCounts,
+  flagCounts,
+  itemCounts,
+  type ClaimStrictness,
+} from "../lib/filters";
 import { INTENTS, ITEMS, itemIdsForIntent, type ItemIntent } from "../lib/items";
 import { useT } from "../lib/useT";
 import {
@@ -15,7 +22,7 @@ import {
 /** off → some → all → off. One tap deepens, three taps clears. */
 const NEXT: Record<ClaimStrictness, ClaimStrictness> = { off: "some", some: "all", all: "off" };
 
-type Menu = "attrs" | "category" | "item" | null;
+type Menu = "where" | "attrs" | "category" | "item" | null;
 
 export function FilterBar() {
   const {
@@ -27,6 +34,8 @@ export function FilterBar() {
     setQuery,
     setVerifiedOnly,
     setSavedOnly,
+    setCity,
+    toggleComuna,
     resetFilters,
     places,
     favorites,
@@ -58,6 +67,19 @@ export function FilterBar() {
     [places, filters],
   );
   const fCounts = useMemo(() => flagCounts(places, filters, [...FLAG_KEYS]), [places, filters]);
+  const cities = useMemo(() => cityCounts(places, filters), [places, filters]);
+  const comunas = useMemo(
+    () => (filters.city ? comunaCounts(places, filters, filters.city) : new Map<string, number>()),
+    [places, filters],
+  );
+
+  // What the location button says when closed. It's the first thing on screen,
+  // so it has to read as an answer ("Providencia") rather than a control name.
+  const whereLabel = filters.comunas.length
+    ? filters.comunas.length === 1
+      ? filters.comunas[0]
+      : t("where.nComunas", { n: filters.comunas.length })
+    : filters.city ?? t("where.prompt");
 
   useEffect(() => {
     if (!open) return;
@@ -94,6 +116,72 @@ export function FilterBar() {
           </button>
         )}
       </div>
+
+      {/* Location comes before everything: at national scale an unfiltered map
+          is 600 pins and no answer. Rendered as its own row so it reads as the
+          first question, not one chip among four. */}
+      <button
+        className={`where-btn ${open === "where" ? "is-open" : ""} ${filters.city ? "is-active" : ""}`}
+        onClick={() => toggle("where")}
+        aria-expanded={open === "where"}
+        aria-controls="menu-where"
+      >
+        <span className="where-btn__pin" aria-hidden="true">
+          📍
+        </span>
+        <span className="where-btn__label">{whereLabel}</span>
+        <span className="menu-btn__caret" aria-hidden="true" />
+      </button>
+
+      {open === "where" && (
+        <div className="menu-panel menu-panel--scroll" id="menu-where">
+          <button
+            className={`chip chip--cat ${!filters.city ? "is-on" : ""}`}
+            onClick={() => {
+              setCity(null);
+              setOpen(null);
+            }}
+          >
+            {t("where.all")} <span className="chip__n">{places.length}</span>
+          </button>
+
+          <div className="menu-panel__group">
+            <h4 className="menu-panel__group-title">{t("where.city")}</h4>
+            <div className="menu-panel__chips">
+              {[...cities.entries()].map(([city, n]) => (
+                <button
+                  key={city}
+                  className={`chip chip--cat ${filters.city === city ? "is-on" : ""}`}
+                  onClick={() => setCity(filters.city === city ? null : city)}
+                  aria-pressed={filters.city === city}
+                >
+                  {city}
+                  <span className="chip__n">{n}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filters.city && comunas.size > 0 && (
+            <div className="menu-panel__group">
+              <h4 className="menu-panel__group-title">{t("where.comuna")}</h4>
+              <div className="menu-panel__chips">
+                {[...comunas.entries()].map(([c, n]) => (
+                  <button
+                    key={c}
+                    className={`chip chip--cat ${filters.comunas.includes(c) ? "is-on" : ""}`}
+                    onClick={() => toggleComuna(c)}
+                    aria-pressed={filters.comunas.includes(c)}
+                  >
+                    {c}
+                    <span className="chip__n">{n}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="filters__menus">
         <button

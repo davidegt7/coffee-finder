@@ -1419,3 +1419,44 @@
     animation: none;
   }
 }
+
+/* ---------- location filter ---------- */
+
+/* Its own full-width row above the other menus: it's the first question, not
+   one chip among four. */
+.where-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.where-btn.is-open,
+.where-btn.is-active {
+  border-color: var(--accent);
+}
+
+.where-btn__pin {
+  font-size: 15px;
+}
+
+.where-btn__label {
+  flex: 1;
+}
+
+.where-btn .menu-btn__caret {
+  transition: transform 0.15s ease;
+}
+
+.where-btn.is-open .menu-btn__caret {
+  transform: rotate(180deg);
+}

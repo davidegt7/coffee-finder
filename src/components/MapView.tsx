@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useStore } from "../store";
@@ -25,6 +25,41 @@ function iconFor(place: Place): L.DivIcon {
     iconSize: [34, 34],
     iconAnchor: [17, 17],
   });
+}
+
+/**
+ * Moves the map when the location filter changes.
+ *
+ * Without this, choosing Valparaíso leaves the viewport over Santiago showing an
+ * empty street grid — the filter would look broken even though it worked. Keyed
+ * on the location filter alone, deliberately: refitting on every filter change
+ * would yank the map around while someone is ticking claim chips.
+ */
+function FitToLocation({ visible }: { visible: Place[] }) {
+  const map = useMap();
+  const city = useStore((s) => s.filters.city);
+  const comunas = useStore((s) => s.filters.comunas);
+  const key = `${city ?? ""}|${[...comunas].sort().join(",")}`;
+  const firstRun = useRef(true);
+
+  useEffect(() => {
+    if (!visible.length) return;
+    const bounds = L.latLngBounds(visible.map((p) => [p.lat, p.lng] as [number, number]));
+    const opts = { padding: [48, 48] as [number, number], maxZoom: 15 };
+    if (firstRun.current) {
+      // Snap on first paint. Animating the initial view is motion for its own
+      // sake — there's no previous position for the reader to be moved *from*.
+      firstRun.current = false;
+      map.fitBounds(bounds, opts);
+    } else {
+      map.flyToBounds(bounds, { ...opts, duration: 0.6 });
+    }
+    // `visible` intentionally omitted: it changes on every filter tick, and
+    // refitting then would fight the user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, map]);
+
+  return null;
 }
 
 function FlyToSelected() {
@@ -89,6 +124,7 @@ export function MapView() {
           />
         ))}
         <FlyToSelected />
+        <FitToLocation visible={visible} />
         <LocateButton />
       </MapContainer>
 

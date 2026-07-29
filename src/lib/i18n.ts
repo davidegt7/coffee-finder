@@ -26,6 +26,11 @@ const ES = {
   "search.label": "Buscar",
   "filter.clear": "Limpiar ({n})",
 
+  "where.prompt": "¿A dónde vas?",
+  "where.all": "Todo Chile",
+  "where.city": "Ciudad",
+  "where.comuna": "Comuna",
+  "where.nComunas": "{n} comunas",
   "menu.item": "Qué buscas",
   "menu.attrs": "Características",
   "menu.category": "Tipo de lugar",
@@ -203,6 +208,11 @@ const EN: Record<keyof typeof ES, string> = {
   "search.label": "Search",
   "filter.clear": "Clear ({n})",
 
+  "where.prompt": "Where are you going?",
+  "where.all": "All of Chile",
+  "where.city": "City",
+  "where.comuna": "Neighborhood",
+  "where.nComunas": "{n} neighborhoods",
   "menu.item": "What you want",
   "menu.attrs": "Characteristics",
   "menu.category": "Place type",
