@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../store";
+import { BrainPanel } from "./BrainPanel";
 import { geocode, type GeocodeHit } from "../lib/geocode";
 import { uploadPlacePhoto } from "../lib/photos";
 import { ITEMS } from "../lib/items";
@@ -177,6 +178,11 @@ export function PlaceEditor() {
         <span className="sheet__cat">{isNew ? t("editor.new") : t("editor.editing")}</span>
         <h2>{place.name || t("editor.noName")}</h2>
       </header>
+
+      {/* First, because it's the fastest way to fill the rest of this form —
+          and it renders nothing at all unless the local brain bridge is up,
+          so a visitor never sees it. */}
+      <BrainPanel place={place} onApply={setPlace} />
 
       <section className="sheet__section">
         <h3>{t("editor.basics")}</h3>

@@ -1441,7 +1441,8 @@
 .field textarea,
 .geo input,
 .claim-edit input,
-.claim-edit select {
+.claim-edit select,
+.brain__pick-label select {
   width: 100%;
   padding: 11px 13px;
   border: 1px solid var(--line);
@@ -1544,6 +1545,97 @@
 
 .editor__actions .btn {
   flex: 1;
+}
+
+/* ============================================================
+   Brain panel (editor-only, local bridge)
+   ============================================================ */
+
+.brain__pick {
+  margin-top: 10px;
+}
+
+.brain__pick-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.brain__pick-label select {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+}
+
+/* A proposal, not a fact — outlined rather than filled, so it never looks like
+   saved data sitting in the form. Accepting it is what makes it real. */
+.brain__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 9px;
+  padding: 9px 11px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.brain__row.is-done {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.brain__row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brain__row-body strong {
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.brain__current {
+  font-size: 11.5px;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.brain__next {
+  font-size: 13px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.brain__use {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  flex: none;
+}
+
+.brain__all {
+  width: 100%;
+  margin-top: 10px;
+  height: 34px;
+  font-size: 13px;
+}
+
+.brain__notes {
+  margin-top: 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+  border-left: 2px solid var(--line);
+  padding-left: 10px;
 }
 
 /* ============================================================
