@@ -51,22 +51,23 @@ const BRAIN_TIMEOUT_MS = Number(process.env.BRAIN_TIMEOUT_MS) || 240_000;
 
 // --------------------------------------------------------------- origins
 //
-// >>> THE SEAM <<<
+// Two origins may talk to this bridge, and both are the editor:
+//   - localhost, from `npm run dev` — same-local-network, no preflight involved
+//   - the deployed site, which is a private-network request (public HTTPS page
+//     → 127.0.0.1) and needs Access-Control-Allow-Private-Network on the
+//     preflight. Verified working: a fetch from https://davidegt7.github.io
+//     reached /health and got the brain back.
 //
-// Today the editor is opened from `npm run dev` (http://localhost:5190), which
-// is same-local-network as this bridge, so no Private Network Access preflight
-// is involved and this is exactly the Premiere bridge's origin rule.
-//
-// To let the DEPLOYED site (https://davidegt7.github.io/coffee-finder/) reach
-// this bridge instead, two things change and nothing else:
-//   1. add "https://davidegt7.github.io" to EXTRA_ORIGINS below, and
-//   2. set ALLOW_PRIVATE_NETWORK = true, which answers Chrome's
-//      `Access-Control-Request-Private-Network: true` preflight.
-// Test that combination BEFORE building anything on top of it: Chrome has
-// re-specced this area more than once (PNA preflight → a local-network
-// permission prompt), so treat it as unproven until seen working.
-const EXTRA_ORIGINS = [];
-const ALLOW_PRIVATE_NETWORK = false;
+// Note what this grant means. While the bridge is running, ANY page on
+// davidegt7.github.io can reach it — that origin is shared by every project
+// published from that account, not just Coffee Finder. It's all content you
+// publish, so the exposure is yours to accept; it is not open to the web.
+// Chrome has re-specced this area before (PNA preflight → a local-network
+// permission prompt), so if the panel silently stops appearing on the deployed
+// site after a Chrome update, this is the first place to look — and running
+// the editor from `npm run dev` sidesteps it entirely.
+const EXTRA_ORIGINS = ["https://davidegt7.github.io"];
+const ALLOW_PRIVATE_NETWORK = true;
 
 function isAllowedOrigin(origin) {
   if (!origin) return true; // curl, same-origin form posts

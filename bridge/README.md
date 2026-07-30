@@ -86,11 +86,18 @@ radius:
 BRIDGE_AUTONOMOUS=false npm run bridge
 ```
 
-**The deployed site can't reach it, deliberately.** Only localhost origins are
-accepted. Making `https://davidegt7.github.io` work needs the two changes
-marked `>>> THE SEAM <<<` in `server.mjs` — an origin entry and Chrome's
-private-network header — and that combination is unproven; test it before
-building on it.
+**The deployed site can reach it, and that's a real grant.** Both
+`localhost:5190` and `https://davidegt7.github.io` are accepted origins, so the
+panel works on the live site too — as long as this bridge is running on your
+machine. But that origin is shared by *every* project you publish from that
+GitHub account, so while the bridge is up, any page there can call it. It's
+your own content, so the exposure is yours to accept; drop the entry from
+`EXTRA_ORIGINS` in `server.mjs` if you'd rather keep it localhost-only.
+
+The deployed path is a private-network request (public HTTPS → 127.0.0.1) and
+depends on Chrome honouring `Access-Control-Allow-Private-Network`. That has
+been re-specced before. If the panel quietly stops appearing on the live site
+after a Chrome update, that's why — and `npm run dev` sidesteps it.
 
 ## Tuning
 
