@@ -52,9 +52,11 @@ interface Row {
 export function BrainPanel({
   place,
   onApply,
+  onAddressApplied,
 }: {
   place: Place;
   onApply: Dispatch<SetStateAction<Place>>;
+  onAddressApplied?: (address: string) => void;
 }) {
   const { t, lang } = useT();
   const [health, setHealth] = useState<BrainHealth | null | undefined>(undefined);
@@ -226,11 +228,15 @@ export function BrainPanel({
 
   const useRow = (row: Row) => {
     onApply(row.apply);
+    if (row.id === "address" && result?.address) onAddressApplied?.(result.address);
     setApplied((cur) => new Set(cur).add(row.id));
   };
 
   const useAll = () => {
     onApply((cur) => pending.reduce((acc, r) => r.apply(acc), cur));
+    if (pending.some((row) => row.id === "address") && result?.address) {
+      onAddressApplied?.(result.address);
+    }
     setApplied(new Set(rows.map((r) => r.id)));
   };
 

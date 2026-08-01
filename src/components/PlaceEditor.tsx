@@ -140,16 +140,24 @@ export function PlaceEditor() {
     patchClaim(key, { confidence, source: autoSource, checkedAt: today });
   };
 
-  const canSave =
-    place.name.trim().length > 1 &&
-    place.lat !== 0 &&
-    place.lng !== 0 &&
-    place.sources.length > 0 &&
-    // Mirrors the DB constraint so the failure is a disabled button with a
-    // reason, not a rejected write with a Postgres error.
-    CLAIM_KEYS.every(
-      (k) => place.claims[k].confidence === "unverified" || Boolean(place.claims[k].source?.trim()),
-    );
+  // Keep this in lockstep with the database constraints, but name only the
+  // requirements that are actually missing. The old all-purpose warning made
+  // a brain-filled form look completely empty when all it still needed was a
+  // geocoding result.
+  const unsourcedClaims = CLAIM_KEYS.filter(
+    (k) => place.claims[k].confidence !== "unverified" && !place.claims[k].source?.trim(),
+  );
+  const missingRequirements = [
+    place.name.trim().length <= 1 ? t("editor.saveMissingName") : null,
+    place.lat === 0 || place.lng === 0 ? t("editor.saveMissingLocation") : null,
+    place.sources.length === 0 ? t("editor.saveMissingSource") : null,
+    unsourcedClaims.length > 0
+      ? t("editor.saveMissingClaimSources", {
+          claims: unsourcedClaims.map((k) => CLAIM_LABELS[k][lang]).join(", "),
+        })
+      : null,
+  ].filter((message): message is string => Boolean(message));
+  const canSave = missingRequirements.length === 0;
 
   const save = async () => {
     setSaving(true);
@@ -182,7 +190,7 @@ export function PlaceEditor() {
       {/* First, because it's the fastest way to fill the rest of this form —
           and it renders nothing at all unless the local brain bridge is up,
           so a visitor never sees it. */}
-      <BrainPanel place={place} onApply={setPlace} />
+      <BrainPanel place={place} onApply={setPlace} onAddressApplied={setQ} />
 
       <section className="sheet__section">
         <h3>{t("editor.basics")}</h3>
@@ -430,7 +438,11 @@ export function PlaceEditor() {
       </section>
 
       {saveErr && <p className="field__err">{saveErr}</p>}
-      {!canSave && <p className="field__hint">{t("editor.saveHint")}</p>}
+      {!canSave && (
+        <p className="field__hint" aria-live="polite">
+          {t("editor.saveHint", { missing: missingRequirements.join("; ") })}
+        </p>
+      )}
 
       <div className="editor__actions">
         <button className="btn" onClick={() => setEditing(null)}>
