@@ -9,12 +9,12 @@ alter table public.places drop constraint if exists places_category_valid;
 alter table public.places add constraint places_category_valid
   check (category in ('cafe','roastery','bakery','shop','cart'));
 
--- Santiago bounding box. The same guard as scripts/check-data.mjs, enforced
--- where it can't be bypassed: a geocoder mishap once put a real lookup 17km
--- away in La Pintana, and it looked perfectly plausible.
+-- Broad Chile extent, including the Pacific islands. Exact country filtering
+-- happens in the geocoder; this still rejects wildly impossible coordinates.
 alter table public.places drop constraint if exists places_in_santiago;
-alter table public.places add constraint places_in_santiago
-  check (lat between -33.65 and -33.30 and lng between -70.85 and -70.50);
+alter table public.places drop constraint if exists places_in_chile_extent;
+alter table public.places add constraint places_in_chile_extent
+  check (lat between -60 and -15 and lng between -115 and -65);
 
 -- A claim above 'unverified' must cite a source. An unsourced "verified" is
 -- exactly the record that misleads someone, so it must be impossible to insert,

@@ -13,19 +13,34 @@
 
 const UA = "VitalMap/0.1 (https://github.com/davidegt7/coffee-finder)";
 
-// Santiago, Chile — bounded so we never geocode into Santiago de Compostela,
-// Santiago de Cuba, or any of the other Santiagos that pollute every search.
-const VIEWBOX = "-70.85,-33.65,-70.50,-33.30";
+const UNIT_LABEL =
+  "(?:local|loc\\.?|oficina|of\\.?|piso|depto\\.?|departamento|dpto\\.?|unidad|suite|m[oó]dulo|tienda|store)";
+
+function lookupQuery(query) {
+  const wholeUnit = new RegExp(`^${UNIT_LABEL}(?=\\s|#|n[°º.]?|\\d|$)`, "i");
+  const inlineUnit = new RegExp(
+    `\\s+${UNIT_LABEL}(?=\\s|#|n[°º.]?|\\d|$)\\s*(?:n[°º.]?\\s*)?[a-z0-9-]+`,
+    "gi",
+  );
+  return query
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part && !wholeUnit.test(part))
+    .join(", ")
+    .replace(inlineUnit, " ")
+    .replace(/\s+,/g, ",")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
 
 export async function geocode(query) {
   const url =
     `https://nominatim.openstreetmap.org/search?` +
     new URLSearchParams({
-      q: `${query}, Santiago, Chile`,
+      q: `${lookupQuery(query)}, Chile`,
       format: "json",
       limit: "3",
-      viewbox: VIEWBOX,
-      bounded: "1",
+      countrycodes: "cl",
       addressdetails: "1",
     });
 
@@ -52,5 +67,5 @@ export async function geocode(query) {
 
 if (process.argv[2]) {
   const result = await geocode(process.argv.slice(2).join(" "));
-  console.log(result ? JSON.stringify(result, null, 2) : "no match in Santiago, Chile");
+  console.log(result ? JSON.stringify(result, null, 2) : "no match in Chile");
 }

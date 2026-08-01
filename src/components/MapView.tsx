@@ -1,132 +1,287 @@
 import { useEffect, useMemo, useRef } from "react";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
-import L from "leaflet";
+import {
+  type GeoJSONSource,
+  LngLatBounds,
+  Map as MapLibreMap,
+  type MapLayerMouseEvent,
+} from "maplibre-gl";
 import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
 import { useT } from "../lib/useT";
-import { CATEGORY_LABELS, type Place } from "../types";
+import type { Place } from "../types";
 
-/** Santiago, roughly Plaza Baquedano. */
-const SANTIAGO: [number, number] = [-33.4372, -70.6344];
+/** Santiago, roughly Plaza Baquedano. MapLibre coordinates are longitude first. */
+const SANTIAGO: [number, number] = [-70.6344, -33.4372];
+const SOURCE_ID = "coffee-places";
+const CLUSTER_LAYER = "coffee-clusters";
+const CLUSTER_COUNT_LAYER = "coffee-cluster-count";
+const SELECTED_LAYER = "coffee-selected";
+const POINT_LAYER = "coffee-points";
+const POINT_CENTRE_LAYER = "coffee-point-centres";
+
+const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
+
+function currentStyle() {
+  return document.documentElement.dataset.theme === "dark" ? DARK_STYLE : LIGHT_STYLE;
+}
+
+function featureCollection(places: Place[], selectedId: string | null) {
+  return {
+    type: "FeatureCollection" as const,
+    features: places.map((place) => ({
+      type: "Feature" as const,
+      geometry: {
+        type: "Point" as const,
+        coordinates: [place.lng, place.lat] as [number, number],
+      },
+      properties: {
+        id: place.id,
+        verified: Object.values(place.claims).some((claim) => claim.confidence === "verified"),
+        selected: place.id === selectedId,
+      },
+    })),
+  };
+}
 
 /**
- * Leaflet's default marker is a PNG resolved by relative URL, which breaks under
- * a bundler and under a GitHub Pages base path. A divIcon is pure DOM: no asset
- * pipeline, no broken image, and it can carry state — here, whether anything
- * about the place has actually been verified.
+ * Adds the café data after every basemap style load. MapLibre removes custom
+ * sources and layers when the light/dark style changes, so this is deliberately
+ * safe to run more than once.
  */
-function iconFor(place: Place): L.DivIcon {
-  const verified = Object.values(place.claims).some((c) => c.confidence === "verified");
-  return L.divIcon({
-    className: "pin-wrap",
-    html: `<div class="pin ${verified ? "pin--verified" : ""}"><span>${
-      CATEGORY_LABELS[place.category].icon
-    }</span></div>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
+function addCoffeeLayers(
+  map: MapLibreMap,
+  data: ReturnType<typeof featureCollection>,
+) {
+  if (map.getSource(SOURCE_ID)) return;
+
+  map.addSource(SOURCE_ID, {
+    type: "geojson",
+    data,
+    cluster: true,
+    clusterMaxZoom: 14,
+    clusterRadius: 52,
+  });
+
+  // European Coffee Trip's biggest readability win is the cluster: at a city
+  // or country scale, overlapping pins become one calm, numbered marker.
+  map.addLayer({
+    id: CLUSTER_LAYER,
+    type: "circle",
+    source: SOURCE_ID,
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": "#211a17",
+      "circle-radius": ["step", ["get", "point_count"], 19, 10, 23, 30, 27],
+      "circle-stroke-color": "#fffaf4",
+      "circle-stroke-width": 3,
+      "circle-opacity": 0.96,
+    },
+  });
+
+  map.addLayer({
+    id: CLUSTER_COUNT_LAYER,
+    type: "symbol",
+    source: SOURCE_ID,
+    filter: ["has", "point_count"],
+    layout: {
+      "text-field": ["get", "point_count_abbreviated"],
+      "text-size": 12,
+      "text-allow-overlap": true,
+    },
+    paint: {
+      "text-color": "#ffffff",
+    },
+  });
+
+  map.addLayer({
+    id: SELECTED_LAYER,
+    type: "circle",
+    source: SOURCE_ID,
+    filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "selected"], true]],
+    paint: {
+      "circle-radius": 22,
+      "circle-color": "rgba(169, 104, 44, 0.16)",
+      "circle-stroke-color": "#a9682c",
+      "circle-stroke-width": 2,
+    },
+  });
+
+  map.addLayer({
+    id: POINT_LAYER,
+    type: "circle",
+    source: SOURCE_ID,
+    filter: ["!", ["has", "point_count"]],
+    paint: {
+      "circle-radius": 14,
+      "circle-color": "#fffaf4",
+      "circle-stroke-color": [
+        "case",
+        ["==", ["get", "verified"], true],
+        "#3f8a48",
+        "#a9682c",
+      ],
+      "circle-stroke-width": ["case", ["==", ["get", "verified"], true], 3, 2],
+    },
+  });
+
+  // A small coffee-coloured centre reads crisply at every resolution without
+  // relying on emoji fonts or marker image files.
+  map.addLayer({
+    id: POINT_CENTRE_LAYER,
+    type: "circle",
+    source: SOURCE_ID,
+    filter: ["!", ["has", "point_count"]],
+    paint: {
+      "circle-radius": 4,
+      "circle-color": "#a9682c",
+    },
   });
 }
 
-/**
- * Moves the map when the location filter changes.
- *
- * Without this, choosing Valparaíso leaves the viewport over Santiago showing an
- * empty street grid — the filter would look broken even though it worked. Keyed
- * on the location filter alone, deliberately: refitting on every filter change
- * would yank the map around while someone is ticking claim chips.
- */
-function FitToLocation({ visible }: { visible: Place[] }) {
-  const map = useMap();
-  const city = useStore((s) => s.filters.city);
-  const comunas = useStore((s) => s.filters.comunas);
-  const key = `${city ?? ""}|${[...comunas].sort().join(",")}`;
-  const firstRun = useRef(true);
-
-  useEffect(() => {
-    if (!visible.length) return;
-    const bounds = L.latLngBounds(visible.map((p) => [p.lat, p.lng] as [number, number]));
-    const opts = { padding: [48, 48] as [number, number], maxZoom: 15 };
-    if (firstRun.current) {
-      // Snap on first paint. Animating the initial view is motion for its own
-      // sake — there's no previous position for the reader to be moved *from*.
-      firstRun.current = false;
-      map.fitBounds(bounds, opts);
-    } else {
-      map.flyToBounds(bounds, { ...opts, duration: 0.6 });
-    }
-    // `visible` intentionally omitted: it changes on every filter tick, and
-    // refitting then would fight the user.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, map]);
-
-  return null;
-}
-
-function FlyToSelected() {
-  const map = useMap();
-  const selectedId = useStore((s) => s.selectedId);
-  const places = useStore((s) => s.places);
-
-  useEffect(() => {
-    if (!selectedId) return;
-    const place = places.find((p) => p.id === selectedId);
-    if (!place) return;
-    map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 15), { duration: 0.6 });
-  }, [selectedId, places, map]);
-
-  return null;
-}
-
-function LocateButton() {
-  const map = useMap();
-  const { t } = useT();
-  return (
-    <button
-      className="locate"
-      title={t("map.locate")}
-      onClick={() => {
-        map.locate({ setView: true, maxZoom: 15 });
-      }}
-    >
-      ◎
-    </button>
+function fitPlaces(map: MapLibreMap, places: Place[], animate: boolean) {
+  if (!places.length) return;
+  const bounds = places.reduce(
+    (next, place) => next.extend([place.lng, place.lat]),
+    new LngLatBounds(),
   );
+  map.fitBounds(bounds, {
+    padding: 48,
+    maxZoom: 15,
+    duration: animate ? 600 : 0,
+  });
 }
 
 export function MapView() {
-  const places = useStore((s) => s.places);
-  const filters = useStore((s) => s.filters);
-  const select = useStore((s) => s.select);
+  const places = useStore((state) => state.places);
+  const filters = useStore((state) => state.filters);
+  const select = useStore((state) => state.select);
+  const selectedId = useStore((state) => state.selectedId);
+  const favorites = useStore((state) => state.favorites);
   const { t } = useT();
-  const favorites = useStore((s) => s.favorites);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const firstFitRef = useRef(true);
+  const selectRef = useRef(select);
+  selectRef.current = select;
+
   const visible = useMemo(
     () => applyFilters(places, filters, favorites),
     [places, filters, favorites],
   );
+  const data = useMemo(() => featureCollection(visible, selectedId), [visible, selectedId]);
+  const dataRef = useRef(data);
+  dataRef.current = data;
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const map = new MapLibreMap({
+      container: containerRef.current,
+      style: currentStyle(),
+      center: SANTIAGO,
+      zoom: 13,
+    });
+    mapRef.current = map;
+
+    map.on("error", (event) => {
+      console.error("Coffee Finder map:", event.error);
+    });
+
+    map.on("style.load", () => addCoffeeLayers(map, dataRef.current));
+
+    const openCluster = async (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      const clusterId = Number(feature?.properties?.cluster_id);
+      if (!feature || !Number.isFinite(clusterId)) return;
+      const source = map.getSource(SOURCE_ID) as GeoJSONSource;
+      const zoom = await source.getClusterExpansionZoom(clusterId);
+      const coordinates = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+      map.easeTo({ center: coordinates, zoom, duration: 450 });
+    };
+
+    const openPlace = (event: MapLayerMouseEvent) => {
+      const id = event.features?.[0]?.properties?.id;
+      if (typeof id === "string") selectRef.current(id);
+    };
+
+    map.on("click", CLUSTER_LAYER, openCluster);
+    map.on("click", POINT_LAYER, openPlace);
+    map.on("click", POINT_CENTRE_LAYER, openPlace);
+    for (const layer of [CLUSTER_LAYER, POINT_LAYER, POINT_CENTRE_LAYER]) {
+      map.on("mouseenter", layer, () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", layer, () => {
+        map.getCanvas().style.cursor = "";
+      });
+    }
+
+    const themeObserver = new MutationObserver(() => {
+      map.setStyle(currentStyle());
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => {
+      themeObserver.disconnect();
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const source = mapRef.current?.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+    source?.setData(data);
+  }, [data]);
+
+  const locationKey = `${filters.city ?? ""}|${[...filters.comunas].sort().join(",")}`;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !visible.length) return;
+    const apply = () => {
+      fitPlaces(map, visible, !firstFitRef.current);
+      firstFitRef.current = false;
+    };
+    if (map.loaded()) apply();
+    else map.once("load", apply);
+    // Fitting on every claim filter change would fight the user; locationKey is
+    // intentionally the only trigger apart from the map becoming available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationKey]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const place = places.find((candidate) => candidate.id === selectedId);
+    const map = mapRef.current;
+    if (!place || !map) return;
+    map.flyTo({
+      center: [place.lng, place.lat],
+      zoom: Math.max(map.getZoom(), 15),
+      duration: 600,
+    });
+  }, [selectedId, places]);
+
+  const locate = () => {
+    navigator.geolocation?.getCurrentPosition((position) => {
+      mapRef.current?.flyTo({
+        center: [position.coords.longitude, position.coords.latitude],
+        zoom: 15,
+        duration: 700,
+      });
+    });
+  };
 
   return (
     <div className="map">
-      <MapContainer center={SANTIAGO} zoom={13} zoomControl={false} className="map__canvas">
-        <TileLayer
-          // OSM's tile server: free, no API key, no billing card. Their usage
-          // policy expects a real referrer and low volume — fine at this size,
-          // but it's the first thing to outgrow if the map ever gets busy.
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={19}
-        />
-        {visible.map((place) => (
-          <Marker
-            key={place.id}
-            position={[place.lat, place.lng]}
-            icon={iconFor(place)}
-            eventHandlers={{ click: () => select(place.id) }}
-          />
-        ))}
-        <FlyToSelected />
-        <FitToLocation visible={visible} />
-        <LocateButton />
-      </MapContainer>
+      <div ref={containerRef} className="map__canvas" />
+
+      <button className="locate" title={t("map.locate")} onClick={locate}>
+        ◎
+      </button>
 
       <div className="map__count">
         {visible.length} {visible.length === 1 ? t("map.place") : t("map.places")}

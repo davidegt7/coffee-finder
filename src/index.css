@@ -167,13 +167,14 @@ h4 {
   }
 }
 
-/* Leaflet paints its own light chrome; keep it inside the theme. */
-.leaflet-container {
+/* MapLibre paints its own canvas and attribution chrome; keep it in the warm
+   Coffee Finder system without obscuring the required map credits. */
+.maplibregl-map {
   background: var(--surface-2);
   font: inherit;
 }
 
-.leaflet-control-attribution {
+.maplibregl-ctrl-attrib {
   background: color-mix(in srgb, var(--bg) 82%, transparent) !important;
   color: var(--muted) !important;
   font-size: 10px;
@@ -181,14 +182,6 @@ h4 {
   padding: 2px 6px !important;
 }
 
-.leaflet-control-attribution a {
+.maplibregl-ctrl-attrib a {
   color: var(--muted) !important;
-}
-
-/* Dark mode: raw OSM tiles are bright white, and undamped they're the only
-   glaring thing on the screen. But this is a map people navigate by — the first
-   pass at brightness(0.72) made street names unreadable, which trades a real
-   function for a cosmetic one. Just enough to take the glare off. */
-:root[data-theme="dark"] .leaflet-tile {
-  filter: brightness(0.92) saturate(0.88) contrast(1.02);
 }

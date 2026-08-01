@@ -27,8 +27,9 @@ const CATEGORIES = ["cafe", "roastery", "bakery", "shop", "cart"];
 const SCOPES = ["all", "some", "none", "unknown"];
 const CONFIDENCES = ["verified", "claimed", "unverified"];
 
-// Santiago, Chile. Anything outside this box is a geocoding accident.
-const BBOX = { minLat: -33.65, maxLat: -33.3, minLng: -70.85, maxLng: -70.5 };
+// Broad Chile extent, including Pacific islands. Anything outside is a
+// geocoding accident; exact country selection happens before data reaches here.
+const BBOX = { minLat: -60, maxLat: -15, minLng: -115, maxLng: -65 };
 
 const raw = await readFile(new URL("../public/data/places.json", import.meta.url), "utf8");
 const places = JSON.parse(raw);
@@ -56,7 +57,7 @@ for (const [i, p] of places.entries()) {
     p.lng < BBOX.minLng ||
     p.lng > BBOX.maxLng
   ) {
-    errors.push(`${at}: coordinates outside Santiago (${p.lat}, ${p.lng})`);
+    errors.push(`${at}: coordinates outside Chile's extent (${p.lat}, ${p.lng})`);
   }
 
   for (const key of CLAIM_KEYS) {
