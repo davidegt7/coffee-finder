@@ -103,6 +103,10 @@ export function ListSheet() {
           // 18px of overlap with the gradient's transparent tail, so the sheet
           // tucks under the fade instead of leaving a visible seam.
           "--sheet-h": topbarH ? `calc(100% - ${Math.max(0, topbarH - 18)}px)` : undefined,
+          // Desktop uses a docked list instead of the draggable sheet. Measure
+          // the real controls so translated labels and active filters can never
+          // leave results hidden underneath them.
+          "--topbar-h": topbarH ? `${topbarH}px` : undefined,
         } as React.CSSProperties
       }
     >

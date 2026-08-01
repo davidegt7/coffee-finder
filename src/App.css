@@ -63,6 +63,11 @@
   font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.03em;
+  padding: 5px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow-1);
 }
 
 .topbar__brand h1 span {
@@ -168,12 +173,16 @@
     right: auto;
     width: 400px;
     height: 100%;
-    padding-top: 226px;
+    padding-top: var(--topbar-h, 226px);
     border-radius: 0;
     border-top: none;
     border-right: 1px solid var(--line);
     transform: none !important;
-    background: linear-gradient(to bottom, transparent 0 226px, var(--bg) 226px);
+    background: linear-gradient(
+      to bottom,
+      transparent 0 var(--topbar-h, 226px),
+      var(--bg) var(--topbar-h, 226px)
+    );
     box-shadow: var(--shadow-2);
   }
 
@@ -323,6 +332,25 @@
 
 .filters__menus::-webkit-scrollbar {
   display: none;
+}
+
+/* The desktop control rail is only 400px wide. Keep all three filter menus
+   visible at once instead of clipping the last one off-screen. */
+@media (min-width: 900px) {
+  .filters__menus {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .filters__menus .menu-btn {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    gap: 5px;
+    padding-inline: 5px;
+    font-size: 11.5px;
+  }
 }
 
 .menu-btn {
