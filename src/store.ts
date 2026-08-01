@@ -81,6 +81,7 @@ interface State {
   addBrainTurn: (turn: ChatMessage, sessionId?: string) => void;
   clearBrainThread: () => void;
   startDraftBatch: (places: Place[]) => void;
+  skipDraft: () => void;
 
   refreshAuth: () => Promise<void>;
   setEditing: (p: Place | "new" | null) => void;
@@ -178,6 +179,17 @@ export const useStore = create<State>((set, get) => ({
       brainOpen: false,
     }));
   },
+
+  skipDraft: () =>
+    set((s) => {
+      const [next, ...remaining] = s.draftQueue;
+      return {
+        editing: next ?? null,
+        draftQueue: remaining,
+        draftBatchTotal: next ? s.draftBatchTotal : 0,
+        editSeq: next ? s.editSeq + 1 : s.editSeq,
+      };
+    }),
 
   persistPlace: async (place) => {
     const res = await savePlace(place);

@@ -160,26 +160,38 @@ export async function geocode(
   const location = [lookup, options.city, options.country]
     .filter((part, index, all): part is string => Boolean(part?.trim()) && all.indexOf(part) === index)
     .join(", ");
-  const params: Record<string, string> = {
-    q: location,
-    format: "json",
-    limit: "5",
-    addressdetails: "1",
-  };
   const countryCode = options.countryCode?.trim().toLowerCase();
-  if (/^[a-z]{2}$/.test(countryCode ?? "")) params.countrycodes = countryCode!;
-  const url =
-    `https://nominatim.openstreetmap.org/search?` +
-    new URLSearchParams(params);
+  const request = async (q: string) => {
+    const params: Record<string, string> = {
+      q,
+      format: "json",
+      limit: "5",
+      addressdetails: "1",
+    };
+    if (/^[a-z]{2}$/.test(countryCode ?? "")) params.countrycodes = countryCode!;
+    const url =
+      `https://nominatim.openstreetmap.org/search?` +
+      new URLSearchParams(params);
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error(`Nominatim HTTP ${res.status}`);
+    return (await res.json()) as Record<string, never>[];
+  };
 
-  // Nominatim wants a real referrer for browser traffic; a static site sends one
-  // by default. Their policy is 1 req/s — a human typing and clicking can't
-  // realistically exceed that, so no throttle here.
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) throw new Error(`Nominatim HTTP ${res.status}`);
-  const hits = await res.json();
+  // A brain draft can contain a complete postal address in the source site's
+  // language while its separate city/country fields have already been
+  // localized for the editor ("New York, United States" versus
+  // "Nueva York, Estados Unidos"). Appending both translations makes a valid
+  // address impossible for Nominatim to parse. Prefer the constrained form,
+  // then retry the address exactly as supplied when it returned nothing.
+  let hits = await request(location);
+  if (!hits.length && location !== lookup) {
+    // Nominatim's public policy is at most one request per second. The retry is
+    // exceptional, so waiting here keeps the fallback polite and predictable.
+    await new Promise((resolve) => setTimeout(resolve, 1_100));
+    hits = await request(lookup);
+  }
 
-  return (hits as Record<string, never>[]).map((h: Record<string, never>) => {
+  return hits.map((h: Record<string, never>) => {
     const a = (h.address ?? {}) as Record<string, string>;
     return {
       lat: Number(h.lat),

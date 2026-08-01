@@ -56,6 +56,7 @@ export function PlaceEditor() {
   const session = useStore((s) => s.session);
   const draftQueueLength = useStore((s) => s.draftQueue.length);
   const draftBatchTotal = useStore((s) => s.draftBatchTotal);
+  const skipDraft = useStore((s) => s.skipDraft);
   const { t, lang } = useT();
 
   // A draft from the chat arrives as a Place with no id yet — that's a new
@@ -557,8 +558,11 @@ export function PlaceEditor() {
       )}
 
       <div className="editor__actions">
-        <button className="btn" onClick={() => setEditing(null)}>
-          {t("editor.cancel")}
+        <button
+          className="btn"
+          onClick={() => (isNew && draftBatchTotal > 1 ? skipDraft() : setEditing(null))}
+        >
+          {isNew && draftBatchTotal > 1 ? t("editor.skipDraft") : t("editor.cancel")}
         </button>
         <button className="btn btn--primary" onClick={save} disabled={!canSave || saving}>
           {saving ? t("editor.saving") : t("editor.save")}
