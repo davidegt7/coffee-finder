@@ -20,7 +20,11 @@ const SELECTED_LAYER = "coffee-selected";
 const POINT_LAYER = "coffee-points";
 const POINT_CENTRE_LAYER = "coffee-point-centres";
 
-const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+// Liberty is a handsome desktop style, but it contains roughly twice as many
+// layers as OpenFreeMap's dark style. Mobile Safari can stall while starting
+// it, leaving light mode with only the canvas background. Positron keeps the
+// light, quiet look with a much smaller style that is friendlier to phones.
+const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
 
 // MapLibre 6 resolves its worker beside a shared module. Vite does not copy
