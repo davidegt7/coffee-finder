@@ -8,6 +8,7 @@ import { ClaimBadge, ClaimRow, UnknownClaims } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
 import { AdSlot } from "./AdSlot";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
+import { countryName } from "../lib/geography";
 
 /**
  * Signing in is required to review. That's friction on purpose: an open write
@@ -239,7 +240,7 @@ export function PlaceSheet() {
             {place.address}
             {place.comuna && `, ${place.comuna}`}
             {place.city && `, ${place.city}`}
-            {place.country && `, ${place.country}`}
+            {place.country && `, ${countryName(place.countryCode, place.country, lang)}`}
           </p>
         )}
         <div className="sheet__links">

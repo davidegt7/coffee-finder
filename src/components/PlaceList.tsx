@@ -5,6 +5,7 @@ import { useT } from "../lib/useT";
 import { ClaimBadge } from "./ClaimBadge";
 import { AdSlot } from "./AdSlot";
 import { CATEGORY_LABELS, CLAIM_KEYS, FLAG_LABELS } from "../types";
+import { countryName } from "../lib/geography";
 
 export function PlaceList() {
   const places = useStore((s) => s.places);
@@ -61,7 +62,9 @@ export function PlaceList() {
               <div className="card__title">
                 <h3>{place.name}</h3>
                 <p className="card__comuna">
-                  {[place.comuna ?? place.city, place.country].filter(Boolean).join(" · ")}
+                  {[place.comuna ?? place.city, countryName(place.countryCode, place.country, lang)]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
               </div>
               {session && (
