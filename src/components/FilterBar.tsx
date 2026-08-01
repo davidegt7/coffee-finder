@@ -4,6 +4,7 @@ import {
   activeFilterCount,
   cityCounts,
   comunaCounts,
+  countryCounts,
   flagCounts,
   itemCounts,
   type ClaimStrictness,
@@ -18,6 +19,7 @@ import {
   FLAG_KEYS,
   FLAG_LABELS,
 } from "../types";
+import { countryName } from "../lib/geography";
 
 /** off → some → all → off. One tap deepens, three taps clears. */
 const NEXT: Record<ClaimStrictness, ClaimStrictness> = { off: "some", some: "all", all: "off" };
@@ -34,6 +36,7 @@ export function FilterBar() {
     setQuery,
     setVerifiedOnly,
     setSavedOnly,
+    setCountry,
     setCity,
     toggleComuna,
     resetFilters,
@@ -67,7 +70,14 @@ export function FilterBar() {
     [places, filters],
   );
   const fCounts = useMemo(() => flagCounts(places, filters, [...FLAG_KEYS]), [places, filters]);
-  const cities = useMemo(() => cityCounts(places, filters), [places, filters]);
+  const countries = useMemo(() => countryCounts(places, filters), [places, filters]);
+  const cities = useMemo(
+    () =>
+      filters.countryCode
+        ? cityCounts(places, filters, filters.countryCode)
+        : new Map<string, number>(),
+    [places, filters],
+  );
   const comunas = useMemo(
     () => (filters.city ? comunaCounts(places, filters, filters.city) : new Map<string, number>()),
     [places, filters],
@@ -79,7 +89,15 @@ export function FilterBar() {
     ? filters.comunas.length === 1
       ? filters.comunas[0]
       : t("where.nComunas", { n: filters.comunas.length })
-    : filters.city ?? t("where.prompt");
+    : filters.city ??
+      (filters.countryCode
+        ? countryName(
+            filters.countryCode,
+            places.find((place) => place.countryCode === filters.countryCode)?.country ??
+              filters.countryCode.toUpperCase(),
+            lang,
+          )
+        : t("where.prompt"));
 
   useEffect(() => {
     if (!open) return;
@@ -117,11 +135,11 @@ export function FilterBar() {
         )}
       </div>
 
-      {/* Location comes before everything: at national scale an unfiltered map
+      {/* Location comes before everything: at global scale an unfiltered map
           is 600 pins and no answer. Rendered as its own row so it reads as the
           first question, not one chip among four. */}
       <button
-        className={`where-btn ${open === "where" ? "is-open" : ""} ${filters.city ? "is-active" : ""}`}
+        className={`where-btn ${open === "where" ? "is-open" : ""} ${filters.countryCode ? "is-active" : ""}`}
         onClick={() => toggle("where")}
         aria-expanded={open === "where"}
         aria-controls="menu-where"
@@ -136,9 +154,9 @@ export function FilterBar() {
       {open === "where" && (
         <div className="menu-panel menu-panel--scroll" id="menu-where">
           <button
-            className={`chip chip--cat ${!filters.city ? "is-on" : ""}`}
+            className={`chip chip--cat ${!filters.countryCode ? "is-on" : ""}`}
             onClick={() => {
-              setCity(null);
+              setCountry(null);
               setOpen(null);
             }}
           >
@@ -146,21 +164,43 @@ export function FilterBar() {
           </button>
 
           <div className="menu-panel__group">
-            <h4 className="menu-panel__group-title">{t("where.city")}</h4>
+            <h4 className="menu-panel__group-title">{t("where.country")}</h4>
             <div className="menu-panel__chips">
-              {[...cities.entries()].map(([city, n]) => (
+              {[...countries.entries()].map(([code, n]) => {
+                const fallback = places.find((place) => place.countryCode === code)?.country ?? code;
+                return (
                 <button
-                  key={city}
-                  className={`chip chip--cat ${filters.city === city ? "is-on" : ""}`}
-                  onClick={() => setCity(filters.city === city ? null : city)}
-                  aria-pressed={filters.city === city}
+                  key={code}
+                  className={`chip chip--cat ${filters.countryCode === code ? "is-on" : ""}`}
+                  onClick={() => setCountry(filters.countryCode === code ? null : code)}
+                  aria-pressed={filters.countryCode === code}
                 >
-                  {city}
+                  {countryName(code, fallback, lang)}
                   <span className="chip__n">{n}</span>
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
+
+          {filters.countryCode && cities.size > 0 && (
+            <div className="menu-panel__group">
+              <h4 className="menu-panel__group-title">{t("where.city")}</h4>
+              <div className="menu-panel__chips">
+                {[...cities.entries()].map(([city, n]) => (
+                  <button
+                    key={city}
+                    className={`chip chip--cat ${filters.city === city ? "is-on" : ""}`}
+                    onClick={() => setCity(filters.city === city ? null : city)}
+                    aria-pressed={filters.city === city}
+                  >
+                    {city}
+                    <span className="chip__n">{n}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {filters.city && comunas.size > 0 && (
             <div className="menu-panel__group">

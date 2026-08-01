@@ -80,6 +80,9 @@ create table if not exists public.submissions (
   category     text not null,
   address      text not null,
   comuna       text,
+  city         text not null default 'Santiago',
+  country      text not null default 'Chile',
+  country_code text,
   website      text,
   instagram    text,
   contact_email text not null,
@@ -95,6 +98,10 @@ create table if not exists public.submissions (
   reviewed_by  text,
   reviewed_at  timestamptz
 );
+
+alter table public.submissions add column if not exists city text not null default 'Santiago';
+alter table public.submissions add column if not exists country text not null default 'Chile';
+alter table public.submissions add column if not exists country_code text;
 
 create index if not exists submissions_status_idx on public.submissions (status, created_at desc);
 

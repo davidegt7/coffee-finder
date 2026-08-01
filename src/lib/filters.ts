@@ -11,13 +11,12 @@ export type ClaimStrictness = "off" | "some" | "all";
 
 export interface Filters {
   /**
-   * Where you're going. Deliberately the first filter in the UI: a national map
-   * with 600 places and no geography is a list nobody can use. null means the
-   * whole country, which is honest at 10 places and useless at 600 — hence the
-   * prominence.
+   * Where you're going. Deliberately the first filter in the UI: a worldwide
+   * map with 600 places and no geography is a list nobody can use.
    */
+  countryCode: string | null;
   city: string | null;
-  /** Comunas within the chosen city. OR'd; empty means the whole city. */
+  /** Neighborhoods/districts within the chosen city. OR'd. */
   comunas: string[];
   claims: Record<ClaimKey, ClaimStrictness>;
   /** AND'd — "wifi + enchufes" means you need both to actually work there. */
@@ -33,6 +32,7 @@ export interface Filters {
 }
 
 export const EMPTY_FILTERS: Filters = {
+  countryCode: null,
   city: null,
   comunas: [],
   claims: { roastsOnSite: "off", specialty: "off", glutenFree: "off", seedOilFree: "off" },
@@ -61,7 +61,14 @@ export function matchesClaim(
 function matchesQuery(place: Place, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  const haystack = [place.name, place.comuna ?? "", place.address ?? "", ...place.items]
+  const haystack = [
+    place.name,
+    place.comuna ?? "",
+    place.city,
+    place.country,
+    place.address ?? "",
+    ...place.items,
+  ]
     .join(" ")
     .toLowerCase();
   return q.split(/\s+/).every((term) => haystack.includes(term));
@@ -73,6 +80,7 @@ export function applyFilters(places: Place[], filters: Filters, favorites: strin
   );
 
   return places.filter((place) => {
+    if (filters.countryCode && place.countryCode !== filters.countryCode) return false;
     if (filters.city && place.city !== filters.city) return false;
     if (filters.comunas.length && !filters.comunas.includes(place.comuna ?? "")) return false;
     if (filters.savedOnly && !favorites.includes(place.id)) return false;
@@ -102,6 +110,7 @@ export function activeFilterCount(filters: Filters): number {
   const claims = Object.values(filters.claims).filter((v) => v !== "off").length;
   return (
     claims +
+    (filters.countryCode ? 1 : 0) +
     (filters.city ? 1 : 0) +
     filters.comunas.length +
     (filters.savedOnly ? 1 : 0) +
@@ -136,8 +145,29 @@ export function flagCounts(places: Place[], filters: Filters, keys: FlagKey[]): 
  * active filter. Derived rather than hard-coded so adding a place in Valparaíso
  * makes Valparaíso appear on its own.
  */
-export function cityCounts(places: Place[], filters: Filters): Map<string, number> {
-  const base = applyFilters(places, { ...filters, city: null, comunas: [] });
+export function countryCounts(places: Place[], filters: Filters): Map<string, number> {
+  const base = applyFilters(places, {
+    ...filters,
+    countryCode: null,
+    city: null,
+    comunas: [],
+  });
+  const out = new Map<string, number>();
+  for (const p of base) out.set(p.countryCode, (out.get(p.countryCode) ?? 0) + 1);
+  return new Map([...out.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])));
+}
+
+export function cityCounts(
+  places: Place[],
+  filters: Filters,
+  countryCode: string,
+): Map<string, number> {
+  const base = applyFilters(places, {
+    ...filters,
+    countryCode,
+    city: null,
+    comunas: [],
+  });
   const out = new Map<string, number>();
   for (const p of base) out.set(p.city, (out.get(p.city) ?? 0) + 1);
   return new Map([...out.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "es")));

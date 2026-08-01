@@ -82,6 +82,9 @@ export function PlaceEditor() {
       // address such as "local 101" when one already exists for visitors.
       address: current.address?.trim() ? current.address : hit.address,
       comuna: hit.comuna ?? current.comuna,
+      city: current.city.trim() ? current.city : (hit.city ?? ""),
+      country: current.country.trim() ? current.country : (hit.country ?? ""),
+      countryCode: hit.countryCode ?? current.countryCode,
       sources: current.sources.includes(hit.osm)
         ? current.sources
         : [...current.sources, hit.osm],
@@ -90,18 +93,30 @@ export function PlaceEditor() {
   }, []);
 
   const runGeocodeFor = useCallback(
-    async (query: string, fullAddress?: string, comuna?: string) => {
+    async (
+      query: string,
+      fullAddress?: string,
+      comuna?: string,
+      city?: string,
+      country?: string,
+      countryCode?: string,
+    ) => {
       if (!query.trim()) return;
       setGeoBusy(true);
       setGeoErr(null);
       setHits(null);
       try {
         const lookup = geocodeLookupQuery(query);
-        const found = await geocode(lookup);
+        const found = await geocode(lookup, { city, country, countryCode });
         const exact = exactGeocodeHit(lookup, found);
         if (exact) applyGeocodeHit(exact);
         else {
-          const corner = await geocodeIntersection(fullAddress ?? query, comuna);
+          const corner = await geocodeIntersection(
+            fullAddress ?? query,
+            city || comuna,
+            country,
+            countryCode,
+          );
           if (corner) applyGeocodeHit(corner);
           else if (found.length) setHits(found);
           else setGeoErr(t("editor.geoNoResults"));
@@ -127,11 +142,17 @@ export function PlaceEditor() {
    * indistinguishable from a right one once it's saved.
    */
   const locateFrom = useCallback(
-    (address?: string, comuna?: string) => {
+    (
+      address?: string,
+      comuna?: string,
+      city?: string,
+      country?: string,
+      countryCode?: string,
+    ) => {
       const query = [address, comuna].filter(Boolean).join(", ");
       if (!query) return;
       setQ(query);
-      void runGeocodeFor(query, address, comuna);
+      void runGeocodeFor(query, address, comuna, city, country, countryCode);
     },
     [runGeocodeFor],
   );
@@ -143,7 +164,7 @@ export function PlaceEditor() {
   useEffect(() => {
     if (!arrivedWithAddress) return;
     const p = editing as Place;
-    locateFrom(p.address, p.comuna);
+    locateFrom(p.address, p.comuna, p.city, p.country, p.countryCode);
     // Once, on arrival — re-running would fight the editor's own searches.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [arrivedWithAddress]);
@@ -159,7 +180,15 @@ export function PlaceEditor() {
       flags: cur.flags.includes(f) ? cur.flags.filter((x) => x !== f) : [...cur.flags, f],
     }));
 
-  const runGeocode = () => runGeocodeFor(q || place.name, place.address, place.comuna);
+  const runGeocode = () =>
+    runGeocodeFor(
+      q || place.name,
+      place.address,
+      place.comuna,
+      place.city,
+      place.country,
+      place.countryCode,
+    );
 
   const pickHit = (h: GeocodeHit) => {
     applyGeocodeHit(h);
@@ -196,6 +225,10 @@ export function PlaceEditor() {
   const missingRequirements = [
     place.name.trim().length <= 1 ? t("editor.saveMissingName") : null,
     place.lat === 0 || place.lng === 0 ? t("editor.saveMissingLocation") : null,
+    !place.city.trim() ? t("editor.saveMissingCity") : null,
+    !place.country.trim() || !/^[a-z]{2}$/i.test(place.countryCode)
+      ? t("editor.saveMissingCountry")
+      : null,
     place.sources.length === 0 ? t("editor.saveMissingSource") : null,
     unsourcedClaims.length > 0
       ? t("editor.saveMissingClaimSources", {
@@ -210,7 +243,7 @@ export function PlaceEditor() {
     setSaveErr(null);
     const final: Place = {
       ...place,
-      id: place.id || `cur_${slug(place.name)}`,
+      id: place.id || `cur_${slug(`${place.name}_${place.city}_${place.countryCode}`)}`,
       name: place.name.trim(),
     };
     const { error } = await persistPlace(final);
@@ -272,6 +305,21 @@ export function PlaceEditor() {
         <h3>{t("editor.where")}</h3>
         {/* No lat/lng inputs, deliberately. A typo'd coordinate looks identical
             to a real one and sends someone to the wrong street. */}
+        <div className="field-row">
+          <label className="field">
+            <span>{t("brain.city")}</span>
+            <input value={place.city} onChange={(e) => patch({ city: e.target.value })} />
+          </label>
+          <label className="field">
+            <span>{t("editor.country")}</span>
+            <input
+              value={place.country}
+              onChange={(e) => patch({ country: e.target.value, countryCode: "" })}
+              placeholder={t("editor.countryPlaceholder")}
+            />
+          </label>
+        </div>
+        <small className="field__hint">{t("editor.countryHint")}</small>
         <label className="field">
           <span>{t("editor.displayAddress")}</span>
           <input

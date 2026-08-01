@@ -432,6 +432,10 @@ function sanitize(raw, vocab, seedSources = []) {
     address: str(raw.address, 200),
     comuna: str(raw.comuna, 80),
     city: str(raw.city, 80),
+    country: str(raw.country, 80),
+    countryCode: /^[a-z]{2}$/i.test(str(raw.countryCode, 2) || "")
+      ? str(raw.countryCode, 2).toLowerCase()
+      : undefined,
     website: str(raw.website, 500),
     instagram: str(raw.instagram, 200),
     items: [...new Set((Array.isArray(raw.items) ? raw.items : []).filter((i) => itemIds.has(i)))],
@@ -649,10 +653,9 @@ async function handleExtract(req, res, payload) {
 // request to Google. We don't; the note asks the editor for the name instead,
 // which is one word from someone already looking at the page.
 
-// Chile, not Santiago. src/lib/geocode.ts was widened when the map grew past
-// Santiago; this lookup was left behind, so a Maps link for a café in
-// Valparaíso or Villarrica found nothing — or worse, a plausible Santiago
-// street with the same name. `countrycodes` is the same guard it uses.
+// Global by design. Discovery requests normally carry a city, while long Maps
+// links carry their own coordinates. Name-only matches remain proposals for a
+// human to review and are never allowed to become coordinates silently.
 const MAX_OSM_HITS = 4;
 
 /** The place name Google puts in its own long URLs. Never a page fetch. */
@@ -719,7 +722,10 @@ async function reverseOsm(lat, lng) {
     return {
       address: [a.road, a.house_number].filter(Boolean).join(" ") || undefined,
       comuna:
-        a.city_district || a.suburb || a.town || a.municipality || a.county || a.city || undefined,
+        a.city_district || a.borough || a.suburb || a.quarter || a.neighbourhood || undefined,
+      city: a.city || a.town || a.municipality || a.village || undefined,
+      country: a.country || undefined,
+      countryCode: a.country_code?.toLowerCase() || undefined,
       osm: b.osm_type && b.osm_id ? `https://www.openstreetmap.org/${b.osm_type}/${b.osm_id}` : undefined,
     };
   } finally {
@@ -793,10 +799,9 @@ async function searchOsm(query) {
   const url =
     "https://nominatim.openstreetmap.org/search?" +
     new URLSearchParams({
-      q: `${query}, Chile`,
+      q: query,
       format: "json",
       limit: String(MAX_OSM_HITS),
-      countrycodes: "cl",
       addressdetails: "1",
       extratags: "1",
     });
@@ -815,7 +820,10 @@ async function searchOsm(query) {
       return {
         name: h.name || h.display_name,
         address: [a.road, a.house_number].filter(Boolean).join(" ") || undefined,
-        comuna: a.city_district || a.suburb || a.town || a.city || undefined,
+        comuna: a.city_district || a.borough || a.suburb || a.quarter || a.neighbourhood || undefined,
+        city: a.city || a.town || a.municipality || a.village || undefined,
+        country: a.country || undefined,
+        countryCode: a.country_code?.toLowerCase() || undefined,
         website: h.extratags?.website || h.extratags?.["contact:website"] || undefined,
         osm: `https://www.openstreetmap.org/${h.osm_type}/${h.osm_id}`,
         display: h.display_name,
@@ -845,7 +853,7 @@ const MAX_HISTORY_TURNS = 20;
  * different proposals.
  */
 const DRAFT_KEYS = new Set([
-  "name", "category", "address", "comuna", "city", "website",
+  "name", "category", "address", "comuna", "city", "country", "countryCode", "website",
   "instagram", "items", "claims", "flags", "caveat", "notes", "sourcesRead",
 ]);
 const REJECTION_STATUSES = new Set([
@@ -861,6 +869,11 @@ function sanitizeRejection(raw) {
   return {
     name: str(raw.name, 120),
     comuna: str(raw.comuna, 80),
+    city: str(raw.city, 80),
+    country: str(raw.country, 80),
+    countryCode: /^[a-z]{2}$/i.test(str(raw.countryCode, 2) || "")
+      ? str(raw.countryCode, 2).toLowerCase()
+      : undefined,
     status: REJECTION_STATUSES.has(raw.status) ? raw.status : "insufficient_evidence",
     reason: str(raw.reason, 600),
     sources,
@@ -1029,6 +1042,9 @@ async function handleChat(req, res, payload) {
     .map((entry) => ({
       name: str(entry.name, 120),
       comuna: str(entry.comuna, 80),
+      city: str(entry.city, 80),
+      country: str(entry.country, 80),
+      countryCode: str(entry.countryCode, 2),
       status: REJECTION_STATUSES.has(entry.status) ? entry.status : "insufficient_evidence",
       reason: str(entry.reason, 600),
       reviewedAt: str(entry.reviewedAt, 40),

@@ -53,13 +53,13 @@ const lines = [
 
 for (const p of places) {
   lines.push(
-    `insert into public.places (id, name, category, lat, lng, address, comuna, city, website, instagram, items, claims, flags, caveat, sources) values (`,
+    `insert into public.places (id, name, category, lat, lng, address, comuna, city, country, country_code, website, instagram, items, claims, flags, caveat, sources) values (`,
     `  ${q(p.id)}, ${q(p.name)}, ${q(p.category)}, ${p.lat}, ${p.lng},`,
-    `  ${q(p.address)}, ${q(p.comuna)}, ${q(p.city)}, ${q(p.website)}, ${q(p.instagram)},`,
+    `  ${q(p.address)}, ${q(p.comuna)}, ${q(p.city)}, ${q(p.country)}, ${q(p.countryCode)}, ${q(p.website)}, ${q(p.instagram)},`,
     `  ${arr(p.items)}, ${q(JSON.stringify(p.claims))}::jsonb, ${arr(p.flags)}, ${q(p.caveat)}, ${arr(p.sources)}`,
     `) on conflict (id) do update set`,
     `  name = excluded.name, category = excluded.category, lat = excluded.lat, lng = excluded.lng,`,
-    `  address = excluded.address, comuna = excluded.comuna, city = excluded.city,`,
+    `  address = excluded.address, comuna = excluded.comuna, city = excluded.city, country = excluded.country, country_code = excluded.country_code,`,
     `  website = excluded.website, instagram = excluded.instagram, items = excluded.items,`,
     `  claims = excluded.claims, flags = excluded.flags, caveat = excluded.caveat,`,
     `  sources = excluded.sources;`,

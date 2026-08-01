@@ -238,6 +238,8 @@ export function PlaceSheet() {
           <p className="sheet__addr">
             {place.address}
             {place.comuna && `, ${place.comuna}`}
+            {place.city && `, ${place.city}`}
+            {place.country && `, ${place.country}`}
           </p>
         )}
         <div className="sheet__links">

@@ -1,5 +1,6 @@
 import { CATEGORIES, UNKNOWN_CLAIM, type Place } from "../types";
 import { isSupabaseConfigured, supabase } from "./auth";
+import { DEFAULT_COUNTRY, DEFAULT_COUNTRY_CODE, normalizeCountryCode } from "./geography";
 
 /**
  * The data-layer seam.
@@ -27,6 +28,8 @@ interface PlaceRow {
   address: string | null;
   comuna: string | null;
   city: string;
+  country: string | null;
+  country_code: string | null;
   website: string | null;
   instagram: string | null;
   items: string[];
@@ -53,6 +56,8 @@ const rowToPlace = (r: PlaceRow): Place => ({
   address: r.address ?? undefined,
   comuna: r.comuna ?? undefined,
   city: r.city,
+  country: r.country?.trim() || DEFAULT_COUNTRY,
+  countryCode: normalizeCountryCode(r.country_code) || DEFAULT_COUNTRY_CODE,
   website: r.website ?? undefined,
   instagram: r.instagram ?? undefined,
   items: r.items ?? [],
@@ -95,6 +100,8 @@ const placeToRow = (p: Place) => ({
   address: p.address ?? null,
   comuna: p.comuna ?? null,
   city: p.city,
+  country: p.country,
+  country_code: normalizeCountryCode(p.countryCode),
   website: p.website ?? null,
   instagram: p.instagram ?? null,
   items: p.items,
@@ -112,7 +119,11 @@ async function fetchSeedJson(): Promise<Place[]> {
   if (!res.ok) throw new Error(`places.json: HTTP ${res.status}`);
   const raw: unknown = await res.json();
   if (!Array.isArray(raw)) throw new Error("places.json: expected an array");
-  return raw as Place[];
+  return (raw as Partial<Place>[]).map((place) => ({
+    ...place,
+    country: place.country?.trim() || DEFAULT_COUNTRY,
+    countryCode: normalizeCountryCode(place.countryCode) || DEFAULT_COUNTRY_CODE,
+  })) as Place[];
 }
 
 export function loadPlaces(): Promise<Place[]> {

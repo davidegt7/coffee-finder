@@ -30,7 +30,9 @@ create table if not exists public.places (
   lng        double precision not null,
   address    text,
   comuna     text,
-  city       text not null default 'Santiago',
+  city       text not null,
+  country    text not null,
+  country_code text not null,
   website    text,
   instagram  text,
   items      text[] not null default '{}',
@@ -57,6 +59,9 @@ create table if not exists public.places (
 alter table public.places drop constraint if exists places_category_check;
 alter table public.places drop constraint if exists places_category_valid;
 alter table public.places drop constraint if exists places_in_santiago;
+alter table public.places drop constraint if exists places_in_chile_extent;
+alter table public.places drop constraint if exists places_on_earth;
+alter table public.places drop constraint if exists places_country_code_valid;
 alter table public.places drop constraint if exists places_claims_sourced;
 alter table public.places drop constraint if exists places_flags_valid;
 
@@ -66,6 +71,8 @@ alter table public.places drop constraint if exists places_flags_valid;
 
 alter table public.places add column if not exists claims jsonb  not null default '{}'::jsonb;
 alter table public.places add column if not exists flags  text[] not null default '{}';
+alter table public.places add column if not exists country text not null default 'Chile';
+alter table public.places add column if not exists country_code text not null default 'cl';
 
 do $$
 begin
@@ -101,4 +108,3 @@ set claims = coalesce(claims, '{}'::jsonb)
                 coalesce(claims -> 'glutenFree',   '{"scope":"unknown","confidence":"unverified"}'::jsonb))
            || jsonb_build_object('seedOilFree',
                 coalesce(claims -> 'seedOilFree',  '{"scope":"unknown","confidence":"unverified"}'::jsonb));
-

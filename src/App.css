@@ -1437,6 +1437,23 @@
   margin-bottom: 12px;
 }
 
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.field-row .field {
+  min-width: 0;
+}
+
+@media (max-width: 420px) {
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
 .field > span {
   display: block;
   font-size: 12px;

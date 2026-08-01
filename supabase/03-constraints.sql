@@ -9,12 +9,17 @@ alter table public.places drop constraint if exists places_category_valid;
 alter table public.places add constraint places_category_valid
   check (category in ('cafe','roastery','bakery','shop','cart'));
 
--- Broad Chile extent, including the Pacific islands. Exact country filtering
--- happens in the geocoder; this still rejects wildly impossible coordinates.
+-- Global geographic sanity checks. Exact country selection happens in the
+-- geocoder; these only reject impossible coordinates and malformed codes.
 alter table public.places drop constraint if exists places_in_santiago;
 alter table public.places drop constraint if exists places_in_chile_extent;
-alter table public.places add constraint places_in_chile_extent
-  check (lat between -60 and -15 and lng between -115 and -65);
+alter table public.places drop constraint if exists places_on_earth;
+alter table public.places add constraint places_on_earth
+  check (lat between -90 and 90 and lng between -180 and 180);
+
+alter table public.places drop constraint if exists places_country_code_valid;
+alter table public.places add constraint places_country_code_valid
+  check (country_code ~ '^[a-z]{2}$');
 
 -- A claim above 'unverified' must cite a source. An unsourced "verified" is
 -- exactly the record that misleads someone, so it must be impossible to insert,
@@ -45,6 +50,7 @@ alter table public.places add constraint places_flags_valid
   ]::text[]);
 
 create index if not exists places_category_idx on public.places (category);
+create index if not exists places_country_city_idx on public.places (country_code, city);
 
 -- ---------------------------------------------------------------- is_editor
 

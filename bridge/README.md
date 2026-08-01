@@ -99,8 +99,8 @@ the page, not even a redirect. What happens instead:
    from whatever you typed next to it. A short `maps.app.goo.gl` link carries no
    name, so type the café's name alongside it — one word, and you're already
    looking at it.
-2. That name is looked up in **OpenStreetMap** (Nominatim, bounded to Santiago
-   — the same source the editor's *Buscar* button has always used).
+2. That name is looked up globally in **OpenStreetMap** (Nominatim), using the
+   city/country in the request when available — the same source as *Buscar*.
 3. The brain drafts from the OSM match and cites the `openstreetmap.org` URL as
    the source.
 

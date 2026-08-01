@@ -60,7 +60,9 @@ export function PlaceList() {
               )}
               <div className="card__title">
                 <h3>{place.name}</h3>
-                <p className="card__comuna">{place.comuna ?? place.city}</p>
+                <p className="card__comuna">
+                  {[place.comuna ?? place.city, place.country].filter(Boolean).join(" · ")}
+                </p>
               </div>
               {session && (
                 // A span, not a button: this sits inside the card's own <button>

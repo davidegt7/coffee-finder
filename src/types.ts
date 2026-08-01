@@ -130,6 +130,9 @@ export interface Place {
   address?: string;
   comuna?: string;
   city: string;
+  /** Human-readable country plus its ISO 3166-1 alpha-2 code. */
+  country: string;
+  countryCode: string;
   website?: string;
   instagram?: string;
   /** Searchable menu items: "flat white", "V60", "cold brew", "grano para llevar". */
@@ -150,4 +153,3 @@ export interface Place {
   sources: string[];
   addedAt: string;
 }
-

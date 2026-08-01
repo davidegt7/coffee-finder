@@ -57,6 +57,7 @@ interface State {
   setQuery: (query: string) => void;
   setVerifiedOnly: (value: boolean) => void;
   setSavedOnly: (value: boolean) => void;
+  setCountry: (countryCode: string | null) => void;
   setCity: (city: string | null) => void;
   toggleComuna: (comuna: string) => void;
   resetFilters: () => void;
@@ -240,6 +241,9 @@ export const useStore = create<State>((set, get) => ({
   setQuery: (query) => set((s) => ({ filters: { ...s.filters, query } })),
   setVerifiedOnly: (verifiedOnly) => set((s) => ({ filters: { ...s.filters, verifiedOnly } })),
   setSavedOnly: (savedOnly) => set((s) => ({ filters: { ...s.filters, savedOnly } })),
+
+  setCountry: (countryCode) =>
+    set((s) => ({ filters: { ...s.filters, countryCode, city: null, comunas: [] } })),
 
   // Changing city clears comunas: a comuna from the previous city would filter
   // everything to nothing, from a control the user can no longer see.

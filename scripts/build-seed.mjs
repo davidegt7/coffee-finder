@@ -207,6 +207,8 @@ for (const d of DEFS) {
     address: hit.address,
     comuna: hit.comuna,
     city: "Santiago",
+    country: "Chile",
+    countryCode: "cl",
     items: d.items ?? [],
     claims: { ...blankClaims(), ...d.claims },
     flags: d.flags ?? [],

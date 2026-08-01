@@ -5,9 +5,9 @@
  * coordinate looks exactly like a real one in the database and sends a person
  * to the wrong street — the only defence is to never let a human type one.
  *
- * Restricted to Chile. The map now covers more than Santiago, so a Santiago
- * viewbox would turn a valid Villarrica address into either no result or a
- * dangerously plausible match in the wrong city.
+ * Country-aware rather than tied to one city or country. The country code comes
+ * from the editor (or a prior geocode result), keeping identical street names
+ * in Copenhagen, Santiago and New York from competing with one another.
  */
 
 export interface GeocodeHit {
@@ -15,6 +15,9 @@ export interface GeocodeHit {
   lng: number;
   address?: string;
   comuna?: string;
+  city?: string;
+  country?: string;
+  countryCode?: string;
   osm: string;
   display: string;
 }
@@ -47,6 +50,8 @@ const overpassNameRegex = (value: string) =>
 export async function geocodeIntersection(
   address: string,
   city?: string,
+  country?: string,
+  countryCode?: string,
 ): Promise<GeocodeHit | null> {
   const corner = addressIntersection(address, city);
   if (!corner) return null;
@@ -77,6 +82,9 @@ export async function geocodeIntersection(
     lat: Number(node.lat),
     lng: Number(node.lon),
     comuna: corner.city,
+    city: corner.city,
+    country,
+    countryCode,
     osm: `https://www.openstreetmap.org/node/${node.id}`,
     display: `${corner.street} × ${corner.crossStreet}, ${corner.city}`,
   };
@@ -144,17 +152,25 @@ export function geocodeLookupQuery(query: string): string {
     .trim();
 }
 
-export async function geocode(query: string): Promise<GeocodeHit[]> {
+export async function geocode(
+  query: string,
+  options: { country?: string; countryCode?: string; city?: string } = {},
+): Promise<GeocodeHit[]> {
   const lookup = geocodeLookupQuery(query);
+  const location = [lookup, options.city, options.country]
+    .filter((part, index, all): part is string => Boolean(part?.trim()) && all.indexOf(part) === index)
+    .join(", ");
+  const params: Record<string, string> = {
+    q: location,
+    format: "json",
+    limit: "5",
+    addressdetails: "1",
+  };
+  const countryCode = options.countryCode?.trim().toLowerCase();
+  if (/^[a-z]{2}$/.test(countryCode ?? "")) params.countrycodes = countryCode!;
   const url =
     `https://nominatim.openstreetmap.org/search?` +
-    new URLSearchParams({
-      q: `${lookup}, Chile`,
-      format: "json",
-      limit: "5",
-      countrycodes: "cl",
-      addressdetails: "1",
-    });
+    new URLSearchParams(params);
 
   // Nominatim wants a real referrer for browser traffic; a static site sends one
   // by default. Their policy is 1 req/s — a human typing and clicking can't
@@ -169,7 +185,10 @@ export async function geocode(query: string): Promise<GeocodeHit[]> {
       lat: Number(h.lat),
       lng: Number(h.lon),
       address: [a.road, a.house_number].filter(Boolean).join(" ") || undefined,
-      comuna: a.city_district || a.suburb || a.town || a.city || undefined,
+      comuna: a.city_district || a.borough || a.suburb || a.quarter || a.neighbourhood || undefined,
+      city: a.city || a.town || a.municipality || a.village || undefined,
+      country: a.country || undefined,
+      countryCode: a.country_code?.toLowerCase() || undefined,
       osm: `https://www.openstreetmap.org/${h.osm_type}/${h.osm_id}`,
       display: String(h.display_name ?? ""),
     };

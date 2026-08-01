@@ -20,6 +20,9 @@ export interface Submission {
   category: Category;
   address: string;
   comuna?: string;
+  city: string;
+  country: string;
+  countryCode?: string;
   website?: string;
   instagram?: string;
   contactEmail: string;
@@ -39,6 +42,9 @@ interface SubmissionRow {
   category: string;
   address: string;
   comuna: string | null;
+  city: string;
+  country: string;
+  country_code: string | null;
   website: string | null;
   instagram: string | null;
   contact_email: string;
@@ -57,6 +63,9 @@ const rowToSubmission = (r: SubmissionRow): Submission => ({
   category: r.category as Category,
   address: r.address,
   comuna: r.comuna ?? undefined,
+  city: r.city,
+  country: r.country,
+  countryCode: r.country_code ?? undefined,
   website: r.website ?? undefined,
   instagram: r.instagram ?? undefined,
   contactEmail: r.contact_email,
@@ -74,6 +83,9 @@ export async function submitPlace(input: {
   category: Category;
   address: string;
   comuna?: string;
+  city: string;
+  country: string;
+  countryCode?: string;
   website?: string;
   instagram?: string;
   contactEmail: string;
@@ -90,6 +102,9 @@ export async function submitPlace(input: {
     category: input.category,
     address: input.address.trim(),
     comuna: input.comuna?.trim() || null,
+    city: input.city.trim(),
+    country: input.country.trim(),
+    country_code: input.countryCode?.trim().toLowerCase() || null,
     website: input.website?.trim() || null,
     instagram: input.instagram?.trim() || null,
     contact_email: input.contactEmail.trim(),

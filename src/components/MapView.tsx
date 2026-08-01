@@ -253,7 +253,11 @@ export function MapView() {
     source?.setData(data);
   }, [data]);
 
-  const locationKey = `${filters.city ?? ""}|${[...filters.comunas].sort().join(",")}`;
+  const locationKey = `${filters.countryCode ?? ""}|${filters.city ?? ""}|${[
+    ...filters.comunas,
+  ]
+    .sort()
+    .join(",")}`;
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !visible.length) return;
@@ -261,8 +265,11 @@ export function MapView() {
       fitPlaces(map, visible, !firstFitRef.current);
       firstFitRef.current = false;
     };
-    if (map.loaded()) apply();
-    else map.once("load", apply);
+    // Camera updates do not depend on the basemap's tiles being idle. Waiting
+    // on `load` here is a trap: that event fires only once, so choosing another
+    // country while tiles are still streaming could leave the list in
+    // Copenhagen and the camera over Chile forever.
+    apply();
     // Fitting on every claim filter change would fight the user; locationKey is
     // intentionally the only trigger apart from the map becoming available.
     // eslint-disable-next-line react-hooks/exhaustive-deps

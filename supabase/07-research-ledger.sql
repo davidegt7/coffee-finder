@@ -10,6 +10,10 @@ create table if not exists public.research_ledger (
   name_key      text not null,
   comuna        text,
   comuna_key    text not null default '',
+  city          text,
+  city_key      text not null default '',
+  country       text,
+  country_code  text not null default '',
   status        text not null check (status in (
                   'generic', 'not_specialty', 'insufficient_evidence', 'closed'
                 )),
@@ -19,7 +23,8 @@ create table if not exists public.research_ledger (
   recheck_after timestamptz,
   created_by    text not null default coalesce(auth.jwt() ->> 'email', ''),
   updated_at    timestamptz not null default now(),
-  unique (name_key, comuna_key)
+  constraint research_ledger_global_identity
+    unique (name_key, comuna_key, city_key, country_code)
 );
 
 create index if not exists research_ledger_active_idx

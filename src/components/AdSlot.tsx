@@ -17,7 +17,7 @@ export function AdSlot({ where }: { where: "list" | "detail" }) {
     <aside className={`ad ad--${where}`} aria-label="Espacio publicitario">
       <span className="ad__tag">Publicidad</span>
       <p className="ad__body">
-        Este espacio es para un local de Santiago.
+        Este espacio es para una cafetería local.
         <br />
         <small>Gratis para siempre para quien busca. Los locales pagan por aparecer destacados.</small>
       </p>

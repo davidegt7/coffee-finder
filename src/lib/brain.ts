@@ -50,6 +50,8 @@ export interface BrainSuggestion {
   address?: string;
   comuna?: string;
   city?: string;
+  country?: string;
+  countryCode?: string;
   website?: string;
   instagram?: string;
   /** Item ids from `ITEMS`; the editor stores their canonical Spanish labels. */
@@ -66,6 +68,9 @@ export interface BrainSuggestion {
 export interface BrainResearchRejection {
   name: string;
   comuna?: string;
+  city?: string;
+  country?: string;
+  countryCode?: string;
   status: "generic" | "not_specialty" | "insufficient_evidence" | "closed";
   reason: string;
   sources: string[];
@@ -91,6 +96,9 @@ export interface BrainLocation {
   precise: boolean;
   address?: string;
   comuna?: string;
+  city?: string;
+  country?: string;
+  countryCode?: string;
   /** The OSM record the coordinates reverse-geocoded to, for the source list. */
   osm?: string;
 }

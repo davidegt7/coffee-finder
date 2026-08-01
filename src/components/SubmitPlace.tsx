@@ -35,6 +35,8 @@ export function SubmitPlace() {
   const [category, setCategory] = useState<Category>("cafe");
   const [address, setAddress] = useState("");
   const [comuna, setComuna] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
   const [website, setWebsite] = useState("");
   const [instagram, setInstagram] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -51,7 +53,12 @@ export function SubmitPlace() {
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   const canSubmit =
-    name.trim().length > 1 && address.trim().length > 3 && /\S+@\S+\.\S+/.test(contactEmail) && !busy;
+    name.trim().length > 1 &&
+    address.trim().length > 3 &&
+    city.trim().length > 1 &&
+    country.trim().length > 1 &&
+    /\S+@\S+\.\S+/.test(contactEmail) &&
+    !busy;
 
   if (done) {
     return (
@@ -120,6 +127,16 @@ export function SubmitPlace() {
           <span>{t("submit.comuna")}</span>
           <input value={comuna} onChange={(e) => setComuna(e.target.value)} />
         </label>
+        <div className="field-row">
+          <label className="field">
+            <span>{t("brain.city")} *</span>
+            <input value={city} onChange={(e) => setCity(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>{t("editor.country")} *</span>
+            <input value={country} onChange={(e) => setCountry(e.target.value)} />
+          </label>
+        </div>
         <label className="field">
           <span>{t("sheet.website")}</span>
           <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" />
@@ -230,6 +247,8 @@ export function SubmitPlace() {
               category,
               address,
               comuna,
+              city,
+              country,
               website,
               instagram,
               contactEmail,

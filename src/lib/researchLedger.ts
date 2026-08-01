@@ -6,6 +6,10 @@ interface LedgerRow {
   name_key: string;
   comuna: string | null;
   comuna_key: string;
+  city: string | null;
+  city_key: string;
+  country: string | null;
+  country_code: string;
   status: BrainResearchRejection["status"];
   reason: string;
   sources: string[] | null;
@@ -35,7 +39,7 @@ export async function loadResearchLedger(): Promise<BrainResearchLedgerItem[]> {
   if (!sb) return [];
   const { data, error } = await sb
     .from("research_ledger")
-    .select("name,comuna,status,reason,sources,reviewed_at,recheck_after")
+    .select("name,comuna,city,country,country_code,status,reason,sources,reviewed_at,recheck_after")
     .order("reviewed_at", { ascending: false })
     .limit(500);
   if (error) return [];
@@ -45,6 +49,9 @@ export async function loadResearchLedger(): Promise<BrainResearchLedgerItem[]> {
     .map((row) => ({
       name: row.name,
       comuna: row.comuna ?? undefined,
+      city: row.city ?? undefined,
+      country: row.country ?? undefined,
+      countryCode: row.country_code || undefined,
       status: row.status,
       reason: row.reason,
       sources: row.sources ?? [],
@@ -70,6 +77,10 @@ export async function saveResearchRejections(
       name_key: keyFor(entry.name),
       comuna: entry.comuna?.trim() || null,
       comuna_key: keyFor(entry.comuna),
+      city: entry.city?.trim() || null,
+      city_key: keyFor(entry.city),
+      country: entry.country?.trim() || null,
+      country_code: entry.countryCode?.trim().toLowerCase() || "",
       status: entry.status,
       reason: entry.reason.trim(),
       sources: entry.sources,
@@ -82,6 +93,6 @@ export async function saveResearchRejections(
 
   const { error } = await sb
     .from("research_ledger")
-    .upsert(rows, { onConflict: "name_key,comuna_key" });
+    .upsert(rows, { onConflict: "name_key,comuna_key,city_key,country_code" });
   return { error: error?.message ?? null };
 }

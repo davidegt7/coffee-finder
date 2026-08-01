@@ -27,9 +27,7 @@ const CATEGORIES = ["cafe", "roastery", "bakery", "shop", "cart"];
 const SCOPES = ["all", "some", "none", "unknown"];
 const CONFIDENCES = ["verified", "claimed", "unverified"];
 
-// Broad Chile extent, including Pacific islands. Anything outside is a
-// geocoding accident; exact country selection happens before data reaches here.
-const BBOX = { minLat: -60, maxLat: -15, minLng: -115, maxLng: -65 };
+const BBOX = { minLat: -90, maxLat: 90, minLng: -180, maxLng: 180 };
 
 const raw = await readFile(new URL("../public/data/places.json", import.meta.url), "utf8");
 const places = JSON.parse(raw);
@@ -57,8 +55,12 @@ for (const [i, p] of places.entries()) {
     p.lng < BBOX.minLng ||
     p.lng > BBOX.maxLng
   ) {
-    errors.push(`${at}: coordinates outside Chile's extent (${p.lat}, ${p.lng})`);
+    errors.push(`${at}: impossible coordinates (${p.lat}, ${p.lng})`);
   }
+
+  if (!p.city?.trim()) errors.push(`${at}: missing city`);
+  if (!p.country?.trim()) errors.push(`${at}: missing country`);
+  if (!/^[a-z]{2}$/.test(p.countryCode ?? "")) errors.push(`${at}: invalid countryCode`);
 
   for (const key of CLAIM_KEYS) {
     const claim = p.claims?.[key];

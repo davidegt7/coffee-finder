@@ -48,7 +48,9 @@ function submissionToPlace(s: Submission, today: string): Place {
     lng: 0,
     address: s.address,
     comuna: s.comuna,
-    city: "Santiago",
+    city: s.city,
+    country: s.country,
+    countryCode: s.countryCode ?? "",
     website: s.website,
     instagram: s.instagram,
     items: s.items,
@@ -88,6 +90,7 @@ export function SubmissionsQueue() {
               <p className="queue__addr">
                 {s.address}
                 {s.comuna && `, ${s.comuna}`}
+                {`, ${s.city}, ${s.country}`}
               </p>
               {s.asserts.length > 0 && (
                 <p className="queue__asserts">

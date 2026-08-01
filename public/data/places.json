@@ -8,6 +8,8 @@
     "address": "General Flores",
     "comuna": "Providencia",
     "city": "Santiago",
+    "country": "Chile",
+    "countryCode": "cl",
     "items": [
       "Espresso",
       "Grano"
@@ -54,6 +56,8 @@
     "address": "Santo Domingo 598",
     "comuna": "Santiago",
     "city": "Santiago",
+    "country": "Chile",
+    "countryCode": "cl",
     "items": [
       "Espresso"
     ],
@@ -94,6 +98,8 @@
     "address": "Girardi 1569",
     "comuna": "Ñuñoa",
     "city": "Santiago",
+    "country": "Chile",
+    "countryCode": "cl",
     "items": [
       "Espresso"
     ],
@@ -133,6 +139,8 @@
     "address": "Huérfanos 1515",
     "comuna": "Santiago",
     "city": "Santiago",
+    "country": "Chile",
+    "countryCode": "cl",
     "items": [
       "Espresso"
     ],
@@ -174,6 +182,8 @@
     "address": "Avenida Santa Isabel 598",
     "comuna": "Providencia",
     "city": "Santiago",
+    "country": "Chile",
+    "countryCode": "cl",
     "items": [
       "Espresso"
     ],
@@ -213,6 +223,8 @@
     "address": "Avenida Antonio Varas",
     "comuna": "Providencia",
     "city": "Santiago",
+    "country": "Chile",
+    "countryCode": "cl",
     "items": [
       "Espresso",
       "Grano"
@@ -258,6 +270,8 @@
     "address": "Avenida Suecia 264",
     "comuna": "Providencia",
     "city": "Santiago",
+    "country": "Chile",
+    "countryCode": "cl",
     "items": [
       "Espresso",
       "Grano"
@@ -303,6 +317,8 @@
     "address": "Rosal 361",
     "comuna": "Santiago",
     "city": "Santiago",
+    "country": "Chile",
+    "countryCode": "cl",
     "items": [
       "Espresso",
       "Flat white",

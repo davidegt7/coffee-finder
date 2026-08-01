@@ -18,16 +18,17 @@ export const LANGS: { id: Lang; label: string }[] = [
 ];
 
 const ES = {
-  "app.tagline": "Café de verdad en Santiago. Gratis, siempre.",
+  "app.tagline": "Café de especialidad, ciudad por ciudad. Gratis, siempre.",
   "app.loading": "Cargando cafés…",
   "app.loadError": "No se pudieron cargar los cafés.",
 
-  "search.placeholder": "Buscar café, comuna o preparación…",
+  "search.placeholder": "Buscar café, ciudad, barrio o preparación…",
   "search.label": "Buscar",
   "filter.clear": "Limpiar ({n})",
 
   "where.prompt": "¿A dónde vas?",
-  "where.all": "Todo Chile",
+  "where.all": "Todo el mundo",
+  "where.country": "País",
   "where.city": "Ciudad",
   "where.comuna": "Comuna",
   "where.nComunas": "{n} comunas",
@@ -133,13 +134,16 @@ const ES = {
   "editor.name": "Nombre",
   "editor.type": "Tipo",
   "editor.where": "Dónde queda",
+  "editor.country": "País",
+  "editor.countryPlaceholder": "Ej: Dinamarca",
+  "editor.countryHint": "Elige el resultado de la dirección para confirmar el país y evitar ciudades equivocadas.",
   "editor.displayAddress": "Dirección completa para visitantes",
   "editor.displayAddressPlaceholder": "General Urrutia 630, local 101",
   "editor.displayAddressHint": "Incluye local, piso o indicaciones dentro del edificio. No se borran al ubicar el pin.",
   "editor.geoPlaceholder": "Dirección o nombre, ej: Merced 838",
   "editor.search": "Buscar",
   "editor.searching": "Buscando…",
-  "editor.geoNoResults": "Sin resultados dentro de Chile. Revisa la calle, número y ciudad.",
+  "editor.geoNoResults": "Sin resultados. Revisa la calle, número, ciudad y país.",
   "editor.noStreet": "sin calle",
   "editor.geoHint": "Busca la dirección — los datos como «local 101» se ignoran sólo para ubicar el pin.",
   "editor.scopeUnknown": "Nadie ha comprobado",
@@ -167,6 +171,8 @@ const ES = {
   "editor.saveHint": "Para guardar: {missing}.",
   "editor.saveMissingName": "escribe un nombre",
   "editor.saveMissingLocation": "busca la dirección y elige un resultado en «Dónde queda»",
+  "editor.saveMissingCity": "agrega la ciudad",
+  "editor.saveMissingCountry": "busca la dirección para confirmar el país",
   "editor.saveMissingSource": "agrega al menos una fuente",
   "editor.saveMissingClaimSources": "agrega una fuente para: {claims}",
   "editor.cancel": "Cancelar",
@@ -271,16 +277,17 @@ const ES = {
 } as const;
 
 const EN: Record<keyof typeof ES, string> = {
-  "app.tagline": "Real coffee in Santiago. Free, always.",
+  "app.tagline": "Specialty coffee, city by city. Free, always.",
   "app.loading": "Loading cafés…",
   "app.loadError": "Couldn't load cafés.",
 
-  "search.placeholder": "Search café, neighborhood or brew…",
+  "search.placeholder": "Search café, city, neighborhood or brew…",
   "search.label": "Search",
   "filter.clear": "Clear ({n})",
 
   "where.prompt": "Where are you going?",
-  "where.all": "All of Chile",
+  "where.all": "Anywhere",
+  "where.country": "Country",
   "where.city": "City",
   "where.comuna": "Neighborhood",
   "where.nComunas": "{n} neighborhoods",
@@ -386,13 +393,16 @@ const EN: Record<keyof typeof ES, string> = {
   "editor.name": "Name",
   "editor.type": "Type",
   "editor.where": "Where it is",
+  "editor.country": "Country",
+  "editor.countryPlaceholder": "E.g. Denmark",
+  "editor.countryHint": "Choose an address result to confirm the country and avoid matching the wrong city.",
   "editor.displayAddress": "Full address for visitors",
   "editor.displayAddressPlaceholder": "General Urrutia 630, local 101",
   "editor.displayAddressHint": "Include the unit, floor, or directions inside the building. Pin lookup will not erase them.",
   "editor.geoPlaceholder": "Address or name, e.g. Merced 838",
   "editor.search": "Search",
   "editor.searching": "Searching…",
-  "editor.geoNoResults": "No results inside Chile. Check the street, number, and city.",
+  "editor.geoNoResults": "No results. Check the street, number, city, and country.",
   "editor.noStreet": "no street",
   "editor.geoHint": "Search the address — details such as “local 101” are ignored only while locating the pin.",
   "editor.scopeUnknown": "Nobody has checked",
@@ -420,6 +430,8 @@ const EN: Record<keyof typeof ES, string> = {
   "editor.saveHint": "To save: {missing}.",
   "editor.saveMissingName": "enter a name",
   "editor.saveMissingLocation": "search the address and choose a result under “Where it is”",
+  "editor.saveMissingCity": "add the city",
+  "editor.saveMissingCountry": "search the address to confirm the country",
   "editor.saveMissingSource": "add at least one source",
   "editor.saveMissingClaimSources": "add a source for: {claims}",
   "editor.cancel": "Cancel",
@@ -534,7 +546,7 @@ export function t(lang: Lang, key: StringKey, vars?: Record<string, string | num
 
 const STORAGE_KEY = "coffeefinder.lang";
 
-/** Persisted choice, else the browser's, else Spanish (this is a Santiago app). */
+/** Persisted choice, else the browser's, else Spanish for the original audience. */
 export function initialLang(): Lang {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);

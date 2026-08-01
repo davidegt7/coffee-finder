@@ -59,7 +59,13 @@ export function BrainPanel({
   place: Place;
   onApply: Dispatch<SetStateAction<Place>>;
   /** Hand an accepted address to the location search, which runs it for you. */
-  onLocate?: (address?: string, comuna?: string) => void;
+  onLocate?: (
+    address?: string,
+    comuna?: string,
+    city?: string,
+    country?: string,
+    countryCode?: string,
+  ) => void;
 }) {
   const { t, lang } = useT();
   const [health, setHealth] = useState<BrainHealth | null | undefined>(undefined);
@@ -126,6 +132,9 @@ export function BrainPanel({
           lng: location.lng,
           address: p.address || location.address,
           comuna: p.comuna || location.comuna,
+          city: p.city || location.city || "",
+          country: p.country || location.country || "",
+          countryCode: p.countryCode || location.countryCode || "",
           sources:
             location.osm && !p.sources.includes(location.osm)
               ? [...p.sources, location.osm]
@@ -149,6 +158,7 @@ export function BrainPanel({
     text("address", "submit.address", result.address, place.address, "address");
     text("comuna", "submit.comuna", result.comuna, place.comuna, "comuna");
     text("city", "brain.city", result.city, place.city, "city");
+    text("country", "editor.country", result.country, place.country, "country");
     text("website", "sheet.website", result.website, place.website, "website");
     text("instagram", "brain.instagram", result.instagram, place.instagram, "instagram");
 
@@ -263,7 +273,14 @@ export function BrainPanel({
    * left an empty search box below it waiting for the same words to be typed
    * again. The search runs; picking among its results stays a human's job.
    */
-  const locate = () => onLocate?.(result?.address, result?.comuna);
+  const locate = () =>
+    onLocate?.(
+      result?.address,
+      result?.comuna,
+      result?.city,
+      result?.country,
+      result?.countryCode,
+    );
 
   const useRow = (row: Row) => {
     onApply(row.apply);

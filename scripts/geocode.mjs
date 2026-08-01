@@ -37,10 +37,9 @@ export async function geocode(query) {
   const url =
     `https://nominatim.openstreetmap.org/search?` +
     new URLSearchParams({
-      q: `${lookupQuery(query)}, Chile`,
+      q: lookupQuery(query),
       format: "json",
       limit: "3",
-      countrycodes: "cl",
       addressdetails: "1",
     });
 
@@ -56,10 +55,19 @@ export async function geocode(query) {
     address: [hit.address?.road, hit.address?.house_number].filter(Boolean).join(" ") || undefined,
     comuna:
       hit.address?.city_district ||
+      hit.address?.borough ||
       hit.address?.suburb ||
-      hit.address?.town ||
-      hit.address?.city ||
+      hit.address?.quarter ||
+      hit.address?.neighbourhood ||
       undefined,
+    city:
+      hit.address?.city ||
+      hit.address?.town ||
+      hit.address?.municipality ||
+      hit.address?.village ||
+      undefined,
+    country: hit.address?.country || undefined,
+    countryCode: hit.address?.country_code?.toLowerCase() || undefined,
     osm: `https://www.openstreetmap.org/${hit.osm_type}/${hit.osm_id}`,
     display: hit.display_name,
   };
@@ -67,5 +75,5 @@ export async function geocode(query) {
 
 if (process.argv[2]) {
   const result = await geocode(process.argv.slice(2).join(" "));
-  console.log(result ? JSON.stringify(result, null, 2) : "no match in Chile");
+  console.log(result ? JSON.stringify(result, null, 2) : "no match");
 }
