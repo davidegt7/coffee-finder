@@ -28,18 +28,20 @@ function runCli(command, args, stdin, timeoutMs) {
     const child = spawn(command, args, { stdio: ["pipe", "pipe", "pipe"] });
     let out = "";
     let err = "";
-    const timer = setTimeout(() => {
-      child.kill("SIGKILL");
-      reject(new Error(`${command} timed out after ${timeoutMs / 1000}s`));
-    }, timeoutMs);
+    const timer = timeoutMs > 0
+      ? setTimeout(() => {
+          child.kill("SIGKILL");
+          reject(new Error(`${command} timed out after ${timeoutMs / 1000}s`));
+        }, timeoutMs)
+      : null;
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (err += d));
     child.on("error", (e) => {
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
       reject(e);
     });
     child.on("close", (code) => {
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
       // CLI warnings can be verbose; actionable API errors are usually last.
       if (code !== 0) reject(new Error(`${command} exited ${code}: ${err.slice(-1500)}`));
       else resolve(out);
@@ -168,7 +170,7 @@ function openaiProvider(env, presetName) {
         { role: "user", content: userContent },
       ];
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const timer = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : null;
       let res;
       try {
         res = await fetch(`${baseUrl}/chat/completions`, {
@@ -181,7 +183,7 @@ function openaiProvider(env, presetName) {
           body: JSON.stringify({ model, messages, stream: false }),
         });
       } finally {
-        clearTimeout(timer);
+        if (timer) clearTimeout(timer);
       }
       const bodyText = await res.text();
       if (!res.ok) throw new Error(`${presetName} HTTP ${res.status}: ${bodyText.slice(0, 400)}`);

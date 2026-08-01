@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import {
-  BrainError,
+  brainErrorText,
   brainHealth,
   extract,
   setBrain,
   type BrainHealth,
+  type BrainLocation,
+  type BrainPhoto,
   type BrainSuggestion,
 } from "../lib/brain";
 import { ITEMS } from "../lib/items";
@@ -52,11 +54,12 @@ interface Row {
 export function BrainPanel({
   place,
   onApply,
-  onAddressApplied,
+  onLocate,
 }: {
   place: Place;
   onApply: Dispatch<SetStateAction<Place>>;
-  onAddressApplied?: (address: string) => void;
+  /** Hand an accepted address to the location search, which runs it for you. */
+  onLocate?: (address?: string, comuna?: string) => void;
 }) {
   const { t, lang } = useT();
   const [health, setHealth] = useState<BrainHealth | null | undefined>(undefined);
@@ -64,6 +67,8 @@ export function BrainPanel({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [result, setResult] = useState<BrainSuggestion | null>(null);
+  const [location, setLocation] = useState<BrainLocation | null>(null);
+  const [photos, setPhotos] = useState<BrainPhoto[]>([]);
   const [applied, setApplied] = useState<Set<string>>(new Set());
   /**
    * The form as it stood when the extraction ran. Rows are built against this
@@ -103,6 +108,31 @@ export function BrainPanel({
         apply: (p) => ({ ...p, [key]: value }),
       });
     };
+
+    // First row, because it's the one that unblocks Save. A pin out of the
+    // pasted link means no name search has to succeed at all — the café can be
+    // absent from OpenStreetMap entirely and still land in the right spot.
+    if (location && (place.lat === 0 || place.lng === 0)) {
+      const where = [location.address, location.comuna].filter(Boolean).join(", ");
+      out.push({
+        id: "location",
+        label: t("editor.where"),
+        next: `${where || t("brain.locFromPin")} · ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}${
+          location.precise ? "" : ` · ${t("brain.locApprox")}`
+        }`,
+        apply: (p) => ({
+          ...p,
+          lat: location.lat,
+          lng: location.lng,
+          address: p.address || location.address,
+          comuna: p.comuna || location.comuna,
+          sources:
+            location.osm && !p.sources.includes(location.osm)
+              ? [...p.sources, location.osm]
+              : p.sources,
+        }),
+      });
+    }
 
     text("name", "editor.name", result.name, place.name || undefined, "name");
     if (result.category && result.category !== place.category) {
@@ -192,7 +222,7 @@ export function BrainPanel({
     }
 
     return out;
-  }, [result, baseline, lang, t, url]);
+  }, [result, baseline, location, lang, t, url]);
 
   if (health === undefined || health === null) return null;
 
@@ -202,15 +232,16 @@ export function BrainPanel({
     setBusy(true);
     setErr(null);
     setResult(null);
+    setPhotos([]);
     setApplied(new Set());
     try {
       const res = await extract(url.trim());
       setBaseline(place);
       setResult(res.suggestion);
+      setLocation(res.location ?? null);
+      setPhotos(res.photos ?? []);
     } catch (e) {
-      if (e instanceof BrainError && e.code === "google_maps") setErr(t("brain.errGoogleMaps"));
-      else if (e instanceof BrainError && e.code === "bad_url") setErr(t("brain.errBadUrl"));
-      else setErr(e instanceof Error ? e.message : String(e));
+      setErr(brainErrorText(e, t));
     } finally {
       setBusy(false);
     }
@@ -226,18 +257,24 @@ export function BrainPanel({
     }
   };
 
+  /**
+   * Accepting an address should also start looking it up. The two used to be
+   * separate steps in separate sections, so approving "Avenida Rancagua 042"
+   * left an empty search box below it waiting for the same words to be typed
+   * again. The search runs; picking among its results stays a human's job.
+   */
+  const locate = () => onLocate?.(result?.address, result?.comuna);
+
   const useRow = (row: Row) => {
     onApply(row.apply);
-    if (row.id === "address" && result?.address) onAddressApplied?.(result.address);
     setApplied((cur) => new Set(cur).add(row.id));
+    if (row.id === "address" || row.id === "comuna") locate();
   };
 
   const useAll = () => {
     onApply((cur) => pending.reduce((acc, r) => r.apply(acc), cur));
-    if (pending.some((row) => row.id === "address") && result?.address) {
-      onAddressApplied?.(result.address);
-    }
     setApplied(new Set(rows.map((r) => r.id)));
+    if (pending.some((r) => r.id === "address" || r.id === "comuna")) locate();
   };
 
   return (
@@ -276,6 +313,35 @@ export function BrainPanel({
       </div>
 
       {err && <p className="field__err">{err}</p>}
+
+      {photos.length > 0 && (
+        <div className="brain__photos">
+          <p className="field__hint">{t("brain.photosLead")}</p>
+          <div className="brain__photo-strip">
+            {photos.map((p) => (
+              <button
+                key={p.url}
+                type="button"
+                className={`brain__photo ${place.photoUrl === p.url ? "is-on" : ""}`}
+                title={[p.alt, p.host].filter(Boolean).join(" — ")}
+                onClick={() =>
+                  onApply((cur) => ({
+                    ...cur,
+                    photoUrl: p.url,
+                    // Credit the site it came from, not the CDN it's served
+                    // from: a reader should see whose photo this is.
+                    photoCredit: cur.photoCredit || new URL(p.page).hostname.replace(/^www\./, ""),
+                  }))
+                }
+              >
+                <img src={p.url} alt={p.alt ?? ""} loading="lazy" />
+                {p.kind === "logo" && <span className="brain__photo-tag">{t("brain.photoLogo")}</span>}
+              </button>
+            ))}
+          </div>
+          <p className="field__hint">{t("brain.photosNote")}</p>
+        </div>
+      )}
 
       {result && (
         <>

@@ -20,10 +20,33 @@ Then, in another terminal:
 npm run dev
 ```
 
-Open <http://localhost:5190/?admin>, sign in as an editor, open a place, and
-**“Extraer desde un link”** is the first section of the editor. If the bridge
-isn't running, that section doesn't render at all — which is also its state on
-the deployed site.
+Open <http://localhost:5190/?admin=1>. There are two ways in, and they answer
+different questions:
+
+**🧠 Cerebro**, in the admin strip — a chat. Paste a link and talk: ask what it
+makes of a café, tell it to check the Instagram too, correct an address it got
+wrong. When the conversation has produced something, a draft card appears, and
+**“Abrir en el editor”** opens the place editor with the form already filled for
+you to review. Reach for this when adding a café from scratch.
+
+It needs **no sign-in** — the bridge is on your own machine and the chat writes
+nothing anywhere, so gating it behind Supabase auth only ever made it
+unreachable while that auth was misconfigured. Saving still needs an editor
+session, as it always did.
+
+**“Extraer desde un link”**, the first section inside the place editor — the
+one-shot version. One URL, one pass, accept fields one at a time. Requires
+opening a place first, so it's for topping up a record you already have.
+
+If the bridge isn't running, the chat says so and names the command; the
+in-editor panel doesn't render at all. On the deployed site without the bridge,
+that's every visitor's experience.
+
+Either way the guardrails are the same, and they live in code rather than in the
+prompt: no coordinates, nothing verified, no photos, no Google Maps. A draft
+fills the form but cannot save itself — `canSave` still wants a geocoded
+location and a source, so a café that came out of a chat still ends with a human
+pressing Buscar and then Guardar.
 
 ## Picking a brain
 
@@ -46,17 +69,48 @@ panel.
 Env overrides: `BRIDGE_PROVIDER`, `BRIDGE_MODEL`, `BRIDGE_PORT`,
 `BRAIN_TIMEOUT_MS`, `BRIDGE_AUTONOMOUS`.
 
-## `providers.mjs` is a copy, not a fork
+Brain jobs have no deadline by default because multi-café specialty research
+can take several minutes. Set `BRAIN_TIMEOUT_MS` to a positive number only when
+you intentionally want the bridge to cancel long jobs.
 
-It is byte-identical to `~/Desktop/premiere-ai-panel/bridge/providers.mjs` (and
-the AE panel's). It is domain-agnostic on purpose. **Fix a provider bug in one
-panel, then copy the file to the others** — don't special-case it here.
+## Research ledger
 
-```bash
-shasum bridge/providers.mjs ~/Desktop/premiere-ai-panel/bridge/providers.mjs
-```
+Run `supabase/07-research-ledger.sql` once when setting up a new database. The
+editor-only `research_ledger` table remembers investigated candidates rejected
+as generic, non-specialty, insufficiently documented or closed. Active entries
+are sent to every discovery request so the Brain skips them; each status gets a
+recheck date because cafés and coffee suppliers can change. Visitors cannot
+read this table or its editorial notes.
+
+## `providers.mjs` is shared infrastructure
+
+It is domain-agnostic on purpose and also powers the Premiere and AE panels.
+Keep generic provider fixes in sync between the apps; coffee-specific behavior
+belongs in `server.mjs` and the coffee prompts.
 
 Ports: Premiere `3117`, After Effects `3118`, Coffee Finder `3119`.
+
+## Adding a café you found on Google Maps
+
+Paste the Maps link into **Cerebro** and it works. Nothing fetches Google — not
+the page, not even a redirect. What happens instead:
+
+1. The café's **name** is taken from the link text (`/maps/place/<name>/`), or
+   from whatever you typed next to it. A short `maps.app.goo.gl` link carries no
+   name, so type the café's name alongside it — one word, and you're already
+   looking at it.
+2. That name is looked up in **OpenStreetMap** (Nominatim, bounded to Santiago
+   — the same source the editor's *Buscar* button has always used).
+3. The brain drafts from the OSM match and cites the `openstreetmap.org` URL as
+   the source.
+
+The distinction that makes this fine: reading Google's pages is what their terms
+forbid, and we don't. A café's name and street address are facts about a
+business, published in an open database under ODbL — and the `osm` citation is
+both honest provenance and the attribution that licence asks for.
+
+Still off limits, whatever the editor pastes: review text, ratings, photos and
+opening hours from Maps. Those are Google's content, not facts about a street.
 
 ## What it refuses to do
 
@@ -101,6 +155,20 @@ after a Chrome update, that's why — and `npm run dev` sidesteps it.
 
 ## Tuning
 
-`extract-prompt.md` is the whole tuning surface, the same role `system-prompt.md`
-plays in the other panels. It's re-read on every request, so edit it and hit
-“Leer” again — no restart.
+Two prompts, one per surface, and both are the whole tuning surface for it —
+the same role `system-prompt.md` plays in the other panels:
+
+| file | drives |
+|---|---|
+| `chat-prompt.md` | **Cerebro** — how it talks, and when it emits a draft |
+| `extract-prompt.md` | “Extraer desde un link” — the one-shot JSON extractor |
+
+Both are re-read on every request, so edit and send again — no restart. The
+claim rules are duplicated across them deliberately: each is a complete
+instruction to a model that has never read the other, and a cross-reference
+would just be a rule the model can't follow.
+
+The chat asks for its draft in a ` ```coffee-finder-draft ` fence, but the
+parser takes the last fenced block that parses as JSON and carries a field it
+recognises — so a brain that fences it as ` ```json `, or wraps it in
+`{"draft": …}`, still works.

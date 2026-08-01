@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Session } from "@supabase/supabase-js";
 import type { Category, ClaimKey, FlagKey, Place } from "./types";
+import type { ChatMessage } from "./lib/brain";
 import { loadPlaces, savePlace } from "./lib/places";
 import { addReview, loadReviews, type Review } from "./lib/reviews";
 import { loadSubmissions, type Submission } from "./lib/submissions";
@@ -34,6 +35,20 @@ interface State {
   /** The public "list your café" form. */
   submitOpen: boolean;
 
+  // --- the brain ---
+  /** The editor's chat with the local brain bridge. */
+  brainOpen: boolean;
+  /** Kept here, not in the panel, so closing the chat to review a draft in the
+   *  editor doesn't throw away the conversation that produced it. */
+  brainThread: ChatMessage[];
+  brainSession?: string;
+  /** Remaining cafés in a multi-place review, after the one in the editor. */
+  draftQueue: Place[];
+  draftBatchTotal: number;
+  /** Bumped on every setEditing so the editor remounts — two drafts in a row
+   *  would otherwise share a mount and the second one's fields never appear. */
+  editSeq: number;
+
   init: () => Promise<void>;
   setClaim: (key: ClaimKey, value: ClaimStrictness) => void;
   toggleFlag: (flag: FlagKey) => void;
@@ -61,6 +76,11 @@ interface State {
   toggleFavorite: (placeId: string) => Promise<void>;
   refreshFavorites: () => Promise<void>;
 
+  setBrainOpen: (open: boolean) => void;
+  addBrainTurn: (turn: ChatMessage, sessionId?: string) => void;
+  clearBrainThread: () => void;
+  startDraftBatch: (places: Place[]) => void;
+
   refreshAuth: () => Promise<void>;
   setEditing: (p: Place | "new" | null) => void;
   persistPlace: (p: Place) => Promise<{ error: string | null }>;
@@ -84,6 +104,12 @@ export const useStore = create<State>((set, get) => ({
   favorites: [],
   submissions: [],
   submitOpen: false,
+  brainOpen: false,
+  brainThread: [],
+  brainSession: undefined,
+  draftQueue: [],
+  draftBatchTotal: 0,
+  editSeq: 0,
 
   init: async () => {
     if (get().status === "loading" || get().status === "ready") return;
@@ -119,19 +145,61 @@ export const useStore = create<State>((set, get) => ({
     else set({ favorites: [] });
   },
 
-  setEditing: (editing) => set({ editing }),
+  setEditing: (editing) =>
+    set((s) => ({
+      editing,
+      editSeq: s.editSeq + 1,
+      // A direct edit or cancel leaves any prior batch behind deliberately.
+      draftQueue: [],
+      draftBatchTotal: 0,
+    })),
+
+  setBrainOpen: (brainOpen) => set({ brainOpen }),
+
+  addBrainTurn: (turn, sessionId) =>
+    set((s) => ({
+      brainThread: [...s.brainThread, turn],
+      // Keep the previous session when a turn carries none: a brain without
+      // sessions echoes nothing back, and dropping it would restart the thread.
+      brainSession: sessionId ?? s.brainSession,
+    })),
+
+  clearBrainThread: () => set({ brainThread: [], brainSession: undefined }),
+
+  startDraftBatch: (places) => {
+    const [first, ...rest] = places;
+    if (!first) return;
+    set((s) => ({
+      editing: first,
+      editSeq: s.editSeq + 1,
+      draftQueue: rest,
+      draftBatchTotal: places.length,
+      brainOpen: false,
+    }));
+  },
 
   persistPlace: async (place) => {
     const res = await savePlace(place);
     if (!res.error) {
       // Re-read rather than patch in memory: the database applies triggers and
       // constraints, so what it stored is the truth, not what we sent.
+      let freshPlaces: Place[] | undefined;
       try {
-        const places = await loadPlaces();
-        set({ places, editing: null });
+        freshPlaces = await loadPlaces();
       } catch {
-        set({ editing: null });
+        // The write succeeded. A refresh failure must not trap the editor on a
+        // form that would create the same record again.
       }
+      set((s) => {
+        const [next, ...remaining] = s.draftQueue;
+        return {
+          ...(freshPlaces ? { places: freshPlaces } : {}),
+          editing: next ?? null,
+          draftQueue: remaining,
+          draftBatchTotal: next ? s.draftBatchTotal : 0,
+          editSeq: next ? s.editSeq + 1 : s.editSeq,
+        };
+      });
     }
     return res;
   },

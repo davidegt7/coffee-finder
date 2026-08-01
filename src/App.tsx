@@ -9,12 +9,25 @@ import { PlaceEditor } from "./components/PlaceEditor";
 import { LangToggle } from "./components/LangToggle";
 import { SubmitPlace } from "./components/SubmitPlace";
 import { SubmissionsQueue } from "./components/SubmissionsQueue";
+import { BrainChat } from "./components/BrainChat";
 import { useT } from "./lib/useT";
 import "./App.css";
 
 export default function App() {
-  const { status, error, init, selectedId, select, editing, submitOpen, setSubmitOpen, isEditor } =
-    useStore();
+  const {
+    status,
+    error,
+    init,
+    selectedId,
+    select,
+    editing,
+    editSeq,
+    submitOpen,
+    setSubmitOpen,
+    isEditor,
+    brainOpen,
+    setBrainOpen,
+  } = useStore();
   const { t } = useT();
 
   useEffect(() => {
@@ -75,10 +88,20 @@ export default function App() {
         </>
       )}
 
+      {brainOpen && (
+        <>
+          <div className="scrim" onClick={() => setBrainOpen(false)} />
+          <BrainChat />
+        </>
+      )}
+
       {editing && (
         <>
           <div className="scrim" />
-          <PlaceEditor key={editing === "new" ? "new" : editing.id} />
+          {/* Keyed on the sequence, not the id: two drafts in a row are both
+              new places with no id yet, and a shared key would keep the first
+              one's form state instead of showing the second one's fields. */}
+          <PlaceEditor key={editSeq} />
         </>
       )}
     </div>

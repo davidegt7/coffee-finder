@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useStore } from "../store";
 import { BrainPanel } from "./BrainPanel";
-import { geocode, type GeocodeHit } from "../lib/geocode";
+import { blankPlace } from "../lib/draft";
+import {
+  exactGeocodeHit,
+  geocode,
+  geocodeIntersection,
+  geocodeLookupQuery,
+  type GeocodeHit,
+} from "../lib/geocode";
 import { uploadPlacePhoto } from "../lib/photos";
 import { ITEMS } from "../lib/items";
 import { useT } from "../lib/useT";
@@ -13,7 +20,6 @@ import {
   CLAIM_KEYS,
   CLAIM_LABELS,
   FLAG_LABELS,
-  UNKNOWN_CLAIM,
   type Claim,
   type ClaimConfidence,
   type ClaimKey,
@@ -35,25 +41,6 @@ const CONFIDENCE_KEYS: Record<ClaimConfidence, StringKey> = {
   verified: "editor.confVerified",
 };
 
-const blankPlace = (): Place => ({
-  id: "",
-  name: "",
-  category: "cafe",
-  lat: 0,
-  lng: 0,
-  city: "Santiago",
-  items: [],
-  claims: {
-    roastsOnSite: { ...UNKNOWN_CLAIM },
-    specialty: { ...UNKNOWN_CLAIM },
-    glutenFree: { ...UNKNOWN_CLAIM },
-    seedOilFree: { ...UNKNOWN_CLAIM },
-  },
-  flags: [],
-  sources: [],
-  addedAt: new Date().toISOString().slice(0, 10),
-});
-
 const slug = (s: string) =>
   s
     .toLowerCase()
@@ -67,11 +54,15 @@ export function PlaceEditor() {
   const setEditing = useStore((s) => s.setEditing);
   const persistPlace = useStore((s) => s.persistPlace);
   const session = useStore((s) => s.session);
+  const draftQueueLength = useStore((s) => s.draftQueue.length);
+  const draftBatchTotal = useStore((s) => s.draftBatchTotal);
   const { t, lang } = useT();
 
-  const isNew = editing === "new";
+  // A draft from the chat arrives as a Place with no id yet — that's a new
+  // place with the form pre-filled, not an edit of an existing record.
+  const isNew = editing === "new" || (typeof editing === "object" && editing !== null && !editing.id);
   const [place, setPlace] = useState<Place>(() =>
-    isNew ? blankPlace() : { ...(editing as Place) },
+    editing === "new" ? blankPlace() : { ...(editing as Place) },
   );
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<GeocodeHit[] | null>(null);
@@ -81,6 +72,81 @@ export function PlaceEditor() {
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [upBusy, setUpBusy] = useState(false);
   const [upErr, setUpErr] = useState<string | null>(null);
+
+  const applyGeocodeHit = useCallback((hit: GeocodeHit) => {
+    setPlace((current) => ({
+      ...current,
+      lat: hit.lat,
+      lng: hit.lng,
+      // A geocoder returns the building's street address. Keep a fuller source
+      // address such as "local 101" when one already exists for visitors.
+      address: current.address?.trim() ? current.address : hit.address,
+      comuna: hit.comuna ?? current.comuna,
+      sources: current.sources.includes(hit.osm)
+        ? current.sources
+        : [...current.sources, hit.osm],
+    }));
+    setHits(null);
+  }, []);
+
+  const runGeocodeFor = useCallback(
+    async (query: string, fullAddress?: string, comuna?: string) => {
+      if (!query.trim()) return;
+      setGeoBusy(true);
+      setGeoErr(null);
+      setHits(null);
+      try {
+        const lookup = geocodeLookupQuery(query);
+        const found = await geocode(lookup);
+        const exact = exactGeocodeHit(lookup, found);
+        if (exact) applyGeocodeHit(exact);
+        else {
+          const corner = await geocodeIntersection(fullAddress ?? query, comuna);
+          if (corner) applyGeocodeHit(corner);
+          else if (found.length) setHits(found);
+          else setGeoErr(t("editor.geoNoResults"));
+        }
+      } catch (err) {
+        setGeoErr(err instanceof Error ? err.message : String(err));
+      } finally {
+        setGeoBusy(false);
+      }
+    },
+    [applyGeocodeHit, t],
+  );
+
+  /**
+   * Fill and run the location search from an address the editor just accepted.
+   *
+   * Retyping an address into a second box, one section below the row where you
+   * just approved it, is the kind of friction nobody notices while building and
+   * everybody feels while using. The search runs on its own; what it does NOT
+   * do is choose. The candidates still appear for a person to pick from, because
+   * the first Nominatim result is not reliably the right one — "Sur Coffee
+   * Roasters" once matched a motorway 25km south, and a wrong coordinate is
+   * indistinguishable from a right one once it's saved.
+   */
+  const locateFrom = useCallback(
+    (address?: string, comuna?: string) => {
+      const query = [address, comuna].filter(Boolean).join(", ");
+      if (!query) return;
+      setQ(query);
+      void runGeocodeFor(query, address, comuna);
+    },
+    [runGeocodeFor],
+  );
+
+  // A draft opened from the Cerebro chat arrives with an address and no
+  // coordinates, so start its search on arrival rather than waiting for the
+  // editor to retype what the draft already says.
+  const arrivedWithAddress = editing !== "new" && editing !== null && !editing.id && !!editing.address;
+  useEffect(() => {
+    if (!arrivedWithAddress) return;
+    const p = editing as Place;
+    locateFrom(p.address, p.comuna);
+    // Once, on arrival — re-running would fight the editor's own searches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arrivedWithAddress]);
 
   if (!editing) return null;
 
@@ -93,30 +159,10 @@ export function PlaceEditor() {
       flags: cur.flags.includes(f) ? cur.flags.filter((x) => x !== f) : [...cur.flags, f],
     }));
 
-  const runGeocode = async () => {
-    setGeoBusy(true);
-    setGeoErr(null);
-    setHits(null);
-    try {
-      const found = await geocode(q || place.name);
-      if (!found.length) setGeoErr(t("editor.geoNoResults"));
-      setHits(found);
-    } catch (err) {
-      setGeoErr(err instanceof Error ? err.message : String(err));
-    } finally {
-      setGeoBusy(false);
-    }
-  };
+  const runGeocode = () => runGeocodeFor(q || place.name, place.address, place.comuna);
 
   const pickHit = (h: GeocodeHit) => {
-    patch({
-      lat: h.lat,
-      lng: h.lng,
-      address: h.address ?? place.address,
-      comuna: h.comuna ?? place.comuna,
-      sources: place.sources.includes(h.osm) ? place.sources : [...place.sources, h.osm],
-    });
-    setHits(null);
+    applyGeocodeHit(h);
   };
 
   /**
@@ -183,14 +229,23 @@ export function PlaceEditor() {
       </button>
 
       <header className="sheet__head">
-        <span className="sheet__cat">{isNew ? t("editor.new") : t("editor.editing")}</span>
+        <span className="sheet__cat">
+          {isNew && draftBatchTotal > 1
+            ? t("editor.newBatch", {
+                current: draftBatchTotal - draftQueueLength,
+                total: draftBatchTotal,
+              })
+            : isNew
+              ? t("editor.new")
+              : t("editor.editing")}
+        </span>
         <h2>{place.name || t("editor.noName")}</h2>
       </header>
 
       {/* First, because it's the fastest way to fill the rest of this form —
           and it renders nothing at all unless the local brain bridge is up,
           so a visitor never sees it. */}
-      <BrainPanel place={place} onApply={setPlace} onAddressApplied={setQ} />
+      <BrainPanel place={place} onApply={setPlace} onLocate={locateFrom} />
 
       <section className="sheet__section">
         <h3>{t("editor.basics")}</h3>
@@ -217,6 +272,15 @@ export function PlaceEditor() {
         <h3>{t("editor.where")}</h3>
         {/* No lat/lng inputs, deliberately. A typo'd coordinate looks identical
             to a real one and sends someone to the wrong street. */}
+        <label className="field">
+          <span>{t("editor.displayAddress")}</span>
+          <input
+            value={place.address ?? ""}
+            onChange={(e) => patch({ address: e.target.value || undefined })}
+            placeholder={t("editor.displayAddressPlaceholder")}
+          />
+          <small>{t("editor.displayAddressHint")}</small>
+        </label>
         <div className="geo">
           <input
             value={q}

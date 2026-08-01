@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useStore } from "../store";
 import { reviewsFor, type Review } from "../lib/reviews";
 import { signInWithEmail, signOut } from "../lib/auth";
+import { instagramUrl } from "../lib/links";
 import { useT } from "../lib/useT";
 import { ClaimBadge, ClaimRow, UnknownClaims } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
@@ -254,11 +255,29 @@ export function PlaceSheet() {
           )}
           {place.instagram && (
             <a
-              href={`https://instagram.com/${place.instagram.replace(/^@/, "")}`}
+              className="link--ig"
+              href={instagramUrl(place.instagram)}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {place.instagram}
+              {/* Drawn rather than fetched: an <img> to Instagram's CDN would
+                  be a third-party request on every listing, and a broken icon
+                  the day they move it. Inherits colour from the link. */}
+              <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false">
+                <rect
+                  x="2.5"
+                  y="2.5"
+                  width="19"
+                  height="19"
+                  rx="5.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" />
+              </svg>
+              {t("sheet.instagram")}
             </a>
           )}
         </div>
