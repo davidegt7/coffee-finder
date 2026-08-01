@@ -4,6 +4,7 @@ import {
   LngLatBounds,
   Map as MapLibreMap,
   type MapLayerMouseEvent,
+  setWorkerUrl,
 } from "maplibre-gl";
 import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
@@ -21,6 +22,16 @@ const POINT_CENTRE_LAYER = "coffee-point-centres";
 
 const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
+
+// MapLibre 6 resolves its worker beside a shared module. Vite does not copy
+// either sibling automatically, so GitHub Pages returned 404 and left a
+// correctly sized but empty map. The build plugin in vite.config.ts copies both
+// stable filenames; BASE_URL gives this the `/coffee-finder/` project prefix.
+// Development keeps MapLibre's native node_modules-relative URL, which Vite can
+// serve directly because the package is excluded from dependency optimization.
+if (import.meta.env.PROD) {
+  setWorkerUrl(`${import.meta.env.BASE_URL}assets/maplibre-gl-worker.mjs`);
+}
 
 function currentStyle() {
   return document.documentElement.dataset.theme === "dark" ? DARK_STYLE : LIGHT_STYLE;
