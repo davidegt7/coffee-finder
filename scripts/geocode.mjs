@@ -16,13 +16,18 @@ const UA = "VitalMap/0.1 (https://github.com/davidegt7/coffee-finder)";
 const UNIT_LABEL =
   "(?:local|loc\\.?|oficina|of\\.?|piso|depto\\.?|departamento|dpto\\.?|unidad|suite|m[oó]dulo|tienda|store)";
 
+// Mirrors LOCALITY_ABBREVIATIONS in src/lib/geocode.ts — keep the two in step.
+// "Cdad. Autónoma de Buenos Aires" is the form Google and Argentine café
+// listings use, and Nominatim returns zero results for it on any street.
+const LOCALITY_ABBREVIATIONS = [[/\bCdad\b\.?/gi, "Ciudad"]];
+
 function lookupQuery(query) {
   const wholeUnit = new RegExp(`^${UNIT_LABEL}(?=\\s|#|n[°º.]?|\\d|$)`, "i");
   const inlineUnit = new RegExp(
     `\\s+${UNIT_LABEL}(?=\\s|#|n[°º.]?|\\d|$)\\s*(?:n[°º.]?\\s*)?[a-z0-9-]+`,
     "gi",
   );
-  return query
+  return LOCALITY_ABBREVIATIONS.reduce((text, [pattern, full]) => text.replace(pattern, full), query)
     .split(",")
     .map((part) => part.trim())
     .filter((part) => part && !wholeUnit.test(part))

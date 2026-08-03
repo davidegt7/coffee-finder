@@ -131,6 +131,23 @@ const UNIT_LABEL =
   "(?:local|loc\\.?|oficina|of\\.?|piso|depto\\.?|departamento|dpto\\.?|unidad|suite|m[oó]dulo|tienda|store)";
 
 /**
+ * Locality abbreviations Nominatim will not expand for itself.
+ *
+ * Argentina writes its capital as "Cdad. Autónoma de Buenos Aires" — the form
+ * Google Maps and most café listings produce — and Nominatim returns ZERO
+ * results for it, on any street. Spelling "Ciudad" out returns the right hit:
+ *
+ *   Franklin D. Roosevelt, C1428 Cdad. Autónoma de Buenos Aires  → 0 results
+ *   Franklin D. Roosevelt, C1428 Ciudad Autónoma de Buenos Aires → Belgrano ✓
+ *
+ * Each entry here is one that was measured to fail, not one that looked
+ * suspicious. "CABA", "C.A.B.A.", "Av." and the Argentine postal code
+ * ("C1428", "C1428ABC") all resolve fine as written and are left alone —
+ * rewriting a string the geocoder already understands can only lose.
+ */
+const LOCALITY_ABBREVIATIONS: [RegExp, string][] = [[/\bCdad\b\.?/gi, "Ciudad"]];
+
+/**
  * Nominatim locates buildings, not their internal shops/offices. Remove unit
  * details only from the lookup string; the Place keeps the original address so
  * visitors still see "local 101" after coordinates are selected.
@@ -141,7 +158,11 @@ export function geocodeLookupQuery(query: string): string {
     `\\s+${UNIT_LABEL}(?=\\s|#|n[°º.]?|\\d|$)\\s*(?:n[°º.]?\\s*)?[a-z0-9-]+`,
     "gi",
   );
-  return query
+  const expanded = LOCALITY_ABBREVIATIONS.reduce(
+    (text, [pattern, full]) => text.replace(pattern, full),
+    query,
+  );
+  return expanded
     .split(",")
     .map((part) => part.trim())
     .filter((part) => part && !wholeUnit.test(part))
