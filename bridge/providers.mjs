@@ -23,6 +23,32 @@ const MAX_HISTORY_MESSAGES = 24; // keep replayed context bounded
 
 // --------------------------------------------------------- CLI (agentic)
 
+/**
+ * Why the CLI failed, in whichever stream it chose to say so.
+ *
+ * Claude Code reports "Not logged in · Please run /login", quota, and API
+ * errors as JSON on STDOUT and *then* exits non-zero, leaving stderr empty.
+ * Reading stderr alone turned every one of those into a bare "exited 1:" with
+ * nothing after the colon — the panel discarding the one sentence that says
+ * what to do. Prefer the CLI's own words wherever it put them, then stderr's
+ * tail, where actionable errors land last.
+ */
+function failureReason(out, err) {
+  const stdout = out.trim();
+  if (stdout) {
+    try {
+      const parsed = JSON.parse(stdout);
+      const said = parsed.result ?? parsed.error?.message ?? parsed.error ?? parsed.message;
+      if (typeof said === "string" && said.trim()) return said.trim().slice(0, 1500);
+    } catch {
+      // Not JSON. Plain-text CLIs put their reason on stderr, handled below.
+    }
+  }
+  const stderr = err.trim();
+  if (stderr) return stderr.slice(-1500);
+  return stdout ? stdout.slice(-1500) : "no output";
+}
+
 function runCli(command, args, stdin, timeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ["pipe", "pipe", "pipe"] });
@@ -42,8 +68,7 @@ function runCli(command, args, stdin, timeoutMs) {
     });
     child.on("close", (code) => {
       if (timer) clearTimeout(timer);
-      // CLI warnings can be verbose; actionable API errors are usually last.
-      if (code !== 0) reject(new Error(`${command} exited ${code}: ${err.slice(-1500)}`));
+      if (code !== 0) reject(new Error(`${command} exited ${code}: ${failureReason(out, err)}`));
       else resolve(out);
     });
     child.stdin.end(stdin);
