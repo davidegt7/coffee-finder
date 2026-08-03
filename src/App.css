@@ -1688,13 +1688,27 @@
   border-color: var(--accent);
 }
 
-/* Beans is for the visitor, the owner CTA is for a business — same shape, but
-   this one leads so the reader's own errand comes first. */
-.owner-cta--beans {
-  margin-bottom: 0;
-  color: var(--text);
-  border-color: var(--accent);
+/* Sits above the first card. Quieter than a card so it doesn't read as a
+   result, loud enough to be seen without scrolling — the whole reason it moved
+   up here from the foot of a several-hundred-item list. */
+.beans-cta {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--accent);
   background: var(--accent-wash);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 550;
+  text-align: center;
+}
+
+.beans-cta:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* ============================================================

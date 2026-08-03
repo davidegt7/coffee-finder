@@ -39,6 +39,15 @@ export function PlaceList() {
 
   return (
     <div className="list">
+      {/* At the TOP, not the end. This first sat below the last card on the
+          theory that someone who scrolled that far hadn't found a café — but
+          the list runs to a few hundred places, so "the end" is somewhere
+          nobody ever arrives. Buying beans is a different errand from finding
+          a seat, and you have to be able to leave for it early. */}
+      <button className="beans-cta" onClick={() => setBeansOpen(true)}>
+        {t("beans.cta")}
+      </button>
+
       {visible.map((place, i) => (
         <div key={place.id}>
           <button className="card" onClick={() => select(place.id)}>
@@ -113,13 +122,6 @@ export function PlaceList() {
           {i === 2 && <AdSlot where="list" />}
         </div>
       ))}
-
-      {/* Buying beans is a different errand from finding somewhere to sit, so
-          it sits at the end of the list rather than competing with the map.
-          Someone who scrolled this far has already not found a café to go to. */}
-      <button className="owner-cta owner-cta--beans" onClick={() => setBeansOpen(true)}>
-        {t("beans.cta")}
-      </button>
 
       {/* Owner CTA lives at the end of the list rather than floating over it.
           It's a rare action for a different audience, and a fixed pill in the

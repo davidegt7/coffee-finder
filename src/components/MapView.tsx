@@ -60,6 +60,72 @@ function featureCollection(places: Place[], selectedId: string | null) {
 }
 
 /**
+ * Repaint the basemap's own layers in the app's palette.
+ *
+ * Positron and OpenFreeMap's dark style are both deliberately colourless —
+ * parks arrive as rgb(230,233,229), water as rgb(194,200,202), and dark paints
+ * nearly everything within a few points of black. Handsome as a backdrop for
+ * someone else's data, lifeless as the canvas of a map that IS the product.
+ *
+ * The obvious fix — switch to a colourful style — is the wrong one. `bright`
+ * is 119 layers against Positron's 55, more even than the Liberty style that
+ * was dropped for stalling Mobile Safari (see LIGHT_STYLE above). Recolouring
+ * costs no extra layers at all, so phones keep the fix they were given.
+ *
+ * Every layer is looked up before it is touched: these ids belong to a style
+ * we don't control, and if OpenFreeMap renames one the map must come out
+ * merely untinted rather than broken.
+ */
+const BASEMAP_TINT: Record<"light" | "dark", Record<string, string>> = {
+  light: {
+    background: "#f7f2ea", // warm paper, not the stock grey
+    water: "#a7cbdb",
+    waterway: "#a7cbdb",
+    park: "#cfe2c4",
+    landuse_park: "#cfe2c4",
+    landcover_wood: "#c2d9b6",
+    landcover_grass: "#d7e6cc",
+    landuse_residential: "#f1eae0",
+    building: "#e6dbcc",
+  },
+  dark: {
+    background: "#141110", // matches --bg so the map reads as part of the app
+    water: "#16272f",
+    waterway: "#16272f",
+    park: "#16241a",
+    landuse_park: "#16241a",
+    landcover_wood: "#182a1c",
+    landcover_grass: "#152218",
+    landuse_residential: "#1b1614",
+    building: "#221b18",
+  },
+};
+
+function tintBasemap(map: MapLibreMap) {
+  const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  for (const [id, color] of Object.entries(BASEMAP_TINT[theme])) {
+    const layer = map.getLayer(id);
+    if (!layer) continue;
+    // The paint property is named after the layer type: a background layer has
+    // no fill-color and setting one throws.
+    const property =
+      layer.type === "background"
+        ? "background-color"
+        : layer.type === "line"
+          ? "line-color"
+          : layer.type === "fill"
+            ? "fill-color"
+            : null;
+    if (!property) continue;
+    try {
+      map.setPaintProperty(id, property, color);
+    } catch {
+      // An upstream style change is a cosmetic loss, never a broken map.
+    }
+  }
+}
+
+/**
  * Adds the café data after every basemap style load. MapLibre removes custom
  * sources and layers when the light/dark style changes, so this is deliberately
  * safe to run more than once.
@@ -204,7 +270,11 @@ export function MapView() {
       console.error("Coffee Finder map:", event.error);
     });
 
-    map.on("style.load", () => addCoffeeLayers(map, dataRef.current));
+    map.on("style.load", () => {
+      // Tint first: the café layers sit on top and must not be repainted.
+      tintBasemap(map);
+      addCoffeeLayers(map, dataRef.current);
+    });
 
     const openCluster = async (event: MapLayerMouseEvent) => {
       const feature = event.features?.[0];
