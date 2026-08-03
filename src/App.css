@@ -975,7 +975,8 @@
   margin-top: 14px;
 }
 
-.sheet__links a {
+.sheet__links a,
+.sheet__links .link-like {
   padding: 7px 13px;
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
@@ -985,8 +986,17 @@
   text-decoration: none;
 }
 
-.sheet__links a:hover {
+.sheet__links a:hover,
+.sheet__links .link-like:hover {
   border-color: var(--accent);
+}
+
+/* A button that has to sit in a row of links without looking like the odd one
+   out — it does the same job, it just has no destination of its own. */
+.sheet__links .link-like {
+  color: var(--text);
+  font-family: inherit;
+  line-height: normal;
 }
 
 .sheet__section {

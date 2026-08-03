@@ -10,6 +10,7 @@ import { EMPTY_FILTERS, type ClaimStrictness, type Filters } from "./lib/filters
 import { checkIsEditor, getSession, isSupabaseConfigured, onAuthChange } from "./lib/auth";
 import { initialLang, persistLang, type Lang } from "./lib/i18n";
 import { applyTheme, initialTheme, type Theme } from "./lib/theme";
+import { readPlaceParam, writePlaceParam } from "./lib/placeUrl";
 
 interface State {
   places: Place[];
@@ -64,6 +65,7 @@ interface State {
   toggleComuna: (comuna: string) => void;
   resetFilters: () => void;
   select: (id: string | null) => void;
+  syncFromUrl: () => void;
   setLang: (lang: Lang) => void;
   setTheme: (theme: Theme) => void;
   submitReview: (review: {
@@ -122,7 +124,13 @@ export const useStore = create<State>((set, get) => ({
     set({ status: "loading", error: null });
     try {
       const places = await loadPlaces();
-      set({ places, status: "ready" });
+      // A shared link names a place we only just learned about, so the id is
+      // resolved here rather than at startup. An id that no longer exists is
+      // ignored: a café that closed should open the map, not an error.
+      const shared = readPlaceParam();
+      const selectedId = shared && places.some((p) => p.id === shared) ? shared : null;
+      set({ places, status: "ready", selectedId });
+      if (shared && !selectedId) writePlaceParam(null);
       // Reviews are secondary — never let them delay or break the map.
       void loadReviews().then((reviews) => set({ reviews })).catch(() => {});
     } catch (err) {
@@ -275,7 +283,20 @@ export const useStore = create<State>((set, get) => ({
       },
     })),
   resetFilters: () => set({ filters: EMPTY_FILTERS }),
-  select: (selectedId) => set({ selectedId }),
+  select: (selectedId) => {
+    writePlaceParam(selectedId);
+    set({ selectedId });
+  },
+
+  /**
+   * Back/forward moved us — adopt whatever the URL now says WITHOUT writing to
+   * history again, or the two would push each other in a loop.
+   */
+  syncFromUrl: () => {
+    const shared = readPlaceParam();
+    const { places } = get();
+    set({ selectedId: shared && places.some((p) => p.id === shared) ? shared : null });
+  },
 
   setTheme: (theme) => {
     applyTheme(theme);

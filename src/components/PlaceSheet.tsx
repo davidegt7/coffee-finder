@@ -3,6 +3,7 @@ import { useStore } from "../store";
 import { reviewsFor, type Review } from "../lib/reviews";
 import { signInWithEmail, signOut } from "../lib/auth";
 import { instagramUrl } from "../lib/links";
+import { placeUrl } from "../lib/placeUrl";
 import { useT } from "../lib/useT";
 import { ClaimBadge, ClaimRow, UnknownClaims } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
@@ -183,8 +184,31 @@ export function PlaceSheet() {
   // Collapsed by default: the evidence is long, and the summary in the header
   // already answers the question the section exists to answer.
   const [claimsOpen, setClaimsOpen] = useState(false);
+  const [shared, setShared] = useState(false);
 
   const place = places.find((p) => p.id === selectedId);
+
+  /**
+   * Native share sheet where the device has one, clipboard otherwise. A user
+   * dismissing the share sheet throws AbortError, which is a decision rather
+   * than a failure and must not fall through to a silent copy.
+   */
+  const share = async () => {
+    if (!place) return;
+    const url = placeUrl(place.id);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: place.name, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      setTimeout(() => setShared(false), 2_000);
+    } catch {
+      // Cancelled, or a browser that permits neither. Nothing to report: the
+      // link is in the address bar either way.
+    }
+  };
   const reviews = useMemo(
     () => (place ? reviewsFor(place.id, allReviews) : []),
     [place, allReviews],
@@ -251,6 +275,12 @@ export function PlaceSheet() {
           >
             {t("sheet.directions")}
           </a>
+          {/* The address bar already carries this café's link; this is for the
+              phones where nobody can see the address bar to copy it. Native
+              share sheet where there is one, clipboard everywhere else. */}
+          <button className="link-like" onClick={() => void share()}>
+            {shared ? t("sheet.shareDone") : t("sheet.share")}
+          </button>
           {place.website && (
             <a href={place.website} target="_blank" rel="noopener noreferrer">
               {t("sheet.website")}

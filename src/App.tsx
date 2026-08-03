@@ -21,6 +21,7 @@ export default function App() {
     init,
     selectedId,
     select,
+    syncFromUrl,
     editing,
     editSeq,
     submitOpen,
@@ -36,6 +37,15 @@ export default function App() {
   useEffect(() => {
     void init();
   }, [init]);
+
+  // Back/forward — including the phone's back gesture — moves between places
+  // rather than leaving the app, which is what someone who just tapped into a
+  // café expects "back" to undo.
+  useEffect(() => {
+    const onPop = () => syncFromUrl();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [syncFromUrl]);
 
   useEffect(() => {
     if (!selectedId) return;
