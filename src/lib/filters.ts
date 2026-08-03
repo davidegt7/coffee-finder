@@ -1,5 +1,6 @@
 import type { Category, Claim, ClaimKey, FlagKey, Place } from "../types";
 import { placeHasItem } from "./items";
+import { fold } from "./text";
 
 /**
  * How strict a claim filter is:
@@ -58,19 +59,24 @@ export function matchesClaim(
   return claim.scope === "all" || claim.scope === "some";
 }
 
+/**
+ * Both sides are accent-folded, so "cafe" finds "Café" and "nunoa" finds
+ * "Ñuñoa". Typing the accent still works — folding is applied to the query as
+ * well as the place, so the two can never disagree.
+ */
 function matchesQuery(place: Place, query: string): boolean {
-  const q = query.trim().toLowerCase();
+  const q = fold(query.trim());
   if (!q) return true;
-  const haystack = [
-    place.name,
-    place.comuna ?? "",
-    place.city,
-    place.country,
-    place.address ?? "",
-    ...place.items,
-  ]
-    .join(" ")
-    .toLowerCase();
+  const haystack = fold(
+    [
+      place.name,
+      place.comuna ?? "",
+      place.city,
+      place.country,
+      place.address ?? "",
+      ...place.items,
+    ].join(" "),
+  );
   return q.split(/\s+/).every((term) => haystack.includes(term));
 }
 

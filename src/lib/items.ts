@@ -1,4 +1,5 @@
 import type { Place } from "../types";
+import { fold } from "./text";
 
 /**
  * The item taxonomy, two levels deep.
@@ -185,11 +186,7 @@ export function itemIdsForIntent(intentId: ItemIntent["id"]): string[] {
 }
 
 /** Accent- and case-insensitive: Place.items is hand-written, "Té" must match "te". */
-const norm = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, ""); // combining diacritics
+const norm = fold;
 
 /**
  * One-directional on purpose: the place's text must CONTAIN the item, never the
