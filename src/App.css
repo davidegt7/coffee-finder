@@ -1688,6 +1688,91 @@
   border-color: var(--accent);
 }
 
+/* Beans is for the visitor, the owner CTA is for a business — same shape, but
+   this one leads so the reader's own errand comes first. */
+.owner-cta--beans {
+  margin-bottom: 0;
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+/* ============================================================
+   Where to buy beans
+   ============================================================ */
+
+.beans__count {
+  margin: 4px 0 10px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.beans__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.beans__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.beans__row:last-child {
+  border-bottom: 0;
+}
+
+.beans__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.beans__name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.beans__meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.beans__via {
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+
+.beans__buy {
+  flex: none;
+  height: 34px;
+  padding: 0 16px;
+  font-size: 13px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.beans__empty {
+  margin: 18px 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.beans__note {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
 .queue {
   border-bottom: 1px solid var(--line);
   background: var(--accent-wash);

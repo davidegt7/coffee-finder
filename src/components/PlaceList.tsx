@@ -13,6 +13,7 @@ export function PlaceList() {
   const select = useStore((s) => s.select);
   const resetFilters = useStore((s) => s.resetFilters);
   const setSubmitOpen = useStore((s) => s.setSubmitOpen);
+  const setBeansOpen = useStore((s) => s.setBeansOpen);
   const { t, lang } = useT();
   const favorites = useStore((s) => s.favorites);
   const toggleFavorite = useStore((s) => s.toggleFavorite);
@@ -112,6 +113,13 @@ export function PlaceList() {
           {i === 2 && <AdSlot where="list" />}
         </div>
       ))}
+
+      {/* Buying beans is a different errand from finding somewhere to sit, so
+          it sits at the end of the list rather than competing with the map.
+          Someone who scrolled this far has already not found a café to go to. */}
+      <button className="owner-cta owner-cta--beans" onClick={() => setBeansOpen(true)}>
+        {t("beans.cta")}
+      </button>
 
       {/* Owner CTA lives at the end of the list rather than floating over it.
           It's a rare action for a different audience, and a fixed pill in the

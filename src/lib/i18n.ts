@@ -275,6 +275,19 @@ const ES = {
   "chat.superseded": "Hay un borrador más nuevo abajo.",
   "chat.foot":
     "Todo lo que proponga entra como «lo dice el local», con el link como fuente. Las coordenadas las pones tú en el editor, y nada se guarda hasta que le des Guardar.",
+
+  "beans.cta": "🫘 ¿Dónde compro grano?",
+  "beans.eyebrow": "Café en grano",
+  "beans.title": "Dónde comprar grano",
+  "beans.intro":
+    "Tostadores y cafeterías que venden grano, con el link a donde lo venden ellos. Le compras directo a ellos: no vendemos café ni nos llevamos una parte.",
+  "beans.count": "{n} venden grano",
+  "beans.buy": "Comprar",
+  "beans.viaInstagram": "Venden por Instagram — hay que escribirles, no es tienda con carrito.",
+  "beans.empty": "Todavía no hay nadie registrado vendiendo grano.",
+  "beans.emptyHere": "Nadie vendiendo grano en {where} todavía. Prueba ampliando la zona.",
+  "beans.note":
+    "El orden es alfabético, nada más. Nadie paga por salir más arriba — y si algún día alguien paga, lo vas a leer acá.",
 } as const;
 
 const EN: Record<keyof typeof ES, string> = {
@@ -534,6 +547,19 @@ const EN: Record<keyof typeof ES, string> = {
   "chat.superseded": "There's a newer draft below.",
   "chat.foot":
     "Anything it proposes lands as “the place says so”, sourced to the link. You set the coordinates in the editor, and nothing is stored until you press Save.",
+
+  "beans.cta": "🫘 Where do I buy beans?",
+  "beans.eyebrow": "Coffee beans",
+  "beans.title": "Where to buy beans",
+  "beans.intro":
+    "Roasters and cafés that sell beans, linked to where they sell them themselves. You buy direct from them — we don't sell coffee and we don't take a cut.",
+  "beans.count": "{n} sell beans",
+  "beans.buy": "Buy",
+  "beans.viaInstagram": "Sells via Instagram — you'll need to message them, it's not a checkout.",
+  "beans.empty": "Nobody logged as selling beans yet.",
+  "beans.emptyHere": "Nobody selling beans in {where} yet. Try widening the area.",
+  "beans.note":
+    "The order is alphabetical and nothing else. Nobody pays to appear higher — and if that ever changes, you'll read it right here.",
 };
 
 const STRINGS: Record<Lang, Record<keyof typeof ES, string>> = { es: ES, en: EN };

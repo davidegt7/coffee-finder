@@ -8,6 +8,7 @@ import { AdminBar } from "./components/AdminBar";
 import { PlaceEditor } from "./components/PlaceEditor";
 import { LangToggle } from "./components/LangToggle";
 import { SubmitPlace } from "./components/SubmitPlace";
+import { BeansSheet } from "./components/BeansSheet";
 import { SubmissionsQueue } from "./components/SubmissionsQueue";
 import { BrainChat } from "./components/BrainChat";
 import { useT } from "./lib/useT";
@@ -24,6 +25,8 @@ export default function App() {
     editSeq,
     submitOpen,
     setSubmitOpen,
+    beansOpen,
+    setBeansOpen,
     isEditor,
     brainOpen,
     setBrainOpen,
@@ -85,6 +88,13 @@ export default function App() {
         <>
           <div className="scrim" onClick={() => setSubmitOpen(false)} />
           <SubmitPlace />
+        </>
+      )}
+
+      {beansOpen && (
+        <>
+          <div className="scrim" onClick={() => setBeansOpen(false)} />
+          <BeansSheet />
         </>
       )}
 

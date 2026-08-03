@@ -34,6 +34,8 @@ interface State {
   submissions: Submission[];
   /** The public "list your café" form. */
   submitOpen: boolean;
+  /** "Where to buy beans" — roasters who sell, and where. */
+  beansOpen: boolean;
 
   // --- the brain ---
   /** The editor's chat with the local brain bridge. */
@@ -73,6 +75,7 @@ interface State {
   }) => Promise<{ error: string | null }>;
   refreshReviews: () => Promise<void>;
   setSubmitOpen: (open: boolean) => void;
+  setBeansOpen: (open: boolean) => void;
   refreshSubmissions: () => Promise<void>;
   toggleFavorite: (placeId: string) => Promise<void>;
   refreshFavorites: () => Promise<void>;
@@ -106,6 +109,7 @@ export const useStore = create<State>((set, get) => ({
   favorites: [],
   submissions: [],
   submitOpen: false,
+  beansOpen: false,
   brainOpen: false,
   brainThread: [],
   brainSession: undefined,
@@ -301,6 +305,8 @@ export const useStore = create<State>((set, get) => ({
   },
 
   setSubmitOpen: (submitOpen) => set({ submitOpen }),
+
+  setBeansOpen: (beansOpen) => set({ beansOpen }),
 
   refreshFavorites: async () => {
     try {
