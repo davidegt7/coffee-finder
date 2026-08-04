@@ -61,6 +61,44 @@ function Trail({ crumbs, label }: { crumbs: { label: string; onClick?: () => voi
   );
 }
 
+/**
+ * The rail along the bottom of every step in the refine flow.
+ *
+ * "Next" is also the skip: someone with no opinion about place type should
+ * pass it in one tap, and a separate Skip button would be two words for the
+ * same motion. On the last step it says so, because "Next" pointing at nothing
+ * is a small lie about how much is left.
+ */
+function ChainFooter({
+  step,
+  total,
+  onBack,
+  onNext,
+  labels,
+}: {
+  step: number;
+  total: number;
+  onBack: (() => void) | null;
+  onNext: () => void;
+  labels: { back: string; next: string; done: string; step: string };
+}) {
+  return (
+    <div className="chain-foot">
+      {onBack ? (
+        <button type="button" className="chain-foot__back" onClick={onBack}>
+          ← {labels.back}
+        </button>
+      ) : (
+        <span />
+      )}
+      <span className="chain-foot__step">{labels.step}</span>
+      <button type="button" className="chain-foot__next" onClick={onNext}>
+        {step === total ? labels.done : `${labels.next} →`}
+      </button>
+    </div>
+  );
+}
+
 export function FilterBar() {
   const {
     filters,
@@ -172,6 +210,34 @@ export function FilterBar() {
   }, [open]);
 
   const toggle = (menu: Exclude<Menu, null>) => setOpen((cur) => (cur === menu ? null : menu));
+
+  /**
+   * The three refining filters are one flow, not three unrelated dropdowns.
+   *
+   * Location is not in it: it's the question you answer first and on its own,
+   * and it already ends by closing onto results.
+   */
+  const CHAIN = ["item", "attrs", "category"] as const;
+  const stepIndex = CHAIN.indexOf(open as (typeof CHAIN)[number]);
+
+  /** Each step opens at its own top level rather than wherever it was left. */
+  const goToStep = (i: number) => {
+    setIntent(null);
+    setAttrGroup(null);
+    setOpen(i < 0 || i >= CHAIN.length ? null : CHAIN[i]);
+  };
+
+  /**
+   * Advance after a choice — and after a skip, which is the same motion. The
+   * last step closes the flow, because by then the thing worth looking at is
+   * the list, not another panel.
+   *
+   * Deliberately NOT wired to the claim chips. Tapping a claim cycles
+   * off → hay opciones → 100%, so advancing on the first tap would put "100%"
+   * permanently out of reach. A tap that means "I've chosen" advances; a tap
+   * that means "I'm still adjusting" does not.
+   */
+  const advance = () => goToStep(stepIndex + 1);
 
   return (
     <div className="filters" ref={rootRef}>
@@ -395,7 +461,10 @@ export function FilterBar() {
                               <button
                                 key={item.id}
                                 className={`chip chip--item ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
-                                onClick={() => toggleItem(item.id)}
+                                onClick={() => {
+                                  toggleItem(item.id);
+                                  advance();
+                                }}
                                 aria-pressed={on}
                                 title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
                               >
@@ -413,6 +482,19 @@ export function FilterBar() {
           )}
 
           {intent === null && <p className="menu-panel__hint">{t("item.pickIntent")}</p>}
+
+          <ChainFooter
+            step={1}
+            total={3}
+            onBack={null}
+            onNext={advance}
+            labels={{
+              back: t("chain.back"),
+              next: t("chain.next"),
+              done: t("chain.done"),
+              step: t("chain.step", { n: 1, total: 3 }),
+            }}
+          />
         </div>
       )}
 
@@ -479,7 +561,10 @@ export function FilterBar() {
                       <button
                         key={key}
                         className={`chip chip--flag ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
-                        onClick={() => toggleFlag(key)}
+                        onClick={() => {
+                          toggleFlag(key);
+                          advance();
+                        }}
                         aria-pressed={on}
                         title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
                       >
@@ -532,6 +617,19 @@ export function FilterBar() {
               </span>
             </label>
           )}
+
+          <ChainFooter
+            step={2}
+            total={3}
+            onBack={() => goToStep(0)}
+            onNext={advance}
+            labels={{
+              back: t("chain.back"),
+              next: t("chain.next"),
+              done: t("chain.done"),
+              step: t("chain.step", { n: 2, total: 3 }),
+            }}
+          />
         </div>
       )}
 
@@ -542,7 +640,10 @@ export function FilterBar() {
               <button
                 key={cat}
                 className={`chip chip--cat ${filters.categories.includes(cat) ? "is-on" : ""}`}
-                onClick={() => toggleCategory(cat)}
+                onClick={() => {
+                  toggleCategory(cat);
+                  advance();
+                }}
                 aria-pressed={filters.categories.includes(cat)}
               >
                 <span aria-hidden="true">{CATEGORY_LABELS[cat].icon}</span>{" "}
@@ -550,6 +651,19 @@ export function FilterBar() {
               </button>
             ))}
           </div>
+
+          <ChainFooter
+            step={3}
+            total={3}
+            onBack={() => goToStep(1)}
+            onNext={advance}
+            labels={{
+              back: t("chain.back"),
+              next: t("chain.next"),
+              done: t("chain.done"),
+              step: t("chain.step", { n: 3, total: 3 }),
+            }}
+          />
         </div>
       )}
     </div>

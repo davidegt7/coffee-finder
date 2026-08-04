@@ -36,6 +36,10 @@ const ES = {
   "menu.item": "Qué buscas",
   "menu.attrs": "Características",
   "menu.category": "Tipo de lugar",
+  "chain.back": "Atrás",
+  "chain.next": "Siguiente",
+  "chain.done": "Ver resultados",
+  "chain.step": "Paso {n} de {total}",
 
   "item.emptyTitle": "Nadie ha registrado esto todavía",
   "item.countTitle": "{n} lugares",
@@ -312,6 +316,10 @@ const EN: Record<keyof typeof ES, string> = {
   "menu.item": "What you want",
   "menu.attrs": "Characteristics",
   "menu.category": "Place type",
+  "chain.back": "Back",
+  "chain.next": "Next",
+  "chain.done": "See results",
+  "chain.step": "Step {n} of {total}",
 
   "item.emptyTitle": "Nobody has logged this yet",
   "item.countTitle": "{n} places",
