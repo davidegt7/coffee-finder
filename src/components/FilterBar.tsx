@@ -122,6 +122,14 @@ export function FilterBar() {
   // Which top-level intent is expanded inside the "Qué buscas" menu.
   const [intent, setIntent] = useState<ItemIntent["id"] | null>(null);
   const [attrGroup, setAttrGroup] = useState<string | null>(null);
+  /**
+   * Which section of the chosen errand is showing. "Café para tomar" holds two
+   * — the coffee, then something to eat — and leaving for the next STEP after
+   * the first pick skipped the second entirely, so choosing a flat white meant
+   * never being offered the pastry. Sections nest the way cities nest inside a
+   * country: you move through them, not past them.
+   */
+  const [section, setSection] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const strictnessHint: Record<ClaimStrictness, string> = {
@@ -223,6 +231,7 @@ export function FilterBar() {
   /** Each step opens at its own top level rather than wherever it was left. */
   const goToStep = (i: number) => {
     setIntent(null);
+    setSection(0);
     setAttrGroup(null);
     setOpen(i < 0 || i >= CHAIN.length ? null : CHAIN[i]);
   };
@@ -238,6 +247,17 @@ export function FilterBar() {
    * that means "I'm still adjusting" does not.
    */
   const advance = () => goToStep(stepIndex + 1);
+
+  /**
+   * Forward through the flow: sections first, then steps. Next has to respect
+   * sections for the same reason a selection does — otherwise "skip the
+   * coffee" would silently skip the food along with it.
+   */
+  const forward = () => {
+    const it = INTENTS.find((i) => i.id === intent);
+    if (open === "item" && it && section < it.sections.length - 1) setSection(section + 1);
+    else advance();
+  };
 
   return (
     <div className="filters" ref={rootRef}>
@@ -418,7 +438,10 @@ export function FilterBar() {
                   <button
                     key={it.id}
                     className={`intent ${chosen ? "is-active" : ""}`}
-                    onClick={() => setIntent(it.id)}
+                    onClick={() => {
+                      setIntent(it.id);
+                      setSection(0);
+                    }}
                   >
                     <span className="intent__icon" aria-hidden="true">
                       {it.icon}
@@ -434,51 +457,57 @@ export function FilterBar() {
               })}
             </div>
           ) : (
-            INTENTS.filter((it) => it.id === intent).map((it) => (
-              <div key={it.id}>
-                <Trail
-                  label={t("menu.item")}
-                  crumbs={[
-                    { label: t("menu.item"), onClick: () => setIntent(null) },
-                    { label: `${it.icon} ${it.label[lang]}` },
-                  ]}
-                />
-                <div className="intent-panel">
-                  {it.sections.map((section) => (
-                    <div key={section.id} className="menu-panel__group">
-                      {section.label && (
-                        <h4 className="menu-panel__group-title">{section.label[lang]}</h4>
-                      )}
-                      <div className="menu-panel__chips">
-                        {[...section.items]
-                          // Real options first: with most of the map untagged,
-                          // alphabetical would bury the few that work under zeros.
-                          .sort((a, b) => (iCounts.get(b.id) ?? 0) - (iCounts.get(a.id) ?? 0))
-                          .map((item) => {
-                            const n = iCounts.get(item.id) ?? 0;
-                            const on = filters.items.includes(item.id);
-                            return (
-                              <button
-                                key={item.id}
-                                className={`chip chip--item ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
-                                onClick={() => {
-                                  toggleItem(item.id);
-                                  advance();
-                                }}
-                                aria-pressed={on}
-                                title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
-                              >
-                                {item.label[lang]}
-                                <span className="chip__n">{n}</span>
-                              </button>
-                            );
-                          })}
-                      </div>
+            INTENTS.filter((it) => it.id === intent).map((it) => {
+              const sec = it.sections[Math.min(section, it.sections.length - 1)];
+              const isLastSection = section >= it.sections.length - 1;
+              return (
+                <div key={it.id}>
+                  <Trail
+                    label={t("menu.item")}
+                    crumbs={[
+                      { label: t("menu.item"), onClick: () => setIntent(null) },
+                      {
+                        label: `${it.icon} ${it.label[lang]}`,
+                        // A link back only when there IS a section to come back
+                        // from; on a one-section errand it is just a label.
+                        ...(section > 0 ? { onClick: () => setSection(0) } : {}),
+                      },
+                      ...(sec.label && it.sections.length > 1 ? [{ label: sec.label[lang] }] : []),
+                    ]}
+                  />
+                  <div className="intent-panel">
+                    <div className="menu-panel__chips">
+                      {[...sec.items]
+                        // Real options first: with most of the map untagged,
+                        // alphabetical would bury the few that work under zeros.
+                        .sort((a, b) => (iCounts.get(b.id) ?? 0) - (iCounts.get(a.id) ?? 0))
+                        .map((item) => {
+                          const n = iCounts.get(item.id) ?? 0;
+                          const on = filters.items.includes(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              className={`chip chip--item ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
+                              onClick={() => {
+                                toggleItem(item.id);
+                                // Through the sections first, out of the step
+                                // only once there are none left.
+                                if (isLastSection) advance();
+                                else setSection(section + 1);
+                              }}
+                              aria-pressed={on}
+                              title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
+                            >
+                              {item.label[lang]}
+                              <span className="chip__n">{n}</span>
+                            </button>
+                          );
+                        })}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
 
           {intent === null && <p className="menu-panel__hint">{t("item.pickIntent")}</p>}
@@ -486,8 +515,8 @@ export function FilterBar() {
           <ChainFooter
             step={1}
             total={3}
-            onBack={null}
-            onNext={advance}
+            onBack={intent && section > 0 ? () => setSection(section - 1) : null}
+            onNext={forward}
             labels={{
               back: t("chain.back"),
               next: t("chain.next"),
