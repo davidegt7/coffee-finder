@@ -14,6 +14,25 @@
  * the point of rendering.
  */
 
+/**
+ * "Cómo llegar" — Google Maps' official directions URL.
+ *
+ * Worth being clear about, because this app refuses Google Maps elsewhere:
+ * that rule is about EXTRACTING their content, which their terms prohibit and
+ * which the brain is blocked from doing by hostname. Sending a person to Maps
+ * is the opposite — a documented URL endpoint Google publishes for exactly
+ * this, carrying nothing of theirs into our data. OpenStreetMap remains where
+ * the coordinates come FROM; Google is just where the walking directions are
+ * better, which is the only thing this button is for.
+ *
+ * Coordinates rather than the name: they're what we geocoded and checked, and
+ * a name lookup can quietly resolve to a different branch across town.
+ */
+export function directionsUrl(lat: number, lng: number): string {
+  const params = new URLSearchParams({ api: "1", destination: `${lat},${lng}` });
+  return `https://www.google.com/maps/dir/?${params}`;
+}
+
 /** `@handle`, `handle`, `instagram.com/handle`, or a full URL — all fine. */
 export function instagramUrl(raw: string): string {
   const value = raw.trim().replace(/^@+/, "");

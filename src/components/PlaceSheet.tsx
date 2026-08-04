@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useStore } from "../store";
 import { reviewsFor, type Review } from "../lib/reviews";
 import { signInWithEmail, signOut } from "../lib/auth";
-import { instagramUrl } from "../lib/links";
+import { directionsUrl, instagramUrl } from "../lib/links";
 import { placeUrl } from "../lib/placeUrl";
 import { useT } from "../lib/useT";
 import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
@@ -279,7 +279,7 @@ export function PlaceSheet() {
         )}
         <div className="sheet__links">
           <a
-            href={`https://www.openstreetmap.org/directions?to=${place.lat},${place.lng}`}
+            href={directionsUrl(place.lat, place.lng)}
             target="_blank"
             rel="noopener noreferrer"
           >
