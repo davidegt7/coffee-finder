@@ -11,6 +11,7 @@ import { checkIsEditor, getSession, isSupabaseConfigured, onAuthChange } from ".
 import { initialLang, persistLang, type Lang } from "./lib/i18n";
 import { applyTheme, initialTheme, type Theme } from "./lib/theme";
 import { readPlaceParam, writePlaceParam } from "./lib/placeUrl";
+import { getPosition, type Coords, type NearStatus } from "./lib/geo";
 
 interface State {
   places: Place[];
@@ -39,6 +40,10 @@ interface State {
   beansOpen: boolean;
   /** A newer build is installed and waiting for a reload. */
   updateReady: boolean;
+
+  /** Where the visitor is, once they've asked to sort by distance. */
+  near: Coords | null;
+  nearStatus: NearStatus;
 
   // --- the brain ---
   /** The editor's chat with the local brain bridge. */
@@ -81,6 +86,8 @@ interface State {
   setSubmitOpen: (open: boolean) => void;
   setBeansOpen: (open: boolean) => void;
   setUpdateReady: (ready: boolean) => void;
+  findNearMe: () => Promise<void>;
+  clearNear: () => void;
   refreshSubmissions: () => Promise<void>;
   toggleFavorite: (placeId: string) => Promise<void>;
   refreshFavorites: () => Promise<void>;
@@ -116,6 +123,8 @@ export const useStore = create<State>((set, get) => ({
   submitOpen: false,
   beansOpen: false,
   updateReady: false,
+  near: null,
+  nearStatus: "idle",
   brainOpen: false,
   brainThread: [],
   brainSession: undefined,
@@ -334,6 +343,25 @@ export const useStore = create<State>((set, get) => ({
   setBeansOpen: (beansOpen) => set({ beansOpen }),
 
   setUpdateReady: (updateReady) => set({ updateReady }),
+
+  /**
+   * "Cerca de mí" is an answer to "where are you going", so it replaces the
+   * country/city/barrio you had picked rather than narrowing inside it —
+   * nearest café within Ñuñoa when you are in Berlin is not what anyone means.
+   */
+  findNearMe: async () => {
+    set({ nearStatus: "locating" });
+    const { coords, status } = await getPosition();
+    set((s) => ({
+      near: coords ?? null,
+      nearStatus: status,
+      filters: coords
+        ? { ...s.filters, countryCode: null, city: null, comunas: [] }
+        : s.filters,
+    }));
+  },
+
+  clearNear: () => set({ near: null, nearStatus: "idle" }),
 
   refreshFavorites: async () => {
     try {

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
+import { distanceKm, formatDistance } from "../lib/geo";
 import { useT } from "../lib/useT";
 import { ClaimBadge } from "./ClaimBadge";
 import { AdSlot } from "./AdSlot";
@@ -14,14 +15,23 @@ export function PlaceList() {
   const resetFilters = useStore((s) => s.resetFilters);
   const setSubmitOpen = useStore((s) => s.setSubmitOpen);
   const setBeansOpen = useStore((s) => s.setBeansOpen);
+  const near = useStore((s) => s.near);
   const { t, lang } = useT();
   const favorites = useStore((s) => s.favorites);
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const session = useStore((s) => s.session);
-  const visible = useMemo(
-    () => applyFilters(places, filters, favorites),
-    [places, filters, favorites],
-  );
+  const visible = useMemo(() => {
+    const matched = applyFilters(places, filters, favorites);
+    // Nearest first once we know where you are. Sorted rather than cut off at a
+    // radius: a hard cutoff turns "nothing within 2km" into an empty screen,
+    // when "the closest is 6km away" is the more useful answer.
+    if (!near) return matched;
+    return [...matched].sort(
+      (a, b) =>
+        distanceKm(near, { lat: a.lat, lng: a.lng }) -
+        distanceKm(near, { lat: b.lat, lng: b.lng }),
+    );
+  }, [places, filters, favorites, near]);
 
   if (visible.length === 0) {
     return (
@@ -75,6 +85,13 @@ export function PlaceList() {
                   {[place.comuna ?? place.city, countryName(place.countryCode, place.country, lang)]
                     .filter(Boolean)
                     .join(" · ")}
+                  {/* Only while sorting by distance — a number with nothing to
+                      measure from would be decoration. */}
+                  {near && (
+                    <span className="card__distance">
+                      {formatDistance(distanceKm(near, { lat: place.lat, lng: place.lng }), lang)}
+                    </span>
+                  )}
                 </p>
               </div>
               {session && (

@@ -5,6 +5,7 @@ import {
   cityCounts,
   comunaCounts,
   countryCounts,
+  locationSuggestions,
   flagCounts,
   itemCounts,
   type ClaimStrictness,
@@ -116,6 +117,10 @@ export function FilterBar() {
     places,
     favorites,
     session,
+    near,
+    nearStatus,
+    findNearMe,
+    clearNear,
   } = useStore();
   const { t, lang } = useT();
   const [open, setOpen] = useState<Menu>(null);
@@ -179,6 +184,32 @@ export function FilterBar() {
     cityCounts(places, { ...filters, countryCode: code, city: null, comunas: [] }, code);
   const comunasIn = (city: string) =>
     comunaCounts(places, { ...filters, city, comunas: [] }, city);
+
+  /** Locations matching what's typed, offered instead of a keyword match. */
+  const suggestions = useMemo(
+    () => locationSuggestions(places, filters.query),
+    [places, filters.query],
+  );
+
+  /**
+   * Take the location and hand over to the ladder at the rung below it —
+   * choosing "Santiago" should leave you looking at its barrios, exactly as
+   * picking Santiago from the menu would. The query is cleared because the
+   * location filter now does the narrowing, and leaving the text behind would
+   * quietly AND a keyword match on top of it.
+   */
+  const useSuggestion = (s: (typeof suggestions)[number]) => {
+    setQuery("");
+    setCountry(s.countryCode);
+    if (s.city) setCity(s.city);
+    if (s.comuna) toggleComuna(s.comuna);
+    setIntent(null);
+    setSection(0);
+    setAttrGroup(null);
+    // A barrio is the bottom of the ladder: there is nothing left to choose, so
+    // show the results rather than an empty rung.
+    setOpen(s.comuna ? null : "where");
+  };
 
   const comunas = useMemo(
     () => (filters.city ? comunaCounts(places, filters, filters.city) : new Map<string, number>()),
@@ -277,6 +308,34 @@ export function FilterBar() {
         )}
       </div>
 
+      {suggestions.length > 0 && (
+        <ul className="place-hints">
+          {suggestions.map((s) => (
+            <li key={`${s.kind}:${s.countryCode}:${s.city ?? ""}:${s.comuna ?? ""}`}>
+              <button className="place-hint" onClick={() => useSuggestion(s)}>
+                <span className="place-hint__pin" aria-hidden="true">
+                  📍
+                </span>
+                <span className="place-hint__label">
+                  {s.label}
+                  <small>
+                    {t(
+                      s.kind === "country"
+                        ? "where.country"
+                        : s.kind === "city"
+                          ? "where.city"
+                          : "where.comuna",
+                    )}
+                    {s.city && s.kind !== "city" && s.kind !== "country" ? ` · ${s.city}` : ""}
+                  </small>
+                </span>
+                <span className="chip__n">{s.count}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {/* Location comes before everything: at global scale an unfiltered map
           is 600 pins and no answer. Rendered as its own row so it reads as the
           first question, not one chip among four. */}
@@ -304,6 +363,28 @@ export function FilterBar() {
 
               The trail above is how you get back up: hiding the level you just
               left would otherwise make the choice unchangeable. */}
+          {/* First, because it answers "where are you going" faster than any
+              amount of drilling — and it is the only answer that needs the
+              browser's permission, so its failures get said out loud rather
+              than leaving a button that appears to do nothing. */}
+          <button
+            className={`near-btn ${near ? "is-on" : ""}`}
+            onClick={() => (near ? clearNear() : void findNearMe())}
+            disabled={nearStatus === "locating"}
+          >
+            <span aria-hidden="true">🧭</span>
+            {nearStatus === "locating"
+              ? t("near.locating")
+              : near
+                ? `${t("near.on")} · ${t("near.clear")}`
+                : t("near.cta")}
+          </button>
+          {(nearStatus === "denied" ||
+            nearStatus === "unavailable" ||
+            nearStatus === "timeout") && (
+            <p className="field__err">{t(`near.${nearStatus}`)}</p>
+          )}
+
           <Trail
             label={t("where.prompt")}
             crumbs={[

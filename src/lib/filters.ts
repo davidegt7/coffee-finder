@@ -189,3 +189,66 @@ export function comunaCounts(places: Place[], filters: Filters, city: string): M
   }
   return new Map([...out.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "es")));
 }
+
+/**
+ * Places in the search box that are LOCATIONS rather than cafés.
+ *
+ * Typing "Providencia" used to filter the list to cafés whose text happened to
+ * contain the word — a keyword match that looks like a location filter and
+ * isn't. It doesn't narrow the map's geography, "¿A dónde vas?" still says
+ * "Todo el mundo", and there is no way to go on and pick a barrio within it.
+ *
+ * So a country, city or barrio you type is offered as itself. Choosing one sets
+ * the real location filter and drops you at the next rung of the ladder, which
+ * is the same thing choosing it from the menu would have done.
+ */
+export interface LocationSuggestion {
+  kind: "country" | "city" | "comuna";
+  label: string;
+  countryCode: string;
+  city?: string;
+  comuna?: string;
+  count: number;
+}
+
+export function locationSuggestions(
+  places: Place[],
+  query: string,
+  limit = 6,
+): LocationSuggestion[] {
+  const q = fold(query.trim());
+  if (q.length < 2) return [];
+
+  const seen = new Map<string, LocationSuggestion>();
+  const add = (s: Omit<LocationSuggestion, "count">) => {
+    const key = `${s.kind}:${s.countryCode}:${s.city ?? ""}:${s.comuna ?? ""}`;
+    const found = seen.get(key);
+    if (found) found.count += 1;
+    else seen.set(key, { ...s, count: 1 });
+  };
+
+  for (const p of places) {
+    if (fold(p.country).startsWith(q)) {
+      add({ kind: "country", label: p.country, countryCode: p.countryCode });
+    }
+    if (fold(p.city).startsWith(q)) {
+      add({ kind: "city", label: p.city, countryCode: p.countryCode, city: p.city });
+    }
+    if (p.comuna && fold(p.comuna).startsWith(q)) {
+      add({
+        kind: "comuna",
+        label: p.comuna,
+        countryCode: p.countryCode,
+        city: p.city,
+        comuna: p.comuna,
+      });
+    }
+  }
+
+  // Broadest first — someone typing "San" more often means the city than one
+  // barrio inside it — then by how much is actually there.
+  const rank = { country: 0, city: 1, comuna: 2 };
+  return [...seen.values()]
+    .sort((a, b) => rank[a.kind] - rank[b.kind] || b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
