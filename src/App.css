@@ -334,9 +334,9 @@
   transform: rotate(180deg);
 }
 
-/* The trail back up out of the location drill-down. Reads as a path, not as
+/* The trail back up out of any drilled-down menu. Reads as a path, not as
    buttons, so it doesn't compete with the chips that are the actual choice. */
-.where-trail {
+.drill-trail {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -346,7 +346,7 @@
   border-bottom: 1px solid var(--line-soft);
 }
 
-.where-trail__crumb {
+.drill-trail__crumb {
   padding: 3px 7px;
   border: none;
   border-radius: var(--r-sm, 8px);
@@ -356,19 +356,25 @@
   font-weight: 600;
 }
 
-.where-trail__crumb:hover:not(:disabled) {
+.drill-trail__crumb:hover:not(:disabled) {
   background: var(--accent-wash);
 }
 
 /* The level you are already on, and the crumbs above it once there is nothing
    further back to go — both are labels, not offers. */
-.where-trail__crumb:disabled,
-.where-trail__crumb.is-current {
+.drill-trail__crumb:disabled,
+.drill-trail__crumb.is-current {
   color: var(--text-2);
   font-weight: 550;
 }
 
-.where-trail__sep {
+.drill-trail__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.drill-trail__sep {
   color: var(--muted);
   font-size: 12px;
 }

@@ -26,6 +26,41 @@ const NEXT: Record<ClaimStrictness, ClaimStrictness> = { off: "some", some: "all
 
 type Menu = "where" | "attrs" | "category" | "item" | null;
 
+/**
+ * The path back out of a drilled-down menu.
+ *
+ * Every menu that hides the level you came from needs one of these, or the
+ * choice you just made becomes the one you can't change. The last crumb is
+ * where you are and is never a button; earlier ones with no handler are
+ * disabled rather than removed, so the shape of the path doesn't jump around
+ * as you move through it.
+ */
+function Trail({ crumbs, label }: { crumbs: { label: string; onClick?: () => void }[]; label: string }) {
+  return (
+    <nav className="drill-trail" aria-label={label}>
+      {crumbs.map((crumb, i) => {
+        const last = i === crumbs.length - 1;
+        return (
+          <span key={`${crumb.label}-${i}`} className="drill-trail__step">
+            {i > 0 && (
+              <span className="drill-trail__sep" aria-hidden="true">
+                ›
+              </span>
+            )}
+            {last || !crumb.onClick ? (
+              <span className={`drill-trail__crumb ${last ? "is-current" : ""}`}>{crumb.label}</span>
+            ) : (
+              <button type="button" className="drill-trail__crumb" onClick={crumb.onClick}>
+                {crumb.label}
+              </button>
+            )}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function FilterBar() {
   const {
     filters,
@@ -48,6 +83,7 @@ export function FilterBar() {
   const [open, setOpen] = useState<Menu>(null);
   // Which top-level intent is expanded inside the "Qué buscas" menu.
   const [intent, setIntent] = useState<ItemIntent["id"] | null>(null);
+  const [attrGroup, setAttrGroup] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const strictnessHint: Record<ClaimStrictness, string> = {
@@ -182,40 +218,26 @@ export function FilterBar() {
 
               The trail above is how you get back up: hiding the level you just
               left would otherwise make the choice unchangeable. */}
-          <nav className="where-trail" aria-label={t("where.prompt")}>
-            <button
-              type="button"
-              className="where-trail__crumb"
-              onClick={() => setCountry(null)}
-              disabled={!filters.countryCode}
-            >
-              {t("where.all")}
-            </button>
-            {filters.countryCode && (
-              <>
-                <span className="where-trail__sep" aria-hidden="true">›</span>
-                <button
-                  type="button"
-                  className="where-trail__crumb"
-                  onClick={() => setCity(null)}
-                  disabled={!filters.city}
-                >
-                  {countryName(
-                    filters.countryCode,
-                    places.find((p) => p.countryCode === filters.countryCode)?.country ??
-                      filters.countryCode.toUpperCase(),
-                    lang,
-                  )}
-                </button>
-              </>
-            )}
-            {filters.city && (
-              <>
-                <span className="where-trail__sep" aria-hidden="true">›</span>
-                <span className="where-trail__crumb is-current">{filters.city}</span>
-              </>
-            )}
-          </nav>
+          <Trail
+            label={t("where.prompt")}
+            crumbs={[
+              { label: t("where.all"), onClick: () => setCountry(null) },
+              ...(filters.countryCode
+                ? [
+                    {
+                      label: countryName(
+                        filters.countryCode,
+                        places.find((p) => p.countryCode === filters.countryCode)?.country ??
+                          filters.countryCode.toUpperCase(),
+                        lang,
+                      ),
+                      onClick: () => setCity(null),
+                    },
+                  ]
+                : []),
+              ...(filters.city ? [{ label: filters.city }] : []),
+            ]}
+          />
 
           <div className="menu-panel__chips">
             {whereLevel === "country" &&
@@ -312,75 +334,85 @@ export function FilterBar() {
       {open === "item" && (
         <div className="menu-panel menu-panel--scroll" id="menu-item">
           {/* Top level is the errand: drinking here, buying beans, buying gear.
-              Someone after a bag of beans has no use for a list of espresso
-              drinks, so only the chosen branch expands. */}
-          <div className="intents">
-            {INTENTS.map((it) => {
-              const ids = itemIdsForIntent(it.id);
-              const chosen = ids.filter((id) => filters.items.includes(id)).length;
-              const total = ids.reduce((n, id) => n + (iCounts.get(id) ?? 0), 0);
-              return (
-                <button
-                  key={it.id}
-                  className={`intent ${intent === it.id ? "is-open" : ""} ${chosen ? "is-active" : ""}`}
-                  onClick={() => setIntent(intent === it.id ? null : it.id)}
-                  aria-expanded={intent === it.id}
-                >
-                  <span className="intent__icon" aria-hidden="true">
-                    {it.icon}
-                  </span>
-                  <span className="intent__label">{it.label[lang]}</span>
-                  {chosen > 0 ? (
-                    <span className="menu-btn__count">{chosen}</span>
-                  ) : (
-                    <span className="intent__n">{total}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+              It used to be an accordion — every errand on screen at once with
+              one expanded underneath — which meant the list you were reading
+              was always sandwiched between two you weren't. Now the errand you
+              pick replaces the others, and the trail brings them back.
 
-          {INTENTS.filter((it) => it.id === intent).map((it) => (
-            <div key={it.id} className="intent-panel">
-              {it.sections.map((section) => (
-                <div key={section.id} className="menu-panel__group">
-                  {section.label && (
-                    <h4 className="menu-panel__group-title">{section.label[lang]}</h4>
-                  )}
-                  <div className="menu-panel__chips">
-                    {[...section.items]
-                      // Real options first: with most of the map untagged,
-                      // alphabetical would bury the few that work under zeros.
-                      .sort((a, b) => (iCounts.get(b.id) ?? 0) - (iCounts.get(a.id) ?? 0))
-                      .map((item) => {
-                        const n = iCounts.get(item.id) ?? 0;
-                        const on = filters.items.includes(item.id);
-                        return (
-                          <button
-                            key={item.id}
-                            className={`chip chip--item ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
-                            onClick={() => toggleItem(item.id)}
-                            aria-pressed={on}
-                            title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
-                          >
-                            {item.label[lang]}
-                            <span className="chip__n">{n}</span>
-                          </button>
-                        );
-                      })}
-                  </div>
-                </div>
-              ))}
+              Unlike the location menu this does NOT close when you choose:
+              these are multi-select, and shutting the panel after every tap
+              would make picking three things a nine-tap job. */}
+          {intent === null ? (
+            <div className="intents">
+              {INTENTS.map((it) => {
+                const ids = itemIdsForIntent(it.id);
+                const chosen = ids.filter((id) => filters.items.includes(id)).length;
+                const total = ids.reduce((n, id) => n + (iCounts.get(id) ?? 0), 0);
+                return (
+                  <button
+                    key={it.id}
+                    className={`intent ${chosen ? "is-active" : ""}`}
+                    onClick={() => setIntent(it.id)}
+                  >
+                    <span className="intent__icon" aria-hidden="true">
+                      {it.icon}
+                    </span>
+                    <span className="intent__label">{it.label[lang]}</span>
+                    {chosen > 0 ? (
+                      <span className="menu-btn__count">{chosen}</span>
+                    ) : (
+                      <span className="intent__n">{total}</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          ))}
+          ) : (
+            INTENTS.filter((it) => it.id === intent).map((it) => (
+              <div key={it.id}>
+                <Trail
+                  label={t("menu.item")}
+                  crumbs={[
+                    { label: t("menu.item"), onClick: () => setIntent(null) },
+                    { label: `${it.icon} ${it.label[lang]}` },
+                  ]}
+                />
+                <div className="intent-panel">
+                  {it.sections.map((section) => (
+                    <div key={section.id} className="menu-panel__group">
+                      {section.label && (
+                        <h4 className="menu-panel__group-title">{section.label[lang]}</h4>
+                      )}
+                      <div className="menu-panel__chips">
+                        {[...section.items]
+                          // Real options first: with most of the map untagged,
+                          // alphabetical would bury the few that work under zeros.
+                          .sort((a, b) => (iCounts.get(b.id) ?? 0) - (iCounts.get(a.id) ?? 0))
+                          .map((item) => {
+                            const n = iCounts.get(item.id) ?? 0;
+                            const on = filters.items.includes(item.id);
+                            return (
+                              <button
+                                key={item.id}
+                                className={`chip chip--item ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
+                                onClick={() => toggleItem(item.id)}
+                                aria-pressed={on}
+                                title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
+                              >
+                                {item.label[lang]}
+                                <span className="chip__n">{n}</span>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
 
           {intent === null && <p className="menu-panel__hint">{t("item.pickIntent")}</p>}
-          {intent !== null && (
-            <p className="menu-panel__hint">
-              {t("item.hintA")} <strong>{t("menu.attrs")}</strong> {t("item.hintB")}{" "}
-              <strong>0</strong> {t("item.hintC")}
-            </p>
-          )}
         </div>
       )}
 
@@ -388,54 +420,90 @@ export function FilterBar() {
         <div className="menu-panel menu-panel--scroll" id="menu-attrs">
           {/* Claims and flags are interleaved by SUBJECT, not by mechanism — a
               visitor thinks "what about the coffee?", not "which of these
-              carries provenance metadata?". */}
-          {ATTR_GROUPS.map((group) => (
-            <div key={group.id} className="menu-panel__group">
-              <h4 className="menu-panel__group-title">{group.label[lang]}</h4>
-              <div className="menu-panel__chips">
-                {group.claims.map((key) => {
-                  const value = filters.claims[key];
-                  return (
-                    <button
-                      key={key}
-                      className={`chip chip--claim is-${value}`}
-                      onClick={() => setClaim(key, NEXT[value])}
-                      aria-pressed={value !== "off"}
-                    >
-                      {CLAIM_LABELS[key][lang]}
-                      {value !== "off" && (
-                        <span className="chip__hint">{strictnessHint[value]}</span>
-                      )}
-                    </button>
-                  );
-                })}
-                {group.flags.map((key) => {
-                  const n = fCounts.get(key) ?? 0;
-                  const on = filters.flags.includes(key);
-                  return (
-                    <button
-                      key={key}
-                      className={`chip chip--flag ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
-                      onClick={() => toggleFlag(key)}
-                      aria-pressed={on}
-                      title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
-                    >
-                      {FLAG_LABELS[key][lang]}
-                      <span className="chip__n">{n}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              carries provenance metadata?". Same drill-down as the others: all
+              three subjects at once was most of a screen of chips to read
+              before finding the one you came for. */}
+          {attrGroup === null ? (
+            <div className="intents">
+              {ATTR_GROUPS.map((group) => {
+                const chosen =
+                  group.claims.filter((k) => filters.claims[k] !== "off").length +
+                  group.flags.filter((k) => filters.flags.includes(k)).length;
+                return (
+                  <button
+                    key={group.id}
+                    className={`intent ${chosen ? "is-active" : ""}`}
+                    onClick={() => setAttrGroup(group.id)}
+                  >
+                    <span className="intent__label">{group.label[lang]}</span>
+                    {chosen > 0 ? (
+                      <span className="menu-btn__count">{chosen}</span>
+                    ) : (
+                      <span className="intent__n">{group.claims.length + group.flags.length}</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          ))}
+          ) : (
+            ATTR_GROUPS.filter((g) => g.id === attrGroup).map((group) => (
+              <div key={group.id}>
+                <Trail
+                  label={t("menu.attrs")}
+                  crumbs={[
+                    { label: t("menu.attrs"), onClick: () => setAttrGroup(null) },
+                    { label: group.label[lang] },
+                  ]}
+                />
+                <div className="menu-panel__chips">
+                  {group.claims.map((key) => {
+                    const value = filters.claims[key];
+                    return (
+                      <button
+                        key={key}
+                        className={`chip chip--claim is-${value}`}
+                        onClick={() => setClaim(key, NEXT[value])}
+                        aria-pressed={value !== "off"}
+                      >
+                        {CLAIM_LABELS[key][lang]}
+                        {value !== "off" && (
+                          <span className="chip__hint">{strictnessHint[value]}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {group.flags.map((key) => {
+                    const n = fCounts.get(key) ?? 0;
+                    const on = filters.flags.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        className={`chip chip--flag ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
+                        onClick={() => toggleFlag(key)}
+                        aria-pressed={on}
+                        title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
+                      >
+                        {FLAG_LABELS[key][lang]}
+                        <span className="chip__n">{n}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* The tri-state is invisible until you know it's there, and
+                    only claims have it — so it belongs with the claims, not
+                    stranded at the foot of a menu you may never scroll. */}
+                {group.claims.length > 0 && (
+                  <p className="menu-panel__hint">
+                    {t("attrs.claimHintA")} <strong>{t("attrs.claimHintOptions")}</strong>
+                    {t("attrs.claimHintB")} <strong>{t("attrs.claimHint100")}</strong>.
+                    <br />
+                    {t("attrs.flagNote")}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
 
-          {/* The tri-state is invisible until you know it's there. Say it once. */}
-          <p className="menu-panel__hint">
-            {t("attrs.claimHintA")} <strong>{t("attrs.claimHintOptions")}</strong>
-            {t("attrs.claimHintB")} <strong>{t("attrs.claimHint100")}</strong>.
-            <br />
-            {t("attrs.flagNote")}
-          </p>
 
           <label className="menu-panel__verified">
             <input
