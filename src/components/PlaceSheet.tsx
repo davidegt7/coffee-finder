@@ -224,7 +224,7 @@ export function PlaceSheet() {
 
   return (
     <div
-      className={`sheet ${swipe.dragging ? "is-dragging" : ""}`}
+      className={`sheet sheet--place ${swipe.dragging ? "is-dragging" : ""}`}
       role="dialog"
       aria-label={place.name}
       ref={swipe.ref}

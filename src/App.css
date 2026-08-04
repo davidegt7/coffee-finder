@@ -1073,6 +1073,62 @@
   font-size: 13px;
 }
 
+/* ============================================================
+   Place sheet — banded so the eye can find its way down
+   ============================================================ */
+
+/*
+ * Everything from the category down to the Instagram link is one block on a
+ * raised surface: it is all identity and ways to leave for this café, and it
+ * used to run into "what you'll find" with nothing but whitespace between them.
+ *
+ * --surface-3 rather than a literal darker colour, because "darker" is only
+ * right in light mode. The token steps AWAY from the sheet's background in
+ * both — down in light, up in dark — so the band reads as a distinct panel
+ * under either theme rather than inverting on one of them.
+ *
+ * Negative margins pull it out to the sheet's own edges; the sheet's padding
+ * would otherwise leave a stripe of background down each side.
+ */
+.sheet--place .sheet__head {
+  margin: -22px -18px 0;
+  padding: 26px 18px 18px;
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+
+/* The drag strip sits above the band and has to share its colour, or the grab
+   handle floats on a lighter shelf of its own. */
+.sheet--place .sheet__drag {
+  margin: -14px -18px -12px;
+  padding: 12px 0 8px;
+  background: var(--surface-3);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+
+/* Sitting on the band, the links need their own surface to stay legible —
+   an outline alone disappears against a tinted background. */
+.sheet--place .sheet__head .sheet__links a,
+.sheet--place .sheet__head .sheet__links .link-like {
+  background: var(--surface);
+}
+
+/*
+ * Below the band, each section becomes its own card. Before this the whole
+ * sheet was one column of headings and chips, and telling where "lo que
+ * sabemos" ended and "datos del local" began meant reading the headings. Cards
+ * do that work without any colour at all, which is why they are all the same
+ * shade: five tinted sections would be a decoration, not a structure.
+ */
+.sheet--place .sheet__section {
+  margin: 12px 0 0;
+  padding: 14px 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+}
+
 .sheet__title-row {
   display: flex;
   align-items: flex-start;
