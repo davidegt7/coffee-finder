@@ -19,6 +19,7 @@ export const LANGS: { id: Lang; label: string }[] = [
 
 const ES = {
   "app.tagline": "Café de especialidad, ciudad por ciudad. Gratis, siempre.",
+  "app.subtitle": "Mapa de café de especialidad",
   "app.loading": "Cargando cafés…",
   "app.loadError": "No se pudieron cargar los cafés.",
 
@@ -294,6 +295,7 @@ const ES = {
 
 const EN: Record<keyof typeof ES, string> = {
   "app.tagline": "Specialty coffee, city by city. Free, always.",
+  "app.subtitle": "Specialty coffee map",
   "app.loading": "Loading cafés…",
   "app.loadError": "Couldn't load cafés.",
 

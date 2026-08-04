@@ -73,9 +73,16 @@ export default function App() {
 
           <div className="topbar">
             <div className="topbar__brand">
-              <h1>
-                Coffee<span>Finder</span>
-              </h1>
+              {/* Wordmark and subtitle share one pill. The pill exists so the
+                  brand stays legible over whatever the map is showing beneath
+                  it, and a subtitle sitting outside it would be the one bit of
+                  text that isn't. */}
+              <div className="brandmark">
+                <h1>
+                  Coffee<span>Finder</span>
+                </h1>
+                <p className="brandmark__sub">{t("app.subtitle")}</p>
+              </div>
               <LangToggle />
             </div>
             <AdminBar />
