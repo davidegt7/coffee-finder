@@ -311,6 +311,29 @@
   white-space: nowrap;
 }
 
+/* Where you are. Deliberately unlike a café pin — blue and pulsing is the
+   convention every map app has taught people to read as "you". */
+.me-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2f80ed;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 4px rgb(47 128 237 / 0.28);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .me-dot {
+    animation: me-pulse 2.2s ease-out infinite;
+  }
+}
+
+@keyframes me-pulse {
+  0% { box-shadow: 0 0 0 3px rgb(47 128 237 / 0.35); }
+  70% { box-shadow: 0 0 0 14px rgb(47 128 237 / 0); }
+  100% { box-shadow: 0 0 0 3px rgb(47 128 237 / 0); }
+}
+
 /* "Cerca de mí" — the fastest answer to "where are you going", so it leads the
    menu rather than hiding under the country list. */
 .near-btn {

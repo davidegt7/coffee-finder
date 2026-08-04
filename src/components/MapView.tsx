@@ -3,6 +3,7 @@ import {
   type GeoJSONSource,
   LngLatBounds,
   Map as MapLibreMap,
+  Marker,
   type MapLayerMouseEvent,
   setWorkerUrl,
 } from "maplibre-gl";
@@ -239,6 +240,7 @@ export function MapView() {
   const select = useStore((state) => state.select);
   const selectedId = useStore((state) => state.selectedId);
   const favorites = useStore((state) => state.favorites);
+  const near = useStore((s) => s.near);
   const { t } = useT();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -323,16 +325,25 @@ export function MapView() {
     source?.setData(data);
   }, [data]);
 
+  // `near` belongs in this key: turning on "cerca de mí" CLEARS the country and
+  // city, which used to leave the camera fitting every place on earth — asking
+  // to be shown what is nearby zoomed you out to the whole planet, which is
+  // exactly the opposite, and read as the feature simply not working.
   const locationKey = `${filters.countryCode ?? ""}|${filters.city ?? ""}|${[
     ...filters.comunas,
   ]
     .sort()
-    .join(",")}`;
+    .join(",")}|${near ? `${near.lat},${near.lng}` : ""}`;
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !visible.length) return;
     const apply = () => {
-      fitPlaces(map, visible, !firstFitRef.current);
+      if (near) {
+        // Where you are, at a zoom where the cafés around you are legible.
+        map.flyTo({ center: [near.lng, near.lat], zoom: 14, duration: 800 });
+      } else {
+        fitPlaces(map, visible, !firstFitRef.current);
+      }
       firstFitRef.current = false;
     };
     // Camera updates do not depend on the basemap's tiles being idle. Waiting
@@ -344,6 +355,29 @@ export function MapView() {
     // intentionally the only trigger apart from the map becoming available.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationKey]);
+
+  /**
+   * A dot for where you are, so "cerca de mí" visibly lands somewhere rather
+   * than just rearranging the list. A Marker rather than a layer: markers are
+   * DOM overlays and survive the light/dark style swap, which wipes every
+   * custom source and layer.
+   */
+  const meRef = useRef<Marker | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!near) {
+      meRef.current?.remove();
+      meRef.current = null;
+      return;
+    }
+    if (!meRef.current) {
+      const el = document.createElement("div");
+      el.className = "me-dot";
+      meRef.current = new Marker({ element: el });
+    }
+    meRef.current.setLngLat([near.lng, near.lat]).addTo(map);
+  }, [near]);
 
   useEffect(() => {
     if (!selectedId) return;

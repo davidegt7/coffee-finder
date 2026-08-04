@@ -20,7 +20,7 @@ import {
   FLAG_KEYS,
   FLAG_LABELS,
 } from "../types";
-import { countryName } from "../lib/geography";
+import { CONTINENT_LABELS, continentOf, countryName, type ContinentId } from "../lib/geography";
 
 /** off → some → all → off. One tap deepens, three taps clears. */
 const NEXT: Record<ClaimStrictness, ClaimStrictness> = { off: "some", some: "all", all: "off" };
@@ -184,6 +184,29 @@ export function FilterBar() {
     cityCounts(places, { ...filters, countryCode: code, city: null, comunas: [] }, code);
   const comunasIn = (city: string) =>
     comunaCounts(places, { ...filters, city, comunas: [] }, city);
+
+  /**
+   * Countries grouped by continent. The flat list was sorted by how many places
+   * each country holds, which put Denmark between Chile and Canada — accurate,
+   * and unreadable as geography. You know which continent you want before you
+   * know which country, so that is the cut.
+   *
+   * Continents are ordered by what is actually on the map rather than
+   * alphabetically or by some canonical order: an app with 45 places in the US
+   * and none in Africa should not open on Africa.
+   */
+  const countriesByContinent = useMemo(() => {
+    const groups = new Map<ContinentId, { code: string; n: number }[]>();
+    for (const [code, n] of countries) {
+      const id = continentOf(code);
+      const list = groups.get(id) ?? [];
+      list.push({ code, n });
+      groups.set(id, list);
+    }
+    return [...groups.entries()]
+      .map(([id, list]) => ({ id, list, total: list.reduce((sum, c) => sum + c.n, 0) }))
+      .sort((a, b) => b.total - a.total);
+  }, [countries]);
 
   /** Locations matching what's typed, offered instead of a keyword match. */
   const suggestions = useMemo(
@@ -408,23 +431,31 @@ export function FilterBar() {
 
           <div className="menu-panel__chips">
             {whereLevel === "country" &&
-              [...countries.entries()].map(([code, n]) => {
-                const fallback = places.find((p) => p.countryCode === code)?.country ?? code;
-                return (
-                  <button
-                    key={code}
-                    className="chip chip--cat"
-                    onClick={() => {
-                      setCountry(code);
-                      // Nowhere left to drill: the menu has done its job.
-                      if (citiesIn(code).size === 0) setOpen(null);
-                    }}
-                  >
-                    {countryName(code, fallback, lang)}
-                    <span className="chip__n">{n}</span>
-                  </button>
-                );
-              })}
+              countriesByContinent.map(({ id, list }) => (
+                <div key={id} className="menu-panel__group">
+                  <h4 className="menu-panel__group-title">{CONTINENT_LABELS[id][lang]}</h4>
+                  <div className="menu-panel__chips">
+                    {list.map(({ code, n }) => {
+                      const fallback =
+                        places.find((p) => p.countryCode === code)?.country ?? code;
+                      return (
+                        <button
+                          key={code}
+                          className="chip chip--cat"
+                          onClick={() => {
+                            setCountry(code);
+                            // Nowhere left to drill: the menu has done its job.
+                            if (citiesIn(code).size === 0) setOpen(null);
+                          }}
+                        >
+                          {countryName(code, fallback, lang)}
+                          <span className="chip__n">{n}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
 
             {whereLevel === "city" &&
               [...cities.entries()].map(([city, n]) => (
