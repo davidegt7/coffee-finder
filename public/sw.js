@@ -17,7 +17,7 @@
 // previous app and the rebrand's find-and-replace missed the unseparated form.
 // Both apps are served from the same origin, so they were sharing one cache
 // namespace and could evict each other's entries.
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = `coffeefinder-shell-${VERSION}`;
 const TILES = `coffeefinder-tiles-${VERSION}`;
 const MAX_TILES = 400;
@@ -34,6 +34,13 @@ self.addEventListener("install", (event) => {
         // A missing shell asset must not wedge the install forever.
       }),
   );
+});
+
+// The page asks for this once the user accepts the update prompt; without it a
+// replacement worker waits until every tab of the app is closed, which for an
+// installed PWA can be never.
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") void self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {

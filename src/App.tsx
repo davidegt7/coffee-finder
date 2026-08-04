@@ -9,6 +9,7 @@ import { PlaceEditor } from "./components/PlaceEditor";
 import { LangToggle } from "./components/LangToggle";
 import { SubmitPlace } from "./components/SubmitPlace";
 import { BeansSheet } from "./components/BeansSheet";
+import { applyUpdate } from "./lib/appUpdate";
 import { SubmissionsQueue } from "./components/SubmissionsQueue";
 import { BrainChat } from "./components/BrainChat";
 import { useT } from "./lib/useT";
@@ -28,6 +29,7 @@ export default function App() {
     setSubmitOpen,
     beansOpen,
     setBeansOpen,
+    updateReady,
     isEditor,
     brainOpen,
     setBrainOpen,
@@ -58,6 +60,14 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* A stale installed app is indistinguishable from a broken one, so say
+          which it is. A prompt rather than an automatic reload: reloading
+          underneath someone mid-review would be the worse bug. */}
+      {updateReady && (
+        <button className="app-update" onClick={applyUpdate}>
+          {t("app.updateReady")} · <strong>{t("app.updateNow")}</strong>
+        </button>
+      )}
       {status === "loading" && <div className="app__state">{t("app.loading")}</div>}
       {status === "error" && (
         <div className="app__state app__state--error">

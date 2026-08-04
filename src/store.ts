@@ -37,6 +37,8 @@ interface State {
   submitOpen: boolean;
   /** "Where to buy beans" — roasters who sell, and where. */
   beansOpen: boolean;
+  /** A newer build is installed and waiting for a reload. */
+  updateReady: boolean;
 
   // --- the brain ---
   /** The editor's chat with the local brain bridge. */
@@ -78,6 +80,7 @@ interface State {
   refreshReviews: () => Promise<void>;
   setSubmitOpen: (open: boolean) => void;
   setBeansOpen: (open: boolean) => void;
+  setUpdateReady: (ready: boolean) => void;
   refreshSubmissions: () => Promise<void>;
   toggleFavorite: (placeId: string) => Promise<void>;
   refreshFavorites: () => Promise<void>;
@@ -112,6 +115,7 @@ export const useStore = create<State>((set, get) => ({
   submissions: [],
   submitOpen: false,
   beansOpen: false,
+  updateReady: false,
   brainOpen: false,
   brainThread: [],
   brainSession: undefined,
@@ -328,6 +332,8 @@ export const useStore = create<State>((set, get) => ({
   setSubmitOpen: (submitOpen) => set({ submitOpen }),
 
   setBeansOpen: (beansOpen) => set({ beansOpen }),
+
+  setUpdateReady: (updateReady) => set({ updateReady }),
 
   refreshFavorites: async () => {
     try {

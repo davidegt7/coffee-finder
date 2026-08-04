@@ -1,3 +1,5 @@
+import { watchForUpdate } from "./lib/appUpdate";
+import { useStore } from "./store";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -15,10 +17,6 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 );
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
-      // A failed SW registration must never take the app down with it.
-    });
-  });
-}
+window.addEventListener("load", () => {
+  watchForUpdate(() => useStore.getState().setUpdateReady(true));
+});

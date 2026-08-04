@@ -22,6 +22,8 @@ const ES = {
   "app.subtitle": "Mapa de café de especialidad",
   "app.loading": "Cargando cafés…",
   "app.loadError": "No se pudieron cargar los cafés.",
+  "app.updateReady": "Hay una versión nueva",
+  "app.updateNow": "Actualizar",
 
   "search.placeholder": "Buscar café, ciudad, barrio o preparación…",
   "search.label": "Buscar",
@@ -303,6 +305,8 @@ const EN: Record<keyof typeof ES, string> = {
   "app.subtitle": "Specialty coffee map",
   "app.loading": "Loading cafés…",
   "app.loadError": "Couldn't load cafés.",
+  "app.updateReady": "A new version is ready",
+  "app.updateNow": "Update",
 
   "search.placeholder": "Search café, city, neighborhood or brew…",
   "search.label": "Search",

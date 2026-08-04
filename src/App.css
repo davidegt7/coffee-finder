@@ -89,6 +89,25 @@
   color: var(--muted);
 }
 
+/* Sits above everything, including the sheets — it is the one message that
+   explains why nothing else on screen looks like it should. */
+.app-update {
+  position: fixed;
+  z-index: 2000;
+  left: 50%;
+  transform: translateX(-50%);
+  top: max(10px, env(safe-area-inset-top));
+  padding: 9px 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12.5px;
+  font-weight: 550;
+  box-shadow: var(--shadow-2);
+  animation: sheet-up 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
 .app__state {
   padding: 56px 20px;
   text-align: center;
