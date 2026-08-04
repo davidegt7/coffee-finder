@@ -7,14 +7,17 @@ import { useCallback, useRef, useState } from "react";
  * on a big screen to reach. Dragging the sheet away is the gesture people
  * already have, so this makes the X the fallback rather than the only way out.
  *
- * The hard part is that the sheet is ALSO the scroll container, so a downward
- * drag is ambiguous: it means "scroll up through the content" almost always,
- * and "close this" only when there is nothing above to scroll to. The gesture
- * therefore decides once, on the first few pixels of movement, and then commits
- * — taking over only when the content is already at its top and the finger is
- * heading down. Anything else is left to the browser as an ordinary scroll,
- * untouched, because a sheet that fights scrolling is worse than one that
- * cannot be swiped at all.
+ * `handlers` belong on a DEDICATED strip across the top of the sheet, not on
+ * the sheet itself, and that strip must carry `touch-action: none`.
+ *
+ * The first version listened on the whole sheet and engaged only when the
+ * content was scrolled to its top. That works with a mouse and fails on a
+ * phone: the sheet is also the scroll container, so the moment a finger moves
+ * on it iOS claims the gesture for scrolling and fires pointercancel, and the
+ * drag never accumulates. Hence the strip — the same reason every native sheet
+ * has a grab handle. Dragging there is unambiguous, so there is no scroll
+ * position to check and no gesture to arbitrate: the body below scrolls
+ * normally, and the top drags.
  */
 
 /** Far enough that resting a thumb and shifting slightly never closes it. */
@@ -57,16 +60,16 @@ export function useSwipeToDismiss(onDismiss: () => void) {
     if (!s.decided) {
       if (Math.abs(dy) < SLOP) return;
       s.decided = true;
-      // Downward, and nothing above to scroll to. Either test failing means
-      // this is a scroll and we never touch it.
-      s.active = dy > 0 && (ref.current?.scrollTop ?? 0) <= 0;
+      // Downward only. Dragging up on the handle does nothing rather than
+      // stretching a sheet that is already against the top of the screen.
+      s.active = dy > 0;
       if (!s.active) {
         s.tracking = false;
         return;
       }
       setDragging(true);
       try {
-        ref.current?.setPointerCapture(e.pointerId);
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       } catch {
         // Capture is an optimisation; the drag still tracks without it.
       }

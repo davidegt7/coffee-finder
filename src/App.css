@@ -953,13 +953,33 @@
   }
 }
 
-/* A sheet you can throw away with your thumb. The bar says so before you try
-   it — an invisible gesture is one most people never discover. */
+/* Drag the top of the sheet to throw it away.
+   `touch-action: none` is the whole trick: without it iOS treats a downward
+   drag here as scrolling the sheet, claims the gesture and fires pointercancel,
+   and the JS drag never accumulates. Declaring that this strip does not scroll
+   hands the gesture to us. It is why native sheets have a grab handle at all.
+   The header opts in too, because a 4px bar is not a target anyone can hit. */
+.sheet__drag,
+.sheet .sheet__head {
+  touch-action: none;
+}
+
+.sheet__drag {
+  /* Tall enough to grab without aiming; the bar inside is only the signpost. */
+  margin: -14px 0 2px;
+  padding: 12px 0 8px;
+  cursor: grab;
+}
+
+.sheet__drag:active {
+  cursor: grabbing;
+}
+
 .sheet__grip {
   display: block;
   width: 38px;
   height: 4px;
-  margin: -8px auto 12px;
+  margin: 0 auto;
   border-radius: var(--r-pill);
   background: var(--line);
 }

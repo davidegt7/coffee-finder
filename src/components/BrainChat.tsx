@@ -136,14 +136,15 @@ export function BrainChat() {
       aria-label={t("chat.title")}
       ref={swipe.ref}
       style={swipe.style}
-      {...swipe.handlers}
     >
-      <span className="sheet__grip" aria-hidden="true" />
+      <div className="sheet__drag" {...swipe.handlers}>
+        <span className="sheet__grip" aria-hidden="true" />
+      </div>
       <button className="sheet__close" onClick={() => setBrainOpen(false)} aria-label={t("common.close")}>
         ✕
       </button>
 
-      <header className="sheet__head">
+      <header className="sheet__head" {...swipe.handlers}>
         <span className="sheet__cat">{t("chat.eyebrow")}</span>
         <h2>{t("chat.title")}</h2>
       </header>

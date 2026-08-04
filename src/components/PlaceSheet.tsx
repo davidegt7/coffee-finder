@@ -229,9 +229,10 @@ export function PlaceSheet() {
       aria-label={place.name}
       ref={swipe.ref}
       style={swipe.style}
-      {...swipe.handlers}
     >
-      <span className="sheet__grip" aria-hidden="true" />
+      <div className="sheet__drag" {...swipe.handlers}>
+        <span className="sheet__grip" aria-hidden="true" />
+      </div>
       <button className="sheet__close" onClick={() => select(null)} aria-label={t("common.close")}>
         ✕
       </button>
@@ -252,7 +253,7 @@ export function PlaceSheet() {
         </figure>
       )}
 
-      <header className="sheet__head">
+      <header className="sheet__head" {...swipe.handlers}>
         <span className="sheet__cat">
           {CATEGORY_LABELS[place.category].icon} {CATEGORY_LABELS[place.category][lang]}
         </span>

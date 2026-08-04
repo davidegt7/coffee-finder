@@ -59,9 +59,10 @@ export function BeansSheet() {
       aria-label={t("beans.title")}
       ref={swipe.ref}
       style={swipe.style}
-      {...swipe.handlers}
     >
-      <span className="sheet__grip" aria-hidden="true" />
+      <div className="sheet__drag" {...swipe.handlers}>
+        <span className="sheet__grip" aria-hidden="true" />
+      </div>
       <button
         className="sheet__close"
         onClick={() => setBeansOpen(false)}
@@ -70,7 +71,7 @@ export function BeansSheet() {
         ✕
       </button>
 
-      <header className="sheet__head">
+      <header className="sheet__head" {...swipe.handlers}>
         <span className="sheet__cat">🫘 {t("beans.eyebrow")}</span>
         <h2>{t("beans.title")}</h2>
       </header>
