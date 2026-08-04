@@ -11,6 +11,7 @@ import {
 } from "../lib/brain";
 import { applyDraft, blankPlace, draftSummary } from "../lib/draft";
 import { useT } from "../lib/useT";
+import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
 import { CATEGORY_LABELS } from "../types";
 import { loadResearchLedger, saveResearchRejections } from "../lib/researchLedger";
 
@@ -41,6 +42,7 @@ export function BrainChat() {
   const clearThread = useStore((s) => s.clearBrainThread);
   const setEditing = useStore((s) => s.setEditing);
   const startDraftBatch = useStore((s) => s.startDraftBatch);
+  const swipe = useSwipeToDismiss(() => setBrainOpen(false));
 
   const [health, setHealth] = useState<BrainHealth | null | undefined>(undefined);
   const [input, setInput] = useState("");
@@ -128,7 +130,15 @@ export function BrainChat() {
   const liveDraftId = [...thread].reverse().find((m) => draftsFor(m).length > 0)?.id;
 
   return (
-    <div className="sheet sheet--chat" role="dialog" aria-label={t("chat.title")}>
+    <div
+      className={`sheet sheet--chat ${swipe.dragging ? "is-dragging" : ""}`}
+      role="dialog"
+      aria-label={t("chat.title")}
+      ref={swipe.ref}
+      style={swipe.style}
+      {...swipe.handlers}
+    >
+      <span className="sheet__grip" aria-hidden="true" />
       <button className="sheet__close" onClick={() => setBrainOpen(false)} aria-label={t("common.close")}>
         ✕
       </button>

@@ -4,6 +4,7 @@ import { applyFilters, EMPTY_FILTERS } from "../lib/filters";
 import { beanSellers, recordBeanClick } from "../lib/beans";
 import { countryName } from "../lib/geography";
 import { useT } from "../lib/useT";
+import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
 import { CATEGORY_LABELS } from "../types";
 
 /**
@@ -23,6 +24,7 @@ export function BeansSheet() {
   const filters = useStore((s) => s.filters);
   const setBeansOpen = useStore((s) => s.setBeansOpen);
   const { t, lang } = useT();
+  const swipe = useSwipeToDismiss(() => setBeansOpen(false));
 
   const sellers = useMemo(
     () =>
@@ -51,7 +53,15 @@ export function BeansSheet() {
       : null);
 
   return (
-    <div className="sheet sheet--beans" role="dialog" aria-label={t("beans.title")}>
+    <div
+      className={`sheet sheet--beans ${swipe.dragging ? "is-dragging" : ""}`}
+      role="dialog"
+      aria-label={t("beans.title")}
+      ref={swipe.ref}
+      style={swipe.style}
+      {...swipe.handlers}
+    >
+      <span className="sheet__grip" aria-hidden="true" />
       <button
         className="sheet__close"
         onClick={() => setBeansOpen(false)}

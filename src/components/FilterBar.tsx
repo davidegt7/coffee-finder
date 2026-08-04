@@ -78,6 +78,26 @@ export function FilterBar() {
         : new Map<string, number>(),
     [places, filters],
   );
+  /**
+   * Which rung of the ladder the menu is showing. Derived from the filters
+   * rather than held as its own state — a separate "step" variable would drift
+   * the moment a country got cleared from anywhere else, and then the menu
+   * would be showing cities for a country nobody had chosen.
+   */
+  const whereLevel: "country" | "city" | "comuna" = !filters.countryCode
+    ? "country"
+    : !filters.city
+      ? "city"
+      : "comuna";
+
+  // Whether the level below has anything in it, asked BEFORE committing to a
+  // choice, so a pick with nothing under it closes rather than opening onto an
+  // empty panel.
+  const citiesIn = (code: string) =>
+    cityCounts(places, { ...filters, countryCode: code, city: null, comunas: [] }, code);
+  const comunasIn = (city: string) =>
+    comunaCounts(places, { ...filters, city, comunas: [] }, city);
+
   const comunas = useMemo(
     () => (filters.city ? comunaCounts(places, filters, filters.city) : new Map<string, number>()),
     [places, filters],
@@ -153,73 +173,104 @@ export function FilterBar() {
 
       {open === "where" && (
         <div className="menu-panel menu-panel--scroll" id="menu-where">
-          <button
-            className={`chip chip--cat ${!filters.countryCode ? "is-on" : ""}`}
-            onClick={() => {
-              setCountry(null);
-              setOpen(null);
-            }}
-          >
-            {t("where.all")} <span className="chip__n">{places.length}</span>
-          </button>
+          {/* ONE level at a time. Showing country, city and barrio stacked
+              meant the answer to "where am I going" was a wall of chips whose
+              lower half was usually irrelevant. Choosing a country replaces the
+              countries with its cities, a city with its barrios, and the last
+              choice closes the menu — because at that point the thing you came
+              to see is the results, not more menu.
 
-          <div className="menu-panel__group">
-            <h4 className="menu-panel__group-title">{t("where.country")}</h4>
-            <div className="menu-panel__chips">
-              {[...countries.entries()].map(([code, n]) => {
-                const fallback = places.find((place) => place.countryCode === code)?.country ?? code;
-                return (
+              The trail above is how you get back up: hiding the level you just
+              left would otherwise make the choice unchangeable. */}
+          <nav className="where-trail" aria-label={t("where.prompt")}>
+            <button
+              type="button"
+              className="where-trail__crumb"
+              onClick={() => setCountry(null)}
+              disabled={!filters.countryCode}
+            >
+              {t("where.all")}
+            </button>
+            {filters.countryCode && (
+              <>
+                <span className="where-trail__sep" aria-hidden="true">›</span>
                 <button
-                  key={code}
-                  className={`chip chip--cat ${filters.countryCode === code ? "is-on" : ""}`}
-                  onClick={() => setCountry(filters.countryCode === code ? null : code)}
-                  aria-pressed={filters.countryCode === code}
+                  type="button"
+                  className="where-trail__crumb"
+                  onClick={() => setCity(null)}
+                  disabled={!filters.city}
                 >
-                  {countryName(code, fallback, lang)}
-                  <span className="chip__n">{n}</span>
+                  {countryName(
+                    filters.countryCode,
+                    places.find((p) => p.countryCode === filters.countryCode)?.country ??
+                      filters.countryCode.toUpperCase(),
+                    lang,
+                  )}
                 </button>
+              </>
+            )}
+            {filters.city && (
+              <>
+                <span className="where-trail__sep" aria-hidden="true">›</span>
+                <span className="where-trail__crumb is-current">{filters.city}</span>
+              </>
+            )}
+          </nav>
+
+          <div className="menu-panel__chips">
+            {whereLevel === "country" &&
+              [...countries.entries()].map(([code, n]) => {
+                const fallback = places.find((p) => p.countryCode === code)?.country ?? code;
+                return (
+                  <button
+                    key={code}
+                    className="chip chip--cat"
+                    onClick={() => {
+                      setCountry(code);
+                      // Nowhere left to drill: the menu has done its job.
+                      if (citiesIn(code).size === 0) setOpen(null);
+                    }}
+                  >
+                    {countryName(code, fallback, lang)}
+                    <span className="chip__n">{n}</span>
+                  </button>
                 );
               })}
-            </div>
+
+            {whereLevel === "city" &&
+              [...cities.entries()].map(([city, n]) => (
+                <button
+                  key={city}
+                  className="chip chip--cat"
+                  onClick={() => {
+                    setCity(city);
+                    if (comunasIn(city).size === 0) setOpen(null);
+                  }}
+                >
+                  {city}
+                  <span className="chip__n">{n}</span>
+                </button>
+              ))}
+
+            {whereLevel === "comuna" &&
+              [...comunas.entries()].map(([c, n]) => (
+                <button
+                  key={c}
+                  className={`chip chip--cat ${filters.comunas.includes(c) ? "is-on" : ""}`}
+                  onClick={() => {
+                    toggleComuna(c);
+                    // Closes on the last level, as asked. Picking a second
+                    // barrio means reopening — the menu comes back here, with
+                    // the first one still lit.
+                    setOpen(null);
+                  }}
+                  aria-pressed={filters.comunas.includes(c)}
+                >
+                  {c}
+                  <span className="chip__n">{n}</span>
+                </button>
+              ))}
           </div>
-
-          {filters.countryCode && cities.size > 0 && (
-            <div className="menu-panel__group">
-              <h4 className="menu-panel__group-title">{t("where.city")}</h4>
-              <div className="menu-panel__chips">
-                {[...cities.entries()].map(([city, n]) => (
-                  <button
-                    key={city}
-                    className={`chip chip--cat ${filters.city === city ? "is-on" : ""}`}
-                    onClick={() => setCity(filters.city === city ? null : city)}
-                    aria-pressed={filters.city === city}
-                  >
-                    {city}
-                    <span className="chip__n">{n}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {filters.city && comunas.size > 0 && (
-            <div className="menu-panel__group">
-              <h4 className="menu-panel__group-title">{t("where.comuna")}</h4>
-              <div className="menu-panel__chips">
-                {[...comunas.entries()].map(([c, n]) => (
-                  <button
-                    key={c}
-                    className={`chip chip--cat ${filters.comunas.includes(c) ? "is-on" : ""}`}
-                    onClick={() => toggleComuna(c)}
-                    aria-pressed={filters.comunas.includes(c)}
-                  >
-                    {c}
-                    <span className="chip__n">{n}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

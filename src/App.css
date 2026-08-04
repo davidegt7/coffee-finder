@@ -334,6 +334,45 @@
   transform: rotate(180deg);
 }
 
+/* The trail back up out of the location drill-down. Reads as a path, not as
+   buttons, so it doesn't compete with the chips that are the actual choice. */
+.where-trail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.where-trail__crumb {
+  padding: 3px 7px;
+  border: none;
+  border-radius: var(--r-sm, 8px);
+  background: transparent;
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.where-trail__crumb:hover:not(:disabled) {
+  background: var(--accent-wash);
+}
+
+/* The level you are already on, and the crumbs above it once there is nothing
+   further back to go — both are labels, not offers. */
+.where-trail__crumb:disabled,
+.where-trail__crumb.is-current {
+  color: var(--text-2);
+  font-weight: 550;
+}
+
+.where-trail__sep {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* --- the three collapsible menus --- */
 
 .filters__menus {
@@ -864,6 +903,23 @@
   }
 }
 
+/* A sheet you can throw away with your thumb. The bar says so before you try
+   it — an invisible gesture is one most people never discover. */
+.sheet__grip {
+  display: block;
+  width: 38px;
+  height: 4px;
+  margin: -8px auto 12px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+}
+
+.sheet.is-dragging {
+  transition: none;
+  /* The entry animation must not fight a finger already moving the sheet. */
+  animation: none;
+}
+
 .sheet {
   position: fixed;
   z-index: 1000;
@@ -878,6 +934,12 @@
   border-radius: var(--r-xl) var(--r-xl) 0 0;
   box-shadow: var(--shadow-3);
   animation: sheet-up 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
+  /* Released short of the dismiss threshold, the sheet springs back rather
+     than teleporting. */
+  transition: transform 0.26s cubic-bezier(0.32, 0.72, 0, 1);
+  /* Scrolling to the top of a sheet must not start dragging the page behind
+     it, which on iOS is what makes a modal feel detached from the app. */
+  overscroll-behavior: contain;
 }
 
 @keyframes sheet-up {

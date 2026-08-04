@@ -35,7 +35,7 @@ export function ListSheet() {
   const [topbarH, setTopbarH] = useState(0);
   const [drag, setDrag] = useState<number | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
-  const startRef = useRef({ y: 0, offset: 0 });
+  const startRef = useRef({ y: 0, offset: 0, lastY: 0, lastT: 0 });
 
   const visible = useMemo(
     () => applyFilters(places, filters, favorites),
@@ -57,8 +57,9 @@ export function ListSheet() {
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
-      startRef.current = { y: e.clientY, offset: OFFSET[snap] * height() };
-      setDrag(OFFSET[snap] * height());
+      const offset = OFFSET[snap] * height();
+      startRef.current = { y: e.clientY, offset, lastY: e.clientY, lastT: performance.now() };
+      setDrag(offset);
     },
     [snap],
   );
@@ -66,6 +67,8 @@ export function ListSheet() {
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (drag === null) return;
+      startRef.current.lastY = e.clientY;
+      startRef.current.lastT = performance.now();
       const next = startRef.current.offset + (e.clientY - startRef.current.y);
       // Clamped so the sheet can't be flung off-screen or above its full height.
       setDrag(Math.max(0, Math.min(next, OFFSET.peek * height())));
@@ -73,16 +76,34 @@ export function ListSheet() {
     [drag],
   );
 
-  const onPointerUp = useCallback(() => {
-    if (drag === null) return;
-    const fraction = drag / height();
-    // Snap to whichever point is nearest where the thumb let go.
-    const nearest = (["peek", "half", "full"] as Snap[]).reduce((best, s) =>
-      Math.abs(OFFSET[s] - fraction) < Math.abs(OFFSET[best] - fraction) ? s : best,
-    );
-    setSnap(nearest);
-    setDrag(null);
-  }, [drag]);
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (drag === null) return;
+      const fraction = drag / height();
+      const order: Snap[] = ["full", "half", "peek"];
+      // How fast, and which way, the thumb was moving when it let go.
+      // Distance alone ignores intent: a short sharp flick down is a request to
+      // dismiss the list, and snapping it back to the nearest point because it
+      // only travelled 40px is the single thing that makes a sheet feel dead.
+      const velocity =
+        (e.clientY - startRef.current.lastY) /
+        Math.max(1, performance.now() - startRef.current.lastT);
+      const current = order.indexOf(snap);
+      let nearest: Snap;
+      if (Math.abs(velocity) > 0.4) {
+        // A flick moves exactly one stop in the direction it was thrown, so the
+        // sheet never leaps from full to peek and lose the reader's place.
+        nearest = order[Math.min(order.length - 1, Math.max(0, current + (velocity > 0 ? 1 : -1)))];
+      } else {
+        nearest = order.reduce((best, s) =>
+          Math.abs(OFFSET[s] - fraction) < Math.abs(OFFSET[best] - fraction) ? s : best,
+        );
+      }
+      setSnap(nearest);
+      setDrag(null);
+    },
+    [drag, snap],
+  );
 
   // Results changing under a collapsed sheet is invisible — lift it so the
   // answer to a filter is on screen.

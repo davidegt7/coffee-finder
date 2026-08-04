@@ -5,6 +5,7 @@ import { signInWithEmail, signOut } from "../lib/auth";
 import { instagramUrl } from "../lib/links";
 import { placeUrl } from "../lib/placeUrl";
 import { useT } from "../lib/useT";
+import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
 import { ClaimBadge, ClaimRow, UnknownClaims } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
 import { AdSlot } from "./AdSlot";
@@ -185,6 +186,7 @@ export function PlaceSheet() {
   // already answers the question the section exists to answer.
   const [claimsOpen, setClaimsOpen] = useState(false);
   const [shared, setShared] = useState(false);
+  const swipe = useSwipeToDismiss(() => select(null));
 
   const place = places.find((p) => p.id === selectedId);
 
@@ -221,7 +223,15 @@ export function PlaceSheet() {
   const isFav = favorites.includes(place.id);
 
   return (
-    <div className="sheet" role="dialog" aria-label={place.name}>
+    <div
+      className={`sheet ${swipe.dragging ? "is-dragging" : ""}`}
+      role="dialog"
+      aria-label={place.name}
+      ref={swipe.ref}
+      style={swipe.style}
+      {...swipe.handlers}
+    >
+      <span className="sheet__grip" aria-hidden="true" />
       <button className="sheet__close" onClick={() => select(null)} aria-label={t("common.close")}>
         ✕
       </button>
