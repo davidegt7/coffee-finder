@@ -392,7 +392,14 @@ export function FilterBar() {
               than leaving a button that appears to do nothing. */}
           <button
             className={`near-btn ${near ? "is-on" : ""}`}
-            onClick={() => (near ? clearNear() : void findNearMe())}
+            onClick={async () => {
+              if (near) return clearNear();
+              await findNearMe();
+              // Get out of the way. The point of "near me" is the map and the
+              // cafés on it; leaving a country list open over both means the
+              // answer arrives behind the question.
+              if (useStore.getState().near) setOpen(null);
+            }}
             disabled={nearStatus === "locating"}
           >
             <span aria-hidden="true">🧭</span>

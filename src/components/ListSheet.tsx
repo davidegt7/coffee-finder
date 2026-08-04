@@ -25,6 +25,7 @@ const OFFSET: Record<Snap, number> = { peek: 0.86, half: 0.44, full: 0 };
 
 export function ListSheet() {
   const places = useStore((s) => s.places);
+  const near = useStore((s) => s.near);
   const filters = useStore((s) => s.filters);
   const favorites = useStore((s) => s.favorites);
   const { t } = useT();
@@ -104,6 +105,15 @@ export function ListSheet() {
     },
     [drag, snap],
   );
+
+  /**
+   * "Cerca de mí" is a question about the map, so give the map back. At the
+   * full snap the list covers it completely, and the answer would arrive on a
+   * screen showing none of the geography that makes it an answer.
+   */
+  useEffect(() => {
+    if (near) setSnap("half");
+  }, [near]);
 
   // Results changing under a collapsed sheet is invisible — lift it so the
   // answer to a filter is on screen.

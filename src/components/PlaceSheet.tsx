@@ -237,8 +237,12 @@ export function PlaceSheet() {
         ✕
       </button>
 
+      {/* The photo drags too. It sits between the grab strip and the header, so
+          on a phone it is the largest thing under your thumb and the obvious
+          place to pull from — and while it was inert, sheets for places WITH a
+          photo felt broken while ones without slid fine. */}
       {place.photoUrl && (
-        <figure className="sheet__photo">
+        <figure className="sheet__photo" {...swipe.handlers}>
           <img
             src={place.photoUrl}
             alt={place.name}

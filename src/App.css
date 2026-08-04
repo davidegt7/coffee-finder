@@ -1081,7 +1081,8 @@
    hands the gesture to us. It is why native sheets have a grab handle at all.
    The header opts in too, because a 4px bar is not a target anyone can hit. */
 .sheet__drag,
-.sheet .sheet__head {
+.sheet .sheet__head,
+.sheet .sheet__photo {
   touch-action: none;
 }
 
