@@ -53,6 +53,7 @@ const ES = {
   "attrs.claimHintB": ", otra vez para",
   "attrs.claimHint100": "100%",
   "attrs.flagNote": "Lo de abajo son datos simples: o están o no se sabe.",
+  "attrs.onlyShow": "Solo mostrar",
 
   "verified.label": "Solo comprobado",
   "verified.desc": "Esconde lo que solo dice el local. Mapa mucho más chico, pero confiable.",
@@ -333,6 +334,7 @@ const EN: Record<keyof typeof ES, string> = {
   "attrs.claimHintB": ", again for",
   "attrs.claimHint100": "100%",
   "attrs.flagNote": "Below are plain facts: either they're there or nobody has said.",
+  "attrs.onlyShow": "Only show",
 
   "verified.label": "Verified only",
   "verified.desc": "Hides what the place merely claims. A much smaller map, but a trustworthy one.",

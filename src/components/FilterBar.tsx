@@ -546,6 +546,9 @@ export function FilterBar() {
                     className={`intent ${chosen ? "is-active" : ""}`}
                     onClick={() => setAttrGroup(group.id)}
                   >
+                    <span className="intent__icon" aria-hidden="true">
+                      {group.icon}
+                    </span>
                     <span className="intent__label">{group.label[lang]}</span>
                     {chosen > 0 ? (
                       <span className="menu-btn__count">{chosen}</span>
@@ -555,6 +558,68 @@ export function FilterBar() {
                   </button>
                 );
               })}
+
+              {/* "Solo comprobado" and "Solo mis guardados" used to sit loose
+                  under the three subjects as two big checkbox rows, so the
+                  first thing you met in this menu was a wall of prose rather
+                  than a choice. They are refinements of what to SHOW, not a
+                  fourth subject, and behind a card of their own they stop
+                  competing with the question actually being asked. */}
+              <button
+                className={`intent ${
+                  filters.verifiedOnly || filters.savedOnly ? "is-active" : ""
+                }`}
+                onClick={() => setAttrGroup("only")}
+              >
+                <span className="intent__icon" aria-hidden="true">
+                  👁
+                </span>
+                <span className="intent__label">{t("attrs.onlyShow")}</span>
+                {filters.verifiedOnly || filters.savedOnly ? (
+                  <span className="menu-btn__count">
+                    {(filters.verifiedOnly ? 1 : 0) + (filters.savedOnly ? 1 : 0)}
+                  </span>
+                ) : (
+                  <span className="intent__n">{session ? 2 : 1}</span>
+                )}
+              </button>
+            </div>
+          ) : attrGroup === "only" ? (
+            <div>
+              <Trail
+                label={t("menu.attrs")}
+                crumbs={[
+                  { label: t("menu.attrs"), onClick: () => setAttrGroup(null) },
+                  { label: t("attrs.onlyShow") },
+                ]}
+              />
+              <label className="menu-panel__verified">
+                <input
+                  type="checkbox"
+                  checked={filters.verifiedOnly}
+                  onChange={(e) => setVerifiedOnly(e.target.checked)}
+                />
+                <span>
+                  {t("verified.label")}
+                  <small>{t("verified.desc")}</small>
+                </span>
+              </label>
+
+              {/* Only offered when signed in — "my saved places" is a promise
+                  the app can't keep for an anonymous visitor. */}
+              {session && (
+                <label className="menu-panel__verified">
+                  <input
+                    type="checkbox"
+                    checked={filters.savedOnly}
+                    onChange={(e) => setSavedOnly(e.target.checked)}
+                  />
+                  <span>
+                    {t("fav.onlySaved")}
+                    <small>{t("fav.onlySavedDesc", { n: favorites.length })}</small>
+                  </span>
+                </label>
+              )}
             </div>
           ) : (
             ATTR_GROUPS.filter((g) => g.id === attrGroup).map((group) => (
@@ -619,38 +684,10 @@ export function FilterBar() {
           )}
 
 
-          <label className="menu-panel__verified">
-            <input
-              type="checkbox"
-              checked={filters.verifiedOnly}
-              onChange={(e) => setVerifiedOnly(e.target.checked)}
-            />
-            <span>
-              {t("verified.label")}
-              <small>{t("verified.desc")}</small>
-            </span>
-          </label>
-
-          {/* Only offered when signed in — "my saved places" is a promise the
-              app can't keep for an anonymous visitor. */}
-          {session && (
-            <label className="menu-panel__verified">
-              <input
-                type="checkbox"
-                checked={filters.savedOnly}
-                onChange={(e) => setSavedOnly(e.target.checked)}
-              />
-              <span>
-                {t("fav.onlySaved")}
-                <small>{t("fav.onlySavedDesc", { n: favorites.length })}</small>
-              </span>
-            </label>
-          )}
-
           <ChainFooter
             step={2}
             total={3}
-            onBack={() => goToStep(0)}
+            onBack={attrGroup ? () => setAttrGroup(null) : () => goToStep(0)}
             onNext={advance}
             labels={{
               back: t("chain.back"),

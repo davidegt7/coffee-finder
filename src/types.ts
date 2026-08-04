@@ -83,24 +83,33 @@ export const FLAG_LABELS: Record<FlagKey, { es: string; en: string }> = {
 export const ATTR_GROUPS: {
   id: "coffee" | "food" | "work";
   label: { es: string; en: string };
+  icon: string;
   claims: ClaimKey[];
   flags: FlagKey[];
 }[] = [
   {
     id: "coffee",
     label: { es: "El café", en: "The coffee" },
-    claims: ["roastsOnSite", "specialty"],
+    icon: "☕",
+    // `specialty` is deliberately NOT filterable. Every place on this map is
+    // specialty coffee — that is the entry requirement, not a distinguishing
+    // feature — so the filter matched everything and told nobody anything. The
+    // claim itself stays on the Place: it still carries its source, and a
+    // reader deciding whether to trust the entry should still see it.
+    claims: ["roastsOnSite"],
     flags: ["filterMethods", "sellsBeans", "grindsBeans"],
   },
   {
     id: "food",
     label: { es: "La comida", en: "The food" },
+    icon: "🥐",
     claims: ["glutenFree", "seedOilFree"],
     flags: ["breakfast", "brunch", "lunch"],
   },
   {
     id: "work",
     label: { es: "Para trabajar", en: "For working" },
+    icon: "💻",
     claims: [],
     flags: ["wifi", "outlets", "laptopFriendly"],
   },
