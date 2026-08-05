@@ -179,3 +179,30 @@ export async function savePlace(place: Place): Promise<{ error: string | null }>
   if (!error) invalidatePlaces();
   return { error: error?.message ?? null };
 }
+
+/**
+ * Remove a place for good.
+ *
+ * There was no way to do this at all: a café that closed, or a duplicate the
+ * brain produced, stayed on the map until someone opened the SQL editor. RLS
+ * already carried a delete policy for editors (supabase/03-constraints.sql),
+ * so this needed no migration — only a caller.
+ *
+ * Deliberately a hard delete rather than a hidden flag. A flag needs a column,
+ * a migration and a filter on every read, and until that migration ran every
+ * save would break. The UI asks for confirmation instead, which is the right
+ * place for that friction.
+ *
+ * Note: an uploaded photo in Storage is NOT removed with the row. Orphaned
+ * files cost a few kB and are recoverable; deleting someone's photo on the way
+ * past, silently, is not.
+ */
+export async function deletePlace(id: string): Promise<{ error: string | null }> {
+  if (!isSupabaseConfigured()) {
+    return { error: "Supabase no está configurado. Revisa el README." };
+  }
+  const sb = await supabase();
+  const { error } = await sb!.from("places").delete().eq("id", id);
+  if (!error) invalidatePlaces();
+  return { error: error?.message ?? null };
+}

@@ -2,9 +2,9 @@ import { create } from "zustand";
 import type { Session } from "@supabase/supabase-js";
 import type { Category, ClaimKey, FlagKey, Place } from "./types";
 import type { ChatMessage } from "./lib/brain";
-import { loadPlaces, savePlace } from "./lib/places";
+import { deletePlace, loadPlaces, savePlace } from "./lib/places";
 import { addReview, loadReviews, type Review } from "./lib/reviews";
-import { loadSubmissions, type Submission } from "./lib/submissions";
+import { loadSubmissions, setSubmissionStatus, type Submission } from "./lib/submissions";
 import { addFavorite, loadFavorites, removeFavorite } from "./lib/favorites";
 import { EMPTY_FILTERS, type ClaimStrictness, type Filters } from "./lib/filters";
 import { checkIsEditor, getSession, isSupabaseConfigured, onAuthChange } from "./lib/auth";
@@ -34,6 +34,13 @@ interface State {
   /** Place ids the signed-in user has saved. Empty when signed out. */
   favorites: string[];
   submissions: Submission[];
+  /**
+   * The submission being published, if the editor was opened from the queue.
+   * Without it a successful publish left the request sitting in the inbox as
+   * though nothing had happened, and the only way to clear it was "Descartar"
+   * — the button that means the opposite.
+   */
+  reviewingSubmissionId: string | null;
   /** The public "list your café" form. */
   submitOpen: boolean;
   /** "Where to buy beans" — roasters who sell, and where. */
@@ -100,7 +107,9 @@ interface State {
 
   refreshAuth: () => Promise<void>;
   setEditing: (p: Place | "new" | null) => void;
+  reviewSubmission: (submissionId: string, p: Place) => void;
   persistPlace: (p: Place) => Promise<{ error: string | null }>;
+  removePlace: (id: string) => Promise<{ error: string | null }>;
 }
 
 export const useStore = create<State>((set, get) => ({
@@ -120,6 +129,7 @@ export const useStore = create<State>((set, get) => ({
   editing: null,
   favorites: [],
   submissions: [],
+  reviewingSubmissionId: null,
   submitOpen: false,
   beansOpen: false,
   updateReady: false,
@@ -179,6 +189,18 @@ export const useStore = create<State>((set, get) => ({
       // A direct edit or cancel leaves any prior batch behind deliberately.
       draftQueue: [],
       draftBatchTotal: 0,
+      // Opening the editor any other way ends the review it was opened for,
+      // or cancelling one request would approve it on the next unrelated save.
+      reviewingSubmissionId: null,
+    })),
+
+  reviewSubmission: (reviewingSubmissionId, place) =>
+    set((s) => ({
+      editing: place,
+      editSeq: s.editSeq + 1,
+      draftQueue: [],
+      draftBatchTotal: 0,
+      reviewingSubmissionId,
     })),
 
   setBrainOpen: (brainOpen) => set({ brainOpen }),
@@ -216,9 +238,44 @@ export const useStore = create<State>((set, get) => ({
       };
     }),
 
+  removePlace: async (id) => {
+    const res = await deletePlace(id);
+    if (!res.error) {
+      let freshPlaces: Place[] | undefined;
+      try {
+        freshPlaces = await loadPlaces();
+      } catch {
+        // The delete landed; a failed refresh must not strand the editor.
+      }
+      set((s) => ({
+        ...(freshPlaces ? { places: freshPlaces } : { places: s.places.filter((p) => p.id !== id) }),
+        editing: null,
+        // The place is gone, so a link to it is too.
+        selectedId: s.selectedId === id ? null : s.selectedId,
+      }));
+      if (get().selectedId === null) writePlaceParam(null);
+    }
+    return res;
+  },
+
   persistPlace: async (place) => {
     const res = await savePlace(place);
     if (!res.error) {
+      /**
+       * Publishing IS the approval. The request stayed pending after a
+       * successful save, so the only way to clear the inbox was "Descartar" —
+       * which records a rejection, the opposite of what just happened.
+       *
+       * Deliberately after the write and never blocking it: the café is
+       * public either way, and a failed status update is a stale inbox row,
+       * not a lost café.
+       */
+      const submissionId = get().reviewingSubmissionId;
+      if (submissionId) {
+        void setSubmissionStatus(submissionId, "approved", get().session?.user?.email ?? "editor")
+          .then(() => get().refreshSubmissions())
+          .catch(() => {});
+      }
       // Re-read rather than patch in memory: the database applies triggers and
       // constraints, so what it stored is the truth, not what we sent.
       let freshPlaces: Place[] | undefined;
@@ -236,6 +293,7 @@ export const useStore = create<State>((set, get) => ({
           draftQueue: remaining,
           draftBatchTotal: next ? s.draftBatchTotal : 0,
           editSeq: next ? s.editSeq + 1 : s.editSeq,
+          reviewingSubmissionId: null,
         };
       });
     }

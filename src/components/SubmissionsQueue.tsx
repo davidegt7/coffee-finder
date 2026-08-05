@@ -64,7 +64,7 @@ function submissionToPlace(s: Submission, today: string): Place {
 
 export function SubmissionsQueue() {
   const submissions = useStore((s) => s.submissions);
-  const setEditing = useStore((s) => s.setEditing);
+  const reviewSubmission = useStore((s) => s.reviewSubmission);
   const refreshSubmissions = useStore((s) => s.refreshSubmissions);
   const session = useStore((s) => s.session);
   const { t, lang } = useT();
@@ -111,7 +111,7 @@ export function SubmissionsQueue() {
               <div className="queue__actions">
                 <button
                   className="btn btn--primary"
-                  onClick={() => setEditing(submissionToPlace(s, today))}
+                  onClick={() => reviewSubmission(s.id, submissionToPlace(s, today))}
                 >
                   {t("queue.review")}
                 </button>

@@ -53,6 +53,7 @@ export function PlaceEditor() {
   const editing = useStore((s) => s.editing);
   const setEditing = useStore((s) => s.setEditing);
   const persistPlace = useStore((s) => s.persistPlace);
+  const removePlace = useStore((s) => s.removePlace);
   const session = useStore((s) => s.session);
   const draftQueueLength = useStore((s) => s.draftQueue.length);
   const draftBatchTotal = useStore((s) => s.draftBatchTotal);
@@ -73,6 +74,8 @@ export function PlaceEditor() {
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [upBusy, setUpBusy] = useState(false);
   const [upErr, setUpErr] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const applyGeocodeHit = useCallback((hit: GeocodeHit) => {
     setPlace((current) => ({
@@ -286,6 +289,30 @@ export function PlaceEditor() {
         <label className="field">
           <span>{t("editor.name")}</span>
           <input value={place.name} onChange={(e) => patch({ name: e.target.value })} />
+        </label>
+        {/* The public sheet shows these, the owner form collects them, the brain
+            extracts them and savePlace stores them — there was simply nowhere
+            to type or correct one by hand. A wrong Instagram handle could only
+            be fixed by re-running an extraction. */}
+        <label className="field">
+          <span>{t("sheet.website")}</span>
+          <input
+            type="url"
+            value={place.website ?? ""}
+            onChange={(e) => patch({ website: e.target.value.trim() || undefined })}
+            placeholder="https://…"
+          />
+        </label>
+        <label className="field">
+          <span>{t("brain.instagram")}</span>
+          <input
+            value={place.instagram ?? ""}
+            onChange={(e) => patch({ instagram: e.target.value.trim() || undefined })}
+            placeholder="@handle"
+          />
+          {/* instagramUrl() accepts @handle, handle, or a full URL, so say so
+              rather than making someone guess which shape is wanted. */}
+          <small className="field__hint">{t("editor.instagramHint")}</small>
         </label>
         <label className="field">
           <span>{t("editor.type")}</span>
@@ -568,6 +595,41 @@ export function PlaceEditor() {
           {saving ? t("editor.saving") : t("editor.save")}
         </button>
       </div>
+
+      {/* Only for a place that exists — "delete" on a form you are still
+          filling in means cancel, and there are already two buttons for that.
+          Two taps, because the row it removes took real research to produce
+          and there is no undo behind it. */}
+      {!isNew && place.id && (
+        <div className="editor__danger">
+          {confirmDelete ? (
+            <>
+              <p className="field__err">{t("editor.deleteConfirm")}</p>
+              <div className="editor__actions">
+                <button className="btn" onClick={() => setConfirmDelete(false)}>
+                  {t("editor.cancel")}
+                </button>
+                <button
+                  className="btn btn--danger"
+                  disabled={deleting}
+                  onClick={async () => {
+                    setDeleting(true);
+                    const { error } = await removePlace(place.id);
+                    setDeleting(false);
+                    if (error) setSaveErr(error);
+                  }}
+                >
+                  {deleting ? t("editor.deleting") : t("editor.deleteYes")}
+                </button>
+              </div>
+            </>
+          ) : (
+            <button className="editor__delete" onClick={() => setConfirmDelete(true)}>
+              {t("editor.delete")}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
