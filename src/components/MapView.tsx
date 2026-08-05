@@ -9,6 +9,7 @@ import {
 } from "maplibre-gl";
 import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
+import { ensureMapPins, pinIdFor } from "../lib/mapPins";
 import { useT } from "../lib/useT";
 import type { Place } from "../types";
 
@@ -19,7 +20,6 @@ const CLUSTER_LAYER = "coffee-clusters";
 const CLUSTER_COUNT_LAYER = "coffee-cluster-count";
 const SELECTED_LAYER = "coffee-selected";
 const POINT_LAYER = "coffee-points";
-const POINT_CENTRE_LAYER = "coffee-point-centres";
 
 // Liberty is a handsome desktop style, but it contains roughly twice as many
 // layers as OpenFreeMap's dark style. Mobile Safari can stall while starting
@@ -45,18 +45,27 @@ function currentStyle() {
 function featureCollection(places: Place[], selectedId: string | null) {
   return {
     type: "FeatureCollection" as const,
-    features: places.map((place) => ({
-      type: "Feature" as const,
-      geometry: {
-        type: "Point" as const,
-        coordinates: [place.lng, place.lat] as [number, number],
-      },
-      properties: {
-        id: place.id,
-        verified: Object.values(place.claims).some((claim) => claim.confidence === "verified"),
-        selected: place.id === selectedId,
-      },
-    })),
+    features: places.map((place) => {
+      const verified = Object.values(place.claims).some(
+        (claim) => claim.confidence === "verified",
+      );
+      return {
+        type: "Feature" as const,
+        geometry: {
+          type: "Point" as const,
+          coordinates: [place.lng, place.lat] as [number, number],
+        },
+        properties: {
+          id: place.id,
+          category: place.category,
+          verified,
+          selected: place.id === selectedId,
+          // Precomputed so the symbol layer doesn't re-encode the category rule
+          // for every feature on every pan.
+          icon: pinIdFor(place.category, verified),
+        },
+      };
+    }),
   };
 }
 
@@ -182,41 +191,27 @@ function addCoffeeLayers(
     source: SOURCE_ID,
     filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "selected"], true]],
     paint: {
-      "circle-radius": 22,
-      "circle-color": "rgba(169, 104, 44, 0.16)",
+      "circle-radius": 24,
+      "circle-color": "rgba(169, 104, 44, 0.18)",
       "circle-stroke-color": "#a9682c",
       "circle-stroke-width": 2,
     },
   });
 
+  // Bean / roaster sprites (registered in ensureMapPins). Circles were clear but
+  // generic; the icon is what makes "coffee map" read at a glance, and the
+  // flame on roasteries answers "do they toast?" without opening the sheet.
   map.addLayer({
     id: POINT_LAYER,
-    type: "circle",
+    type: "symbol",
     source: SOURCE_ID,
     filter: ["!", ["has", "point_count"]],
-    paint: {
-      "circle-radius": 14,
-      "circle-color": "#fffaf4",
-      "circle-stroke-color": [
-        "case",
-        ["==", ["get", "verified"], true],
-        "#3f8a48",
-        "#a9682c",
-      ],
-      "circle-stroke-width": ["case", ["==", ["get", "verified"], true], 3, 2],
-    },
-  });
-
-  // A small coffee-coloured centre reads crisply at every resolution without
-  // relying on emoji fonts or marker image files.
-  map.addLayer({
-    id: POINT_CENTRE_LAYER,
-    type: "circle",
-    source: SOURCE_ID,
-    filter: ["!", ["has", "point_count"]],
-    paint: {
-      "circle-radius": 4,
-      "circle-color": "#a9682c",
+    layout: {
+      "icon-image": ["get", "icon"],
+      "icon-size": 0.5,
+      "icon-allow-overlap": true,
+      "icon-ignore-placement": true,
+      "icon-padding": 2,
     },
   });
 }
@@ -275,7 +270,11 @@ export function MapView() {
     map.on("style.load", () => {
       // Tint first: the café layers sit on top and must not be repainted.
       tintBasemap(map);
-      addCoffeeLayers(map, dataRef.current);
+      // Images are wiped with the style (light/dark swap), so re-register before
+      // layers that reference them — otherwise MapLibre draws missing-icon boxes.
+      void ensureMapPins(map).then(() => {
+        addCoffeeLayers(map, dataRef.current);
+      });
     });
 
     const openCluster = async (event: MapLayerMouseEvent) => {
@@ -295,8 +294,7 @@ export function MapView() {
 
     map.on("click", CLUSTER_LAYER, openCluster);
     map.on("click", POINT_LAYER, openPlace);
-    map.on("click", POINT_CENTRE_LAYER, openPlace);
-    for (const layer of [CLUSTER_LAYER, POINT_LAYER, POINT_CENTRE_LAYER]) {
+    for (const layer of [CLUSTER_LAYER, POINT_LAYER]) {
       map.on("mouseenter", layer, () => {
         map.getCanvas().style.cursor = "pointer";
       });

@@ -13,8 +13,19 @@
 
 const UA = "VitalMap/0.1 (https://github.com/davidegt7/coffee-finder)";
 
+/*
+ * Unit labels in both languages. The Spanish set was here from the start; the
+ * US forms were not, so "47 E Robinson St Unit 100, Orlando, FL 32801" reached
+ * Nominatim intact and returned NOTHING — the same failure as "Cdad.", from a
+ * different direction. Measured: dropping the unit gives one exact hit, while
+ * "Unit", "#100", "Ste" and "Apt" each return zero on their own.
+ *
+ * "fl" is deliberately absent even though it abbreviates "floor": in a US
+ * address FL is far more often Florida, and stripping a state is a worse bug
+ * than leaving a floor in.
+ */
 const UNIT_LABEL =
-  "(?:local|loc\\.?|oficina|of\\.?|piso|depto\\.?|departamento|dpto\\.?|unidad|suite|m[oó]dulo|tienda|store)";
+  "(?:local|loc\\.?|oficina|of\\.?|piso|depto\\.?|departamento|dpto\\.?|unidad|suite|ste\\.?|unit|apt\\.?|apartment|room|floor|m[oó]dulo|tienda|store)";
 
 // Mirrors LOCALITY_ABBREVIATIONS in src/lib/geocode.ts — keep the two in step.
 // "Cdad. Autónoma de Buenos Aires" is the form Google and Argentine café
@@ -27,12 +38,15 @@ function lookupQuery(query) {
     `\\s+${UNIT_LABEL}(?=\\s|#|n[°º.]?|\\d|$)\\s*(?:n[°º.]?\\s*)?[a-z0-9-]+`,
     "gi",
   );
+  // "#100" names a unit with no word attached, so it needs its own rule.
+  const hashUnit = /\s+#\s*[a-z0-9-]+/gi;
   return LOCALITY_ABBREVIATIONS.reduce((text, [pattern, full]) => text.replace(pattern, full), query)
     .split(",")
     .map((part) => part.trim())
     .filter((part) => part && !wholeUnit.test(part))
     .join(", ")
     .replace(inlineUnit, " ")
+    .replace(hashUnit, " ")
     .replace(/\s+,/g, ",")
     .replace(/\s{2,}/g, " ")
     .trim();

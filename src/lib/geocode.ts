@@ -127,8 +127,19 @@ export function exactGeocodeHit(query: string, hits: GeocodeHit[]): GeocodeHit |
   return exact.length === 1 ? exact[0] : null;
 }
 
+/*
+ * Unit labels in both languages. The Spanish set was here from the start; the
+ * US forms were not, so "47 E Robinson St Unit 100, Orlando, FL 32801" reached
+ * Nominatim intact and returned NOTHING — the same failure as "Cdad.", from a
+ * different direction. Measured: dropping the unit gives one exact hit, while
+ * "Unit", "#100", "Ste" and "Apt" each return zero on their own.
+ *
+ * "fl" is deliberately absent even though it abbreviates "floor": in a US
+ * address FL is far more often Florida, and stripping a state is a worse bug
+ * than leaving a floor in.
+ */
 const UNIT_LABEL =
-  "(?:local|loc\\.?|oficina|of\\.?|piso|depto\\.?|departamento|dpto\\.?|unidad|suite|m[oó]dulo|tienda|store)";
+  "(?:local|loc\\.?|oficina|of\\.?|piso|depto\\.?|departamento|dpto\\.?|unidad|suite|ste\\.?|unit|apt\\.?|apartment|room|floor|m[oó]dulo|tienda|store)";
 
 /**
  * Locality abbreviations Nominatim will not expand for itself.
@@ -158,6 +169,8 @@ export function geocodeLookupQuery(query: string): string {
     `\\s+${UNIT_LABEL}(?=\\s|#|n[°º.]?|\\d|$)\\s*(?:n[°º.]?\\s*)?[a-z0-9-]+`,
     "gi",
   );
+  // "#100" names a unit with no word attached, so it needs its own rule.
+  const hashUnit = /\s+#\s*[a-z0-9-]+/gi;
   const expanded = LOCALITY_ABBREVIATIONS.reduce(
     (text, [pattern, full]) => text.replace(pattern, full),
     query,
@@ -168,6 +181,7 @@ export function geocodeLookupQuery(query: string): string {
     .filter((part) => part && !wholeUnit.test(part))
     .join(", ")
     .replace(inlineUnit, " ")
+    .replace(hashUnit, " ")
     .replace(/\s+,/g, ",")
     .replace(/\s{2,}/g, " ")
     .trim();
