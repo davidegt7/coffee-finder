@@ -88,7 +88,10 @@ cosmetic: a CHECK constraint is validated against every existing row the moment
 it's added, so `02-cleanup.sql` must remove the previous app's grocery/market/
 restaurant rows *before* `03-constraints.sql` introduces the coffee-only category
 check. Concatenating them the other way round fails with a 23514.
-Run `full-setup.sql` (generated) to get all of it in the right order.
+`full-setup.sql` is the original base install; newer numbered migrations are
+run individually, in order, after it. In particular,
+`11-outreach-and-referrals.sql` adds the private photo-permission queue and the
+anonymous roaster referral totals used by the admin tools.
 
 
 This reuses the **same project as the old Vital Map** — the free tier allows only
@@ -115,6 +118,16 @@ from the JWT and RLS re-checks it, so a client can't write into someone else's
 list even if it tried. Saved places live server-side rather than in localStorage
 because the point of saving a café is that it's there on the phone you're
 holding when you're near it.
+
+### Photo outreach and roaster referrals
+
+Run `supabase/11-outreach-and-referrals.sql` after the earlier migrations.
+Photo-permission records are editor-only and store the contact status, follow-up
+date, photo scope, and where the approval evidence is preserved. Referral
+telemetry stores only a daily total per roaster and link type—no account,
+session, IP address, or browser identifier. Outbound roaster links also carry
+UTM parameters so a future partner can compare Coffee Finder's tally with their
+own analytics.
 
 Add a teammate:
 

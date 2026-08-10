@@ -9,9 +9,10 @@ import {
 } from "maplibre-gl";
 import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
-import { ensureMapPins, pinIdFor } from "../lib/mapPins";
+import { applyRoasterFilters } from "../lib/roasters";
+import { ensureMapPins, pinIdFor, PIN_ROASTER } from "../lib/mapPins";
 import { useT } from "../lib/useT";
-import type { Place } from "../types";
+import type { Place, Roaster } from "../types";
 
 /** Santiago, roughly Plaza Baquedano. MapLibre coordinates are longitude first. */
 const SANTIAGO: [number, number] = [-70.6344, -33.4372];
@@ -20,6 +21,8 @@ const CLUSTER_LAYER = "coffee-clusters";
 const CLUSTER_COUNT_LAYER = "coffee-cluster-count";
 const SELECTED_LAYER = "coffee-selected";
 const POINT_LAYER = "coffee-points";
+
+type MapPoint = { id: string; lat: number; lng: number };
 
 // Liberty is a handsome desktop style, but it contains roughly twice as many
 // layers as OpenFreeMap's dark style. Mobile Safari can stall while starting
@@ -42,7 +45,7 @@ function currentStyle() {
   return document.documentElement.dataset.theme === "dark" ? DARK_STYLE : LIGHT_STYLE;
 }
 
-function featureCollection(places: Place[], selectedId: string | null) {
+function placeFeatureCollection(places: Place[], selectedId: string | null) {
   return {
     type: "FeatureCollection" as const,
     features: places.map((place) => {
@@ -66,6 +69,27 @@ function featureCollection(places: Place[], selectedId: string | null) {
         },
       };
     }),
+  };
+}
+
+function roasterFeatureCollection(roasters: Roaster[], selectedId: string | null) {
+  return {
+    type: "FeatureCollection" as const,
+    features: roasters.map((roaster) => ({
+      type: "Feature" as const,
+      geometry: {
+        type: "Point" as const,
+        coordinates: [roaster.lng, roaster.lat] as [number, number],
+      },
+      properties: {
+        id: roaster.id,
+        category: "roastery" as const,
+        verified: false,
+        selected: roaster.id === selectedId,
+        // Directory pins all use the fire mark — every entry is a roaster.
+        icon: PIN_ROASTER,
+      },
+    })),
   };
 }
 
@@ -142,7 +166,7 @@ function tintBasemap(map: MapLibreMap) {
  */
 function addCoffeeLayers(
   map: MapLibreMap,
-  data: ReturnType<typeof featureCollection>,
+  data: ReturnType<typeof placeFeatureCollection>,
 ) {
   if (map.getSource(SOURCE_ID)) return;
 
@@ -216,10 +240,10 @@ function addCoffeeLayers(
   });
 }
 
-function fitPlaces(map: MapLibreMap, places: Place[], animate: boolean) {
-  if (!places.length) return;
-  const bounds = places.reduce(
-    (next, place) => next.extend([place.lng, place.lat]),
+function fitPoints(map: MapLibreMap, points: MapPoint[], animate: boolean) {
+  if (!points.length) return;
+  const bounds = points.reduce(
+    (next, point) => next.extend([point.lng, point.lat]),
     new LngLatBounds(),
   );
   map.fitBounds(bounds, {
@@ -230,10 +254,15 @@ function fitPlaces(map: MapLibreMap, places: Place[], animate: boolean) {
 }
 
 export function MapView() {
+  const section = useStore((state) => state.section);
   const places = useStore((state) => state.places);
+  const roasters = useStore((state) => state.roasters);
   const filters = useStore((state) => state.filters);
+  const roasterFilters = useStore((state) => state.roasterFilters);
   const select = useStore((state) => state.select);
+  const selectRoaster = useStore((state) => state.selectRoaster);
   const selectedId = useStore((state) => state.selectedId);
+  const selectedRoasterId = useStore((state) => state.selectedRoasterId);
   const favorites = useStore((state) => state.favorites);
   const near = useStore((s) => s.near);
   const { t } = useT();
@@ -241,14 +270,33 @@ export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const firstFitRef = useRef(true);
+  const sectionRef = useRef(section);
+  sectionRef.current = section;
   const selectRef = useRef(select);
   selectRef.current = select;
+  const selectRoasterRef = useRef(selectRoaster);
+  selectRoasterRef.current = selectRoaster;
 
-  const visible = useMemo(
+  const visiblePlaces = useMemo(
     () => applyFilters(places, filters, favorites),
     [places, filters, favorites],
   );
-  const data = useMemo(() => featureCollection(visible, selectedId), [visible, selectedId]);
+  const visibleRoasters = useMemo(
+    () => applyRoasterFilters(roasters, roasterFilters),
+    [roasters, roasterFilters],
+  );
+  const visible: MapPoint[] =
+    section === "roasters" ? visibleRoasters : visiblePlaces;
+  const totalCount = section === "roasters" ? roasters.length : places.length;
+  const activeSelectedId = section === "roasters" ? selectedRoasterId : selectedId;
+
+  const data = useMemo(
+    () =>
+      section === "roasters"
+        ? roasterFeatureCollection(visibleRoasters, selectedRoasterId)
+        : placeFeatureCollection(visiblePlaces, selectedId),
+    [section, visiblePlaces, visibleRoasters, selectedId, selectedRoasterId],
+  );
   const dataRef = useRef(data);
   dataRef.current = data;
 
@@ -287,13 +335,15 @@ export function MapView() {
       map.easeTo({ center: coordinates, zoom, duration: 450 });
     };
 
-    const openPlace = (event: MapLayerMouseEvent) => {
+    const openPoint = (event: MapLayerMouseEvent) => {
       const id = event.features?.[0]?.properties?.id;
-      if (typeof id === "string") selectRef.current(id);
+      if (typeof id !== "string") return;
+      if (sectionRef.current === "roasters") selectRoasterRef.current(id);
+      else selectRef.current(id);
     };
 
     map.on("click", CLUSTER_LAYER, openCluster);
-    map.on("click", POINT_LAYER, openPlace);
+    map.on("click", POINT_LAYER, openPoint);
     for (const layer of [CLUSTER_LAYER, POINT_LAYER]) {
       map.on("mouseenter", layer, () => {
         map.getCanvas().style.cursor = "pointer";
@@ -327,20 +377,22 @@ export function MapView() {
   // city, which used to leave the camera fitting every place on earth — asking
   // to be shown what is nearby zoomed you out to the whole planet, which is
   // exactly the opposite, and read as the feature simply not working.
-  const locationKey = `${filters.countryCode ?? ""}|${filters.city ?? ""}|${[
-    ...filters.comunas,
-  ]
-    .sort()
-    .join(",")}|${near ? `${near.lat},${near.lng}` : ""}`;
+  // Section is included so switching to the global roasters map re-frames.
+  const locationKey =
+    section === "roasters"
+      ? `roasters|${roasterFilters.countryCode ?? ""}|${roasterFilters.city ?? ""}|${roasterFilters.region ?? ""}`
+      : `cafes|${filters.countryCode ?? ""}|${filters.city ?? ""}|${[...filters.comunas]
+          .sort()
+          .join(",")}|${near ? `${near.lat},${near.lng}` : ""}`;
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !visible.length) return;
     const apply = () => {
-      if (near) {
+      if (section === "cafes" && near) {
         // Where you are, at a zoom where the cafés around you are legible.
         map.flyTo({ center: [near.lng, near.lat], zoom: 14, duration: 800 });
       } else {
-        fitPlaces(map, visible, !firstFitRef.current);
+        fitPoints(map, visible, !firstFitRef.current);
       }
       firstFitRef.current = false;
     };
@@ -378,16 +430,19 @@ export function MapView() {
   }, [near]);
 
   useEffect(() => {
-    if (!selectedId) return;
-    const place = places.find((candidate) => candidate.id === selectedId);
+    if (!activeSelectedId) return;
+    const point =
+      section === "roasters"
+        ? roasters.find((candidate) => candidate.id === activeSelectedId)
+        : places.find((candidate) => candidate.id === activeSelectedId);
     const map = mapRef.current;
-    if (!place || !map) return;
+    if (!point || !map) return;
     map.flyTo({
-      center: [place.lng, place.lat],
+      center: [point.lng, point.lat],
       zoom: Math.max(map.getZoom(), 15),
       duration: 600,
     });
-  }, [selectedId, places]);
+  }, [activeSelectedId, section, places, roasters]);
 
   const locate = () => {
     navigator.geolocation?.getCurrentPosition((position) => {
@@ -399,6 +454,9 @@ export function MapView() {
     });
   };
 
+  const unitOne = section === "roasters" ? t("map.roaster") : t("map.place");
+  const unitMany = section === "roasters" ? t("map.roasters") : t("map.places");
+
   return (
     <div className="map">
       <div ref={containerRef} className="map__canvas" />
@@ -408,8 +466,8 @@ export function MapView() {
       </button>
 
       <div className="map__count">
-        {visible.length} {visible.length === 1 ? t("map.place") : t("map.places")}
-        {visible.length !== places.length && ` ${t("map.ofTotal", { n: places.length })}`}
+        {visible.length} {visible.length === 1 ? unitOne : unitMany}
+        {visible.length !== totalCount && ` ${t("map.ofTotal", { n: totalCount })}`}
       </div>
     </div>
   );

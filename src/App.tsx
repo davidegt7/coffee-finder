@@ -3,7 +3,10 @@ import { useStore } from "./store";
 import { MapView } from "./components/MapView";
 import { ListSheet } from "./components/ListSheet";
 import { FilterBar } from "./components/FilterBar";
+import { RoasterFilterBar } from "./components/RoasterFilterBar";
 import { PlaceSheet } from "./components/PlaceSheet";
+import { RoasterSheet } from "./components/RoasterSheet";
+import { SectionToggle } from "./components/SectionToggle";
 import { AdminBar } from "./components/AdminBar";
 import { PlaceEditor } from "./components/PlaceEditor";
 import { LangToggle } from "./components/LangToggle";
@@ -20,8 +23,11 @@ export default function App() {
     status,
     error,
     init,
+    section,
     selectedId,
+    selectedRoasterId,
     select,
+    selectRoaster,
     syncFromUrl,
     editing,
     editSeq,
@@ -50,13 +56,16 @@ export default function App() {
   }, [syncFromUrl]);
 
   useEffect(() => {
-    if (!selectedId) return;
+    if (!selectedId && !selectedRoasterId) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") select(null);
+      if (e.key === "Escape") {
+        if (selectedRoasterId) selectRoaster(null);
+        else select(null);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId, select]);
+  }, [selectedId, selectedRoasterId, select, selectRoaster]);
 
   return (
     <div className="app">
@@ -91,23 +100,33 @@ export default function App() {
                 <h1>
                   Coffee<span>Finder</span>
                 </h1>
-                <p className="brandmark__sub">{t("app.subtitle")}</p>
+                <p className="brandmark__sub">
+                  {section === "roasters" ? t("app.subtitleRoasters") : t("app.subtitle")}
+                </p>
               </div>
               <LangToggle />
             </div>
+            <SectionToggle />
             <AdminBar />
-            {isEditor && <SubmissionsQueue />}
-            <FilterBar />
+            {isEditor && section === "cafes" && <SubmissionsQueue />}
+            {section === "cafes" ? <FilterBar /> : <RoasterFilterBar />}
           </div>
 
           <ListSheet />
         </>
       )}
 
-      {selectedId && !editing && (
+      {selectedId && !editing && section === "cafes" && (
         <>
           <div className="scrim" onClick={() => select(null)} />
           <PlaceSheet />
+        </>
+      )}
+
+      {selectedRoasterId && section === "roasters" && (
+        <>
+          <div className="scrim" onClick={() => selectRoaster(null)} />
+          <RoasterSheet />
         </>
       )}
 

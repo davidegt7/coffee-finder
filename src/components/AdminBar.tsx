@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { isSupabaseConfigured, signInWithEmail, signOut } from "../lib/auth";
 import { useT } from "../lib/useT";
+import { PhotoOutreach } from "./PhotoOutreach";
+import { ReferralDashboard } from "./ReferralDashboard";
 
 /**
  * The admin strip. Only rendered when ?admin=1 is in the URL.
@@ -28,7 +30,7 @@ import { useT } from "../lib/useT";
  * editor's Save, which RLS still adjudicates.
  */
 export function AdminBar() {
-  const { adminMode, session, isEditor, authReady, setEditing, refreshAuth, setBrainOpen } =
+  const { adminMode, session, isEditor, authReady, section, setEditing, refreshAuth, setBrainOpen } =
     useStore();
   const { t } = useT();
   const [email, setEmail] = useState("");
@@ -99,9 +101,12 @@ export function AdminBar() {
     body = (
       <>
         <span className="admin__who">✎ {session.user.email}</span>
-        <button className="btn btn--primary" onClick={() => setEditing("new")}>
-          {t("admin.addPlace")}
-        </button>
+        {section === "cafes" && (
+          <button className="btn btn--primary" onClick={() => setEditing("new")}>
+            {t("admin.addPlace")}
+          </button>
+        )}
+        {section === "cafes" ? <PhotoOutreach /> : <ReferralDashboard />}
         <button className="btn" onClick={async () => { await signOut(); await refreshAuth(); }}>
           {t("admin.signOut")}
         </button>

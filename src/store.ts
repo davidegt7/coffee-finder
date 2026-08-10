@@ -1,25 +1,41 @@
 import { create } from "zustand";
 import type { Session } from "@supabase/supabase-js";
-import type { Category, ClaimKey, FlagKey, Place } from "./types";
+import type { AppSection, Category, ClaimKey, FlagKey, Place, Roaster } from "./types";
 import type { ChatMessage } from "./lib/brain";
 import { deletePlace, loadPlaces, savePlace } from "./lib/places";
 import { addReview, loadReviews, type Review } from "./lib/reviews";
 import { loadSubmissions, setSubmissionStatus, type Submission } from "./lib/submissions";
 import { addFavorite, loadFavorites, removeFavorite } from "./lib/favorites";
 import { EMPTY_FILTERS, type ClaimStrictness, type Filters } from "./lib/filters";
+import {
+  EMPTY_ROASTER_FILTERS,
+  loadRoasters,
+  type RoasterFilters,
+} from "./lib/roasters";
 import { checkIsEditor, getSession, isSupabaseConfigured, onAuthChange } from "./lib/auth";
 import { initialLang, persistLang, type Lang } from "./lib/i18n";
 import { applyTheme, initialTheme, type Theme } from "./lib/theme";
 import { readPlaceParam, writePlaceParam } from "./lib/placeUrl";
+import {
+  readRoasterParam,
+  readSectionParam,
+  writeRoasterParam,
+  writeSectionParam,
+} from "./lib/roasterUrl";
 import { getPosition, type Coords, type NearStatus } from "./lib/geo";
 
 interface State {
   places: Place[];
+  roasters: Roaster[];
   reviews: Review[];
   status: "idle" | "loading" | "ready" | "error";
   error: string | null;
+  /** Which directory the map + list are showing. */
+  section: AppSection;
   filters: Filters;
+  roasterFilters: RoasterFilters;
   selectedId: string | null;
+  selectedRoasterId: string | null;
   lang: Lang;
   theme: Theme;
 
@@ -67,6 +83,7 @@ interface State {
   editSeq: number;
 
   init: () => Promise<void>;
+  setSection: (section: AppSection) => void;
   setClaim: (key: ClaimKey, value: ClaimStrictness) => void;
   toggleFlag: (flag: FlagKey) => void;
   toggleCategory: (category: Category) => void;
@@ -78,7 +95,16 @@ interface State {
   setCity: (city: string | null) => void;
   toggleComuna: (comuna: string) => void;
   resetFilters: () => void;
+  setRoasterCountry: (countryCode: string | null) => void;
+  setRoasterCity: (city: string | null) => void;
+  setRoasterRegion: (region: string | null) => void;
+  setRoasterQuery: (query: string) => void;
+  toggleRoasterShipLocal: () => void;
+  toggleRoasterShipIntl: () => void;
+  toggleRoasterSubscription: () => void;
+  resetRoasterFilters: () => void;
   select: (id: string | null) => void;
+  selectRoaster: (id: string | null) => void;
   syncFromUrl: () => void;
   setLang: (lang: Lang) => void;
   setTheme: (theme: Theme) => void;
@@ -114,11 +140,15 @@ interface State {
 
 export const useStore = create<State>((set, get) => ({
   places: [],
+  roasters: [],
   reviews: [],
   status: "idle",
   error: null,
+  section: readSectionParam(),
   filters: EMPTY_FILTERS,
+  roasterFilters: { ...EMPTY_ROASTER_FILTERS },
   selectedId: null,
+  selectedRoasterId: null,
   lang: initialLang(),
   theme: initialTheme(),
 
@@ -146,14 +176,34 @@ export const useStore = create<State>((set, get) => ({
     if (get().status === "loading" || get().status === "ready") return;
     set({ status: "loading", error: null });
     try {
+      // Places are required for the café map. Roasters fail soft: a missing
+      // directory file must not take the café map down with it.
       const places = await loadPlaces();
-      // A shared link names a place we only just learned about, so the id is
-      // resolved here rather than at startup. An id that no longer exists is
-      // ignored: a café that closed should open the map, not an error.
-      const shared = readPlaceParam();
-      const selectedId = shared && places.some((p) => p.id === shared) ? shared : null;
-      set({ places, status: "ready", selectedId });
-      if (shared && !selectedId) writePlaceParam(null);
+      let roasters: Roaster[] = [];
+      try {
+        roasters = await loadRoasters();
+      } catch (err) {
+        console.warn("Coffee Finder roasters:", err);
+      }
+      // A shared link names a place/roaster we only just learned about, so the
+      // id is resolved here rather than at startup. An id that no longer
+      // exists is ignored: a closed café should open the map, not an error.
+      const sharedPlace = readPlaceParam();
+      const sharedRoaster = readRoasterParam();
+      const section = readSectionParam();
+      const selectedId =
+        section === "cafes" && sharedPlace && places.some((p) => p.id === sharedPlace)
+          ? sharedPlace
+          : null;
+      const selectedRoasterId =
+        section === "roasters" &&
+        sharedRoaster &&
+        roasters.some((r) => r.id === sharedRoaster)
+          ? sharedRoaster
+          : null;
+      set({ places, roasters, status: "ready", selectedId, selectedRoasterId, section });
+      if (sharedPlace && !selectedId) writePlaceParam(null);
+      if (sharedRoaster && !selectedRoasterId) writeRoasterParam(null);
       // Reviews are secondary — never let them delay or break the map.
       void loadReviews().then((reviews) => set({ reviews })).catch(() => {});
     } catch (err) {
@@ -354,9 +404,65 @@ export const useStore = create<State>((set, get) => ({
       },
     })),
   resetFilters: () => set({ filters: EMPTY_FILTERS }),
+
+  setSection: (section) => {
+    const prev = get().section;
+    if (prev === section) return;
+    writeSectionParam(section);
+    // Switching directories closes the other sheet and clears its selection
+    // from the URL so back doesn't resurrect the wrong product.
+    if (section === "roasters") {
+      writePlaceParam(null);
+      set({ section, selectedId: null, selectedRoasterId: null });
+    } else {
+      writeRoasterParam(null);
+      set({ section, selectedRoasterId: null, selectedId: null });
+    }
+  },
+
+  setRoasterCountry: (countryCode) =>
+    set((s) => ({
+      roasterFilters: { ...s.roasterFilters, countryCode, city: null, region: null },
+    })),
+
+  setRoasterCity: (city) => set((s) => ({ roasterFilters: { ...s.roasterFilters, city } })),
+
+  setRoasterRegion: (region) =>
+    set((s) => ({ roasterFilters: { ...s.roasterFilters, region, city: null } })),
+
+  setRoasterQuery: (query) => set((s) => ({ roasterFilters: { ...s.roasterFilters, query } })),
+
+  toggleRoasterShipLocal: () =>
+    set((s) => ({
+      roasterFilters: { ...s.roasterFilters, shipsLocally: !s.roasterFilters.shipsLocally },
+    })),
+
+  toggleRoasterShipIntl: () =>
+    set((s) => ({
+      roasterFilters: {
+        ...s.roasterFilters,
+        shipsInternationally: !s.roasterFilters.shipsInternationally,
+      },
+    })),
+
+  toggleRoasterSubscription: () =>
+    set((s) => ({
+      roasterFilters: {
+        ...s.roasterFilters,
+        hasSubscription: !s.roasterFilters.hasSubscription,
+      },
+    })),
+
+  resetRoasterFilters: () => set({ roasterFilters: { ...EMPTY_ROASTER_FILTERS } }),
+
   select: (selectedId) => {
     writePlaceParam(selectedId);
-    set({ selectedId });
+    set({ selectedId, selectedRoasterId: null });
+  },
+
+  selectRoaster: (selectedRoasterId) => {
+    writeRoasterParam(selectedRoasterId);
+    set({ selectedRoasterId, selectedId: null });
   },
 
   /**
@@ -364,9 +470,23 @@ export const useStore = create<State>((set, get) => ({
    * history again, or the two would push each other in a loop.
    */
   syncFromUrl: () => {
-    const shared = readPlaceParam();
-    const { places } = get();
-    set({ selectedId: shared && places.some((p) => p.id === shared) ? shared : null });
+    const section = readSectionParam();
+    const sharedPlace = readPlaceParam();
+    const sharedRoaster = readRoasterParam();
+    const { places, roasters } = get();
+    set({
+      section,
+      selectedId:
+        section === "cafes" && sharedPlace && places.some((p) => p.id === sharedPlace)
+          ? sharedPlace
+          : null,
+      selectedRoasterId:
+        section === "roasters" &&
+        sharedRoaster &&
+        roasters.some((r) => r.id === sharedRoaster)
+          ? sharedRoaster
+          : null,
+    });
   },
 
   setTheme: (theme) => {

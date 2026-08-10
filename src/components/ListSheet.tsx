@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useMemo } from "react";
 import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
+import { applyRoasterFilters } from "../lib/roasters";
 import { useT } from "../lib/useT";
 import { PlaceList } from "./PlaceList";
+import { RoasterList } from "./RoasterList";
 
 /**
  * The results list, as a sheet you drag over a full-bleed map.
@@ -17,6 +19,9 @@ import { PlaceList } from "./PlaceList";
  * Three snap points rather than free positioning: a sheet that stops wherever
  * your thumb left it feels broken, and the useful states really are "show me the
  * map", "show me both", and "show me the list".
+ *
+ * Serves both directories: cafés and the roasters directory share this chrome
+ * so switching sections feels like changing filters, not opening an app.
  */
 type Snap = "peek" | "half" | "full";
 
@@ -24,9 +29,12 @@ type Snap = "peek" | "half" | "full";
 const OFFSET: Record<Snap, number> = { peek: 0.86, half: 0.44, full: 0 };
 
 export function ListSheet() {
+  const section = useStore((s) => s.section);
   const places = useStore((s) => s.places);
+  const roasters = useStore((s) => s.roasters);
   const near = useStore((s) => s.near);
   const filters = useStore((s) => s.filters);
+  const roasterFilters = useStore((s) => s.roasterFilters);
   const favorites = useStore((s) => s.favorites);
   const { t } = useT();
 
@@ -38,10 +46,17 @@ export function ListSheet() {
   const sheetRef = useRef<HTMLDivElement>(null);
   const startRef = useRef({ y: 0, offset: 0, lastY: 0, lastT: 0 });
 
-  const visible = useMemo(
+  const visiblePlaces = useMemo(
     () => applyFilters(places, filters, favorites),
     [places, filters, favorites],
   );
+  const visibleRoasters = useMemo(
+    () => applyRoasterFilters(roasters, roasterFilters),
+    [roasters, roasterFilters],
+  );
+  const count = section === "roasters" ? visibleRoasters.length : visiblePlaces.length;
+  const unitOne = section === "roasters" ? t("map.roaster") : t("map.place");
+  const unitMany = section === "roasters" ? t("map.roasters") : t("map.places");
 
   useEffect(() => {
     const bar = document.querySelector(".topbar");
@@ -116,11 +131,11 @@ export function ListSheet() {
   }, [near]);
 
   // Results changing under a collapsed sheet is invisible — lift it so the
-  // answer to a filter is on screen.
-  const count = visible.length;
+  // answer to a filter is on screen. Section changes too: switching to
+  // roasters under a peeked sheet would look like nothing happened.
   useEffect(() => {
     setSnap((cur) => (cur === "peek" ? "half" : cur));
-  }, [count]);
+  }, [count, section]);
 
   const offsetPx = drag ?? OFFSET[snap] * height();
 
@@ -160,12 +175,12 @@ export function ListSheet() {
       >
         <span className="list-sheet__bar" aria-hidden="true" />
         <span className="list-sheet__count">
-          {count} {count === 1 ? t("map.place") : t("map.places")}
+          {count} {count === 1 ? unitOne : unitMany}
         </span>
       </div>
 
       <div className="list-sheet__body">
-        <PlaceList />
+        {section === "roasters" ? <RoasterList /> : <PlaceList />}
       </div>
     </div>
   );

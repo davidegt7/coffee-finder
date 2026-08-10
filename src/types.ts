@@ -162,3 +162,73 @@ export interface Place {
   sources: string[];
   addedAt: string;
 }
+
+// ---------------------------------------------------------------- app section
+
+/**
+ * Two products share one shell: cafés you visit for a drink, and roasters you
+ * discover so you can buy beans from them directly. Same map chrome, different
+ * data, different filters, different primary action.
+ */
+export type AppSection = "cafes" | "roasters";
+
+// ---------------------------------------------------------------- roasters
+
+/**
+ * A specialty coffee roaster in the global directory.
+ *
+ * Not a Place. Places are cafés you walk into; a roaster here is a brand you
+ * discover so you can buy from *their* store. We never take payment or place
+ * orders — the only outbound action is a link to their website or shop.
+ *
+ * Coordinates mark the HQ / primary roast location for the map pin. Additional
+ * retail sites live in `physicalLocations` and are listed on the profile, not
+ * plotted as separate pins (that would turn one brand into a cluster of noise).
+ */
+export interface RoasterLocation {
+  /** Optional label: "Roastery", "Café Italia", "Warehouse". */
+  name?: string;
+  address?: string;
+  city: string;
+  country: string;
+  countryCode: string;
+  lat?: number;
+  lng?: number;
+}
+
+export interface Roaster {
+  id: string;
+  name: string;
+  /** Short blurb — what makes them worth knowing, not marketing fluff. */
+  description?: string;
+  lat: number;
+  lng: number;
+  address?: string;
+  city: string;
+  /** Free-text region within a country when useful: "Patagonia", "California". */
+  region?: string;
+  country: string;
+  countryCode: string;
+  /** Brand / about site. */
+  website?: string;
+  /**
+   * Where you actually buy beans online. Often the same host as `website`,
+   * sometimes a shop subdomain or Shopify store. Prefer this for the buy CTA.
+   */
+  onlineStore?: string;
+  instagram?: string;
+  /** Ships within their home country / region. */
+  shipsLocally: boolean;
+  /** Ships outside their home country. */
+  shipsInternationally: boolean;
+  /** Offers a bean subscription / club. */
+  hasSubscription: boolean;
+  /** Human note: "EU only", "free over $40", "weekly roast club". */
+  shippingNotes?: string;
+  /** Cafés, tasting rooms, or retail sites under the same brand. */
+  physicalLocations?: RoasterLocation[];
+  photoUrl?: string;
+  photoCredit?: string;
+  sources: string[];
+  addedAt: string;
+}

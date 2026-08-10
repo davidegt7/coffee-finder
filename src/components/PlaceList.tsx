@@ -15,6 +15,7 @@ export function PlaceList() {
   const resetFilters = useStore((s) => s.resetFilters);
   const setSubmitOpen = useStore((s) => s.setSubmitOpen);
   const setBeansOpen = useStore((s) => s.setBeansOpen);
+  const setSection = useStore((s) => s.setSection);
   const near = useStore((s) => s.near);
   const { t, lang } = useT();
   const favorites = useStore((s) => s.favorites);
@@ -54,7 +55,10 @@ export function PlaceList() {
           the list runs to a few hundred places, so "the end" is somewhere
           nobody ever arrives. Buying beans is a different errand from finding
           a seat, and you have to be able to leave for it early. */}
-      <button className="beans-cta" onClick={() => setBeansOpen(true)}>
+      <button className="beans-cta" onClick={() => setSection("roasters")}>
+        {t("roasters.ctaFromCafes")}
+      </button>
+      <button className="beans-cta beans-cta--secondary" onClick={() => setBeansOpen(true)}>
         {t("beans.cta")}
       </button>
 
