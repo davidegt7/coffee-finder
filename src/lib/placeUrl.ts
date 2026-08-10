@@ -2,7 +2,7 @@
  * The selected place, mirrored into the address bar so it can be shared.
  *
  * A query parameter rather than a path segment (`?place=x`, not `/place/x`)
- * because GitHub Pages serves static files: `/coffee-finder/place/x` has no
+ * because GitHub Pages serves static files: `/place/x` has no
  * file behind it, so opening or refreshing a shared link would 404. A query
  * string always resolves to index.html, on Pages and on any host we might move
  * to later.

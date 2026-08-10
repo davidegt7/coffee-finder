@@ -29,8 +29,8 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["maplibre-gl"],
   },
-  // GitHub Pages project site: https://davidegt7.github.io/coffee-finder/
-  // Local / custom domain: leave unset or VITE_BASE_PATH=/
+  // coffee-finder.com serves the app from the domain root. Keep this
+  // configurable so a temporary preview can still choose another base path.
   base: process.env.VITE_BASE_PATH || "/",
   server: {
     host: true,

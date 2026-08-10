@@ -34,7 +34,7 @@ const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
 // MapLibre 6 resolves its worker beside a shared module. Vite does not copy
 // either sibling automatically, so GitHub Pages returned 404 and left a
 // correctly sized but empty map. The build plugin in vite.config.ts copies both
-// stable filenames; BASE_URL gives this the `/coffee-finder/` project prefix.
+// stable filenames; BASE_URL keeps the path correct for the active host root.
 // Development keeps MapLibre's native node_modules-relative URL, which Vite can
 // serve directly because the package is excluded from dependency optimization.
 if (import.meta.env.PROD) {

@@ -31,7 +31,9 @@ jobs:
         run: npm run check-data
       - name: Build
         env:
-          VITE_BASE_PATH: /coffee-finder/
+          # The custom domain serves this project at its root. Building with
+          # /coffee-finder/ here would make every JS/CSS request 404 there.
+          VITE_BASE_PATH: /
           # Baked into the client at build time. Both are repo *variables*, not
           # secrets: the publishable/anon key is meant to ship in the browser,
           # and RLS is what protects the data. Empty when unset → the app falls

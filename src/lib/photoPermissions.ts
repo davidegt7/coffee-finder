@@ -118,7 +118,7 @@ export async function savePhotoPermission(
 }
 
 const productionPlaceUrl = (placeId: string) =>
-  `https://davidegt7.github.io/coffee-finder/?place=${encodeURIComponent(placeId)}`;
+  `https://coffee-finder.com/?place=${encodeURIComponent(placeId)}`;
 
 /** A ready-to-send draft. The café still has to confirm it owns or can license the photos. */
 export function photoPermissionEmail(
