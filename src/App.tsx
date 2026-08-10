@@ -97,9 +97,12 @@ export default function App() {
                   it, and a subtitle sitting outside it would be the one bit of
                   text that isn't. */}
               <div className="brandmark">
-                <h1>
-                  Coffee<span>Finder</span>
-                </h1>
+                <div className="brandmark__title">
+                  <h1>
+                    Coffee<span>Finder</span>
+                  </h1>
+                  <span className="brandmark__beta">Beta</span>
+                </div>
                 <p className="brandmark__sub">
                   {section === "roasters" ? t("app.subtitleRoasters") : t("app.subtitle")}
                 </p>
