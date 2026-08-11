@@ -12,14 +12,13 @@
  * places.json is deliberately NOT cached here — it's network-first via the
  * fetch handler, because stale dietary data is worse than no data.
  */
-// Bump this on any deploy that must invalidate cached assets. Note the cache
-// names below were briefly `vitalmap-*`: this file was copied wholesale from the
-// previous app and the rebrand's find-and-replace missed the unseparated form.
-// Both apps are served from the same origin, so they were sharing one cache
-// namespace and could evict each other's entries.
-const VERSION = "v2";
-const SHELL = `coffeefinder-shell-${VERSION}`;
-const TILES = `coffeefinder-tiles-${VERSION}`;
+// Vite replaces this token with a fingerprint of the generated entry page.
+// That makes every interface release detectable by installed phone apps.
+const BUILD = "__COFFEE_FINDER_BUILD__";
+const SHELL = `coffeefinder-shell-${BUILD}`;
+// Map tiles do not change with an app deployment. Keep their cache stable so a
+// small interface release does not throw away someone's offline map.
+const TILES = "coffeefinder-tiles-v2";
 const MAX_TILES = 400;
 
 const SHELL_ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./favicon.svg"];
