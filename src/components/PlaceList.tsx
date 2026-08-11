@@ -3,10 +3,9 @@ import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
 import { distanceKm, formatDistance } from "../lib/geo";
 import { useT } from "../lib/useT";
-import { ClaimBadge } from "./ClaimBadge";
 import { AdSlot } from "./AdSlot";
 import { PlacePhoto } from "./PlacePhoto";
-import { CLAIM_KEYS, FLAG_LABELS } from "../types";
+import { FLAG_LABELS } from "../types";
 import { countryName } from "../lib/geography";
 
 export function PlaceList() {
@@ -98,18 +97,17 @@ export function PlaceList() {
                 </span>
               )}
             </div>
-            <div className="card__badges">
-              {CLAIM_KEYS.map((key) => (
-                <ClaimBadge key={key} claimKey={key} claim={place.claims[key]} />
-              ))}
-              {/* Amenities ride along as quiet chips — no provenance mark, because
-                  they carry none and pretending otherwise would be dishonest. */}
-              {place.flags.slice(0, 3).map((f) => (
-                <span key={f} className="badge badge--flag">
-                  {FLAG_LABELS[f][lang]}
-                </span>
-              ))}
-            </div>
+            {place.flags.length > 0 && (
+              <div className="card__badges">
+                {/* Result cards stay scannable: detailed claims and their
+                    evidence belong inside the place page, not on every row. */}
+                {place.flags.slice(0, 3).map((f) => (
+                  <span key={f} className="badge badge--flag">
+                    {FLAG_LABELS[f][lang]}
+                  </span>
+                ))}
+              </div>
+            )}
             {place.items.length > 0 && (
               <p className="card__items">{place.items.slice(0, 4).join(" · ")}</p>
             )}

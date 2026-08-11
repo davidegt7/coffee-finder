@@ -215,6 +215,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
     // A barrio is the bottom of the ladder: there is nothing left to choose, so
     // show the results rather than an empty rung.
     setOpen(s.comuna ? null : "where");
+    if (s.comuna) onComplete?.();
   };
 
   const comunas = useMemo(
@@ -366,7 +367,10 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
               // Get out of the way. The point of "near me" is the map and the
               // cafés on it; leaving a country list open over both means the
               // answer arrives behind the question.
-              if (useStore.getState().near) setOpen(null);
+              if (useStore.getState().near) {
+                setOpen(null);
+                onComplete?.();
+              }
             }}
             disabled={nearStatus === "locating"}
           >
@@ -420,7 +424,10 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
                           onClick={() => {
                             setCountry(code);
                             // Nowhere left to drill: the menu has done its job.
-                            if (citiesIn(code).size === 0) setOpen(null);
+                            if (citiesIn(code).size === 0) {
+                              setOpen(null);
+                              onComplete?.();
+                            }
                           }}
                         >
                           {countryName(code, fallback, lang)}
@@ -439,7 +446,10 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
                   className="chip chip--cat"
                   onClick={() => {
                     setCity(city);
-                    if (comunasIn(city).size === 0) setOpen(null);
+                    if (comunasIn(city).size === 0) {
+                      setOpen(null);
+                      onComplete?.();
+                    }
                   }}
                 >
                   {city}
@@ -458,6 +468,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
                     // barrio means reopening — the menu comes back here, with
                     // the first one still lit.
                     setOpen(null);
+                    onComplete?.();
                   }}
                   aria-pressed={filters.comunas.includes(c)}
                 >
