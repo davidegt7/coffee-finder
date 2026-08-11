@@ -2926,6 +2926,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-bottom: 0;
+}
+
+.claims-section.is-open .claims-head {
   margin-bottom: 11px;
 }
 
@@ -2955,15 +2959,6 @@
 
 .claims-toggle__caret.is-open {
   transform: rotate(180deg);
-}
-
-/* The collapsed state is a summary, not a hidden section: the badges say what
-   is known, and only the evidence behind them is a tap away. */
-.claims-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  cursor: pointer;
 }
 
 /* The caveat now sits at the end, so it needs its own top margin rather than

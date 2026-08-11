@@ -6,7 +6,7 @@ import { directionsUrl, instagramUrl } from "../lib/links";
 import { placeUrl } from "../lib/placeUrl";
 import { useT } from "../lib/useT";
 import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
-import { ClaimBadge, ClaimRow, UnknownClaims } from "./ClaimBadge";
+import { ClaimRow, UnknownClaims } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
 import { AdSlot } from "./AdSlot";
 import { PlacePhoto } from "./PlacePhoto";
@@ -330,7 +330,7 @@ export function PlaceSheet() {
         </section>
       )}
 
-      <section className="sheet__section">
+      <section className={`sheet__section claims-section ${claimsOpen ? "is-open" : ""}`}>
         <div className="claims-head">
           <button
             className="claims-toggle"
@@ -347,22 +347,6 @@ export function PlaceSheet() {
             </button>
           )}
         </div>
-
-        {/* Collapsed still shows WHAT is known — only the evidence (notes,
-            sources, dates) is behind the tap. Hiding the answer itself would
-            trade clutter for uselessness. */}
-        {!claimsOpen && (
-          <div className="claims-summary" onClick={() => setClaimsOpen(true)}>
-            {CLAIM_KEYS.map((key) => (
-              <ClaimBadge key={key} claimKey={key} claim={place.claims[key]} />
-            ))}
-            {unknownKeys.length > 0 && (
-              <span className="badge badge--flag">
-                {unknownKeys.length} {t("claim.uncheckedShort")}
-              </span>
-            )}
-          </div>
-        )}
 
         {claimsOpen && (
           <div id="claims-body">
