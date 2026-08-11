@@ -47,7 +47,7 @@ export default function App() {
   }, [init]);
 
   useEffect(() => {
-    document.title = section === "roasters" ? "Roasters · Coffee Finder" : "Map · Coffee Finder";
+    document.title = section === "roasters" ? "Roasters · Coffee Finder" : "Coffee Map · Coffee Finder";
   }, [section]);
 
   // Back/forward — including the phone's back gesture — moves between places

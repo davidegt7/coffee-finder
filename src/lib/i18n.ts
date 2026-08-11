@@ -27,7 +27,7 @@ const ES = {
   "app.updateNow": "Actualizar",
 
   "section.label": "Sección",
-  "section.cafes": "Mapa",
+  "section.cafes": "Mapa de café",
   "section.roasters": "Tostadores",
 
   "search.placeholder": "Buscar café, ciudad, barrio o preparación…",
@@ -424,7 +424,7 @@ const EN: Record<keyof typeof ES, string> = {
   "app.updateNow": "Update",
 
   "section.label": "Section",
-  "section.cafes": "Map",
+  "section.cafes": "Coffee Map",
   "section.roasters": "Roasters",
 
   "search.placeholder": "Search café, city, neighborhood or brew…",
