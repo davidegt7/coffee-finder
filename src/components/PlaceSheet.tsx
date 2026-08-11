@@ -9,6 +9,7 @@ import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
 import { ClaimBadge, ClaimRow, UnknownClaims } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
 import { AdSlot } from "./AdSlot";
+import { PlacePhoto } from "./PlacePhoto";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
 import { countryName } from "../lib/geography";
 
@@ -237,25 +238,10 @@ export function PlaceSheet() {
         ✕
       </button>
 
-      {/* The photo drags too. It sits between the grab strip and the header, so
-          on a phone it is the largest thing under your thumb and the obvious
-          place to pull from — and while it was inert, sheets for places WITH a
-          photo felt broken while ones without slid fine. */}
-      {place.photoUrl && (
-        <figure className="sheet__photo" {...swipe.handlers}>
-          <img
-            src={place.photoUrl}
-            alt={place.name}
-            loading="lazy"
-            onError={(e) => {
-              // Hide the whole figure, not just the img — a caption under a
-              // broken image is worse than no photo at all.
-              (e.currentTarget.closest("figure") as HTMLElement).style.display = "none";
-            }}
-          />
-          {place.photoCredit && <figcaption>{place.photoCredit}</figcaption>}
-        </figure>
-      )}
+      {/* The photo or branded fallback is also a large swipe target on mobile. */}
+      <figure className="sheet__photo" {...swipe.handlers}>
+        <PlacePhoto place={place} variant="hero" />
+      </figure>
 
       <header className="sheet__head" {...swipe.handlers}>
         <span className="sheet__cat">

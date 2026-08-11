@@ -37,6 +37,7 @@ interface PlaceRow {
   flags: Place["flags"];
   photo_url: string | null;
   photo_credit: string | null;
+  photo_approved?: boolean;
   caveat: string | null;
   sources: string[];
   added_at: string;
@@ -70,6 +71,7 @@ const rowToPlace = (r: PlaceRow): Place => ({
   flags: Array.isArray(r.flags) ? r.flags : [],
   photoUrl: r.photo_url ?? undefined,
   photoCredit: r.photo_credit ?? undefined,
+  ...(typeof r.photo_approved === "boolean" ? { photoApproved: r.photo_approved } : {}),
   caveat: r.caveat ?? undefined,
   sources: r.sources ?? [],
   addedAt: r.added_at?.slice(0, 10) ?? "",
@@ -109,6 +111,7 @@ const placeToRow = (p: Place) => ({
   flags: p.flags,
   photo_url: p.photoUrl ?? null,
   photo_credit: p.photoCredit ?? null,
+  ...(typeof p.photoApproved === "boolean" ? { photo_approved: p.photoApproved } : {}),
   caveat: p.caveat ?? null,
   sources: p.sources,
 });

@@ -518,7 +518,7 @@ export function PlaceEditor() {
               const { url, error } = await uploadPlacePhoto(file, place.id || slug(place.name));
               setUpBusy(false);
               if (error) setUpErr(error);
-              else if (url) patch({ photoUrl: url });
+              else if (url) patch({ photoUrl: url, photoApproved: false });
               // Let the same file be picked again after an error.
               e.target.value = "";
             }}
@@ -533,7 +533,10 @@ export function PlaceEditor() {
           <span>{t("editor.photoUrl")}</span>
           <input
             value={place.photoUrl ?? ""}
-            onChange={(e) => patch({ photoUrl: e.target.value || undefined })}
+            onChange={(e) => patch({
+              photoUrl: e.target.value || undefined,
+              photoApproved: false,
+            })}
             placeholder="https://…"
           />
         </label>
@@ -549,13 +552,23 @@ export function PlaceEditor() {
             a real business is a small lie, and this app's claim is that it
             doesn't tell those. */}
         <p className="field__hint">{t("editor.photoNote")}</p>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={place.photoApproved === true}
+            disabled={!place.photoUrl}
+            onChange={(e) => patch({ photoApproved: e.target.checked })}
+          />
+          <span>{t("editor.photoApproved")}</span>
+        </label>
+        <p className="field__hint">{t("editor.photoApprovedHint")}</p>
         {place.photoUrl && (
           <div className="editor__photo-wrap">
             <img className="editor__photo-preview" src={place.photoUrl} alt="" />
             <button
               type="button"
               className="editor__photo-clear"
-              onClick={() => patch({ photoUrl: undefined })}
+              onClick={() => patch({ photoUrl: undefined, photoApproved: false })}
             >
               {t("editor.photoRemove")}
             </button>

@@ -5,7 +5,8 @@ import { distanceKm, formatDistance } from "../lib/geo";
 import { useT } from "../lib/useT";
 import { ClaimBadge } from "./ClaimBadge";
 import { AdSlot } from "./AdSlot";
-import { CATEGORY_LABELS, CLAIM_KEYS, FLAG_LABELS } from "../types";
+import { PlacePhoto } from "./PlacePhoto";
+import { CLAIM_KEYS, FLAG_LABELS } from "../types";
 import { countryName } from "../lib/geography";
 
 export function PlaceList() {
@@ -57,23 +58,7 @@ export function PlaceList() {
         <div key={place.id}>
           <button className="card" onClick={() => select(place.id)}>
             <div className="card__head">
-              {place.photoUrl ? (
-                <img
-                  className="card__photo"
-                  src={place.photoUrl}
-                  alt=""
-                  loading="lazy"
-                  // A dead link would otherwise leave a broken-image glyph,
-                  // which looks worse than never having had a photo.
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              ) : (
-                <span className="card__cat" aria-hidden="true">
-                  {CATEGORY_LABELS[place.category].icon}
-                </span>
-              )}
+              <PlacePhoto place={place} variant="card" />
               <div className="card__title">
                 <h3>{place.name}</h3>
                 <p className="card__comuna">

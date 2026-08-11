@@ -345,6 +345,9 @@ export function BrainPanel({
                   onApply((cur) => ({
                     ...cur,
                     photoUrl: p.url,
+                    // A discovered image is only a candidate. The outreach
+                    // workflow is what allows it onto the public listing.
+                    photoApproved: false,
                     // Credit the site it came from, not the CDN it's served
                     // from: a reader should see whose photo this is.
                     photoCredit: cur.photoCredit || new URL(p.page).hostname.replace(/^www\./, ""),

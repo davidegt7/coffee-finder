@@ -1106,6 +1106,82 @@
   background: var(--surface-2);
 }
 
+/* A listing never needs someone else's photo in order to look intentional. */
+.place-photo-placeholder {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 84% 18%, color-mix(in srgb, var(--accent) 20%, transparent) 0 18%, transparent 19%),
+    radial-gradient(circle at 12% 84%, color-mix(in srgb, var(--verified) 20%, transparent) 0 23%, transparent 24%),
+    linear-gradient(145deg, var(--surface-2), color-mix(in srgb, var(--surface) 82%, var(--accent-wash)));
+}
+
+.place-photo-placeholder--card {
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.place-photo-placeholder--card .place-photo-placeholder__brand {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  font-size: 6px;
+}
+
+.place-photo-placeholder--card .place-photo-placeholder__cup {
+  margin-top: 7px;
+  font-size: 21px;
+}
+
+.place-photo-placeholder--hero {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 24px;
+  text-align: center;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+
+.place-photo-placeholder__brand {
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: -0.03em;
+}
+
+.place-photo-placeholder__brand span {
+  color: var(--accent);
+}
+
+.place-photo-placeholder__cup {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.place-photo-placeholder--hero strong {
+  max-width: 90%;
+  font-size: clamp(17px, 4vw, 24px);
+  line-height: 1.15;
+}
+
+.place-photo-placeholder__soon {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .card__cat {
   display: grid;
   place-items: center;
@@ -2629,6 +2705,10 @@
 
 @media (min-width: 900px) {
   .sheet__photo img {
+    border-radius: 0;
+  }
+
+  .place-photo-placeholder--hero {
     border-radius: 0;
   }
 }

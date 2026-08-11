@@ -156,6 +156,8 @@ export interface Place {
    */
   photoUrl?: string;
   photoCredit?: string;
+  /** True only after the photo-permission workflow records approval. */
+  photoApproved?: boolean;
   /** A known problem the reader deserves to see — usually sources disagreeing. */
   caveat?: string;
   /** Where this record came from. Every place must cite at least one. */
