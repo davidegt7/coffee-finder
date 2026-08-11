@@ -1,10 +1,6 @@
 import { useMemo } from "react";
 import { useStore } from "../store";
-import {
-  applyRoasterFilters,
-  roasterSellsInPerson,
-  roasterSellsOnline,
-} from "../lib/roasters";
+import { applyRoasterFilters } from "../lib/roasters";
 import { countryName } from "../lib/geography";
 import { useT } from "../lib/useT";
 
@@ -40,61 +36,36 @@ export function RoasterList() {
     <div className="list list--roasters">
       <p className="roasters__intro">{t("roasters.listIntro")}</p>
 
-      {visible.map((roaster) => {
-        const online = roasterSellsOnline(roaster);
-        const inPerson = roasterSellsInPerson(roaster);
-        return (
-          <button
-            key={roaster.id}
-            type="button"
-            className="card card--roaster"
-            onClick={() => selectRoaster(roaster.id)}
-          >
-            <div className="card__head">
-              <span className="card__cat" aria-hidden="true">
-                🔥
-              </span>
-              <div className="card__title">
-                <h3>{roaster.name}</h3>
-                <p className="card__comuna">
-                  {[
-                    roaster.city,
-                    roaster.region,
-                    countryName(roaster.countryCode, roaster.country, lang),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              </div>
+      {visible.map((roaster) => (
+        <button
+          key={roaster.id}
+          type="button"
+          className="card card--roaster"
+          onClick={() => selectRoaster(roaster.id)}
+        >
+          <div className="card__head">
+            <span className="card__cat" aria-hidden="true">
+              🔥
+            </span>
+            <div className="card__title">
+              <h3>{roaster.name}</h3>
+              <p className="card__comuna">
+                {[
+                  roaster.city,
+                  roaster.region,
+                  countryName(roaster.countryCode, roaster.country, lang),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
             </div>
+          </div>
 
-            {roaster.description && (
-              <p className="card__items card__desc">{roaster.description}</p>
-            )}
-
-            <div className="card__badges">
-              {online && (
-                <span className="badge badge--flag">{t("roasters.channelOnline")}</span>
-              )}
-              {inPerson && (
-                <span className="badge badge--flag">{t("roasters.channelInPerson")}</span>
-              )}
-              {roaster.shipsLocally && (
-                <span className="badge badge--flag">{t("roasters.shipsLocally")}</span>
-              )}
-              {roaster.shipsInternationally && (
-                <span className="badge badge--flag">{t("roasters.shipsInternationally")}</span>
-              )}
-              {roaster.hasSubscription && (
-                <span className="badge badge--flag">{t("roasters.hasSubscription")}</span>
-              )}
-              {!online && (
-                <span className="badge badge--warn">{t("roasters.noShop")}</span>
-              )}
-            </div>
-          </button>
-        );
-      })}
+          {roaster.description && (
+            <p className="card__items card__desc">{roaster.description}</p>
+          )}
+        </button>
+      ))}
     </div>
   );
 }

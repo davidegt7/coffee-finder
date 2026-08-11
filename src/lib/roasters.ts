@@ -1,9 +1,9 @@
 /**
- * Roasters directory — load, filter, and outbound shop links.
+ * Roasters directory — load, filter, and outbound profile links.
  *
  * Separate from places: the café map answers "where do I sit for coffee",
- * this answers "whose beans do I want, and where do I buy them". We never
- * process payment; every buy action is a link to the roaster's own store.
+ * this answers "which roasters should I discover". Products, sales, and
+ * fulfillment stay on each roaster's own website or Instagram.
  */
 
 import type { Roaster } from "../types";
@@ -15,10 +15,6 @@ export interface RoasterFilters {
   city: string | null;
   /** Free-text region match against `region` and city. */
   region: string | null;
-  shipsLocally: boolean;
-  shipsInternationally: boolean;
-  hasSubscription: boolean;
-  buying: "all" | "online" | "inPerson";
   query: string;
 }
 
@@ -26,10 +22,6 @@ export const EMPTY_ROASTER_FILTERS: RoasterFilters = {
   countryCode: null,
   city: null,
   region: null,
-  shipsLocally: false,
-  shipsInternationally: false,
-  hasSubscription: false,
-  buying: "all",
   query: "",
 };
 
@@ -104,38 +96,9 @@ export async function loadRoasters(): Promise<Roaster[]> {
   return roastersCache;
 }
 
-/** Preferred URL for the buy / visit CTA: shop first, then brand site. */
-export function roasterShopUrl(roaster: Roaster): string | undefined {
-  return roaster.onlineStore?.trim() || roaster.website?.trim() || undefined;
-}
-
-/** A published checkout or a shipping business with a usable brand site. */
-export function roasterSellsOnline(roaster: Roaster): boolean {
-  return Boolean(
-    roaster.onlineStore?.trim() ||
-      (roaster.website?.trim() &&
-        (roaster.shipsLocally || roaster.shipsInternationally || roaster.hasSubscription)),
-  );
-}
-
-/** A public retail location, or a small roaster with no online sales channel. */
-export function roasterSellsInPerson(roaster: Roaster): boolean {
-  return Boolean(
-    roaster.physicalLocations?.length ||
-      (!roasterSellsOnline(roaster) && (roaster.address?.trim() || roaster.city.trim())),
-  );
-}
-
-/**
- * Brand site when it differs from the shop — profile can show both without
- * two identical buttons.
- */
-export function roasterBrandUrl(roaster: Roaster): string | undefined {
-  const site = roaster.website?.trim();
-  const shop = roaster.onlineStore?.trim();
-  if (!site) return undefined;
-  if (shop && fold(site) === fold(shop)) return undefined;
-  return site;
+/** One external home. A store URL is a useful fallback when no brand site exists. */
+export function roasterWebsiteUrl(roaster: Roaster): string | undefined {
+  return roaster.website?.trim() || roaster.onlineStore?.trim() || undefined;
 }
 
 function matchesQuery(roaster: Roaster, query: string): boolean {
@@ -148,14 +111,6 @@ function matchesQuery(roaster: Roaster, query: string): boolean {
       roaster.city,
       roaster.region ?? "",
       roaster.country,
-      roaster.address ?? "",
-      roaster.shippingNotes ?? "",
-      ...(roaster.physicalLocations ?? []).flatMap((loc) => [
-        loc.name ?? "",
-        loc.city,
-        loc.country,
-        loc.address ?? "",
-      ]),
     ].join(" "),
   );
   return q.split(/\s+/).every((term) => haystack.includes(term));
@@ -168,17 +123,9 @@ export function applyRoasterFilters(roasters: Roaster[], filters: RoasterFilters
     if (filters.region) {
       const want = fold(filters.region);
       const has =
-        (r.region && fold(r.region).includes(want)) ||
-        fold(r.city).includes(want) ||
-        (r.physicalLocations ?? []).some(
-          (loc) => fold(loc.city).includes(want) || fold(loc.country).includes(want),
-        );
+        (r.region && fold(r.region).includes(want)) || fold(r.city).includes(want);
       if (!has) return false;
     }
-    if (filters.shipsLocally && !r.shipsLocally) return false;
-    if (filters.shipsInternationally && !r.shipsInternationally) return false;
-    if (filters.buying === "online" && !roasterSellsOnline(r)) return false;
-    if (filters.buying === "inPerson" && !roasterSellsInPerson(r)) return false;
     if (!matchesQuery(r, filters.query)) return false;
     return true;
   });
@@ -189,9 +136,6 @@ export function activeRoasterFilterCount(filters: RoasterFilters): number {
   if (filters.countryCode) n += 1;
   if (filters.city) n += 1;
   if (filters.region) n += 1;
-  if (filters.shipsLocally) n += 1;
-  if (filters.shipsInternationally) n += 1;
-  if (filters.buying !== "all") n += 1;
   if (filters.query.trim()) n += 1;
   return n;
 }

@@ -389,33 +389,13 @@ const ES = {
   "roasters.searchPlaceholder": "Buscar tostador, ciudad o país…",
   "roasters.wherePrompt": "¿De dónde son?",
   "roasters.region": "Región",
-  "roasters.shipMenu": "Envío",
-  "roasters.shipPrompt": "¿Cómo quieres comprar?",
-  "roasters.shipHint":
-    "Los filtros se basan en lo que publica cada tostador. Confirma en su tienda antes de pedir.",
-  "roasters.buyingChannel": "Cómo comprar",
-  "roasters.channelAll": "Todos",
-  "roasters.channelOnline": "Comprar online",
-  "roasters.channelInPerson": "En persona",
-  "roasters.shipsLocally": "Envía local",
-  "roasters.shipsInternationally": "Envía internacional",
-  "roasters.hasSubscription": "Suscripción",
-  "roasters.noLocalShip": "Sin envío local registrado",
-  "roasters.noIntlShip": "Sin envío internacional registrado",
-  "roasters.noSubscription": "Sin suscripción registrada",
   "roasters.listIntro":
-    "Directorio de tostadores de especialidad. Les compras directo a ellos — no vendemos café ni procesamos pedidos.",
+    "Directorio de tostadores de especialidad. Visita su sitio o Instagram para ver qué ofrecen.",
   "roasters.emptyTitle": "Ningún tostador cumple con esto.",
-  "roasters.emptyHint": "Prueba ampliando el país o apagando filtros de envío.",
-  "roasters.noShop": "Sin tienda online registrada",
+  "roasters.emptyHint": "Prueba ampliando la ubicación o borrando la búsqueda.",
   "roasters.about": "Sobre ellos",
-  "roasters.shipping": "Envío y compra",
-  "roasters.locations": "Locales",
-  "roasters.visit": "Visitar tostador",
-  "roasters.buy": "Comprar en su tienda",
-  "roasters.ctaNote": "Te llevamos a su sitio. Ellos venden; nosotros solo te ayudamos a encontrarlos.",
   "roasters.foot":
-    "Coffee Finder no vende café ni toma pedidos. El orden es alfabético — nadie paga por aparecer más arriba.",
+    "El orden es alfabético — nadie paga por aparecer más arriba. Confirma productos, ventas y entregas directamente con cada tostador.",
 } as const;
 
 const EN: Record<keyof typeof ES, string> = {
@@ -789,33 +769,13 @@ const EN: Record<keyof typeof ES, string> = {
   "roasters.searchPlaceholder": "Search roaster, city or country…",
   "roasters.wherePrompt": "Where are they based?",
   "roasters.region": "Region",
-  "roasters.shipMenu": "Shipping",
-  "roasters.shipPrompt": "How do you want to buy?",
-  "roasters.shipHint":
-    "Filters reflect what each roaster publishes. Confirm on their shop before ordering.",
-  "roasters.buyingChannel": "How to buy",
-  "roasters.channelAll": "All",
-  "roasters.channelOnline": "Shop online",
-  "roasters.channelInPerson": "In person",
-  "roasters.shipsLocally": "Ships locally",
-  "roasters.shipsInternationally": "Ships internationally",
-  "roasters.hasSubscription": "Subscription",
-  "roasters.noLocalShip": "No local shipping listed",
-  "roasters.noIntlShip": "No international shipping listed",
-  "roasters.noSubscription": "No subscription listed",
   "roasters.listIntro":
-    "A directory of specialty coffee roasters. You buy direct from them — we don't sell coffee or process orders.",
+    "A directory of specialty coffee roasters. Visit their website or Instagram to see what they offer.",
   "roasters.emptyTitle": "No roasters match this.",
-  "roasters.emptyHint": "Try widening the country or turning off shipping filters.",
-  "roasters.noShop": "No online store listed",
+  "roasters.emptyHint": "Try widening the location or clearing your search.",
   "roasters.about": "About",
-  "roasters.shipping": "Shipping & buying",
-  "roasters.locations": "Locations",
-  "roasters.visit": "Visit roaster",
-  "roasters.buy": "Buy from roaster",
-  "roasters.ctaNote": "We send you to their site. They sell; we only help you find them.",
   "roasters.foot":
-    "Coffee Finder doesn't sell coffee or take orders. Order is alphabetical — nobody pays to rank higher.",
+    "Order is alphabetical — nobody pays to rank higher. Confirm products, sales and delivery directly with each roaster.",
 };
 
 const STRINGS: Record<Lang, Record<keyof typeof ES, string>> = { es: ES, en: EN };

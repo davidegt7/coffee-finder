@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../store";
-import { roasterBrandUrl, roasterSellsOnline, roasterShopUrl } from "../lib/roasters";
-import { directionsUrl, instagramUrl } from "../lib/links";
+import { roasterWebsiteUrl } from "../lib/roasters";
+import { instagramUrl } from "../lib/links";
 import { roasterUrl } from "../lib/roasterUrl";
 import { recordRoasterReferral, trackedRoasterUrl } from "../lib/referrals";
 import { countryName } from "../lib/geography";
@@ -11,9 +11,8 @@ import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
 /**
  * Profile for one specialty roaster.
  *
- * The product promise is discovery + handoff: learn who they are, where
- * they're based, how they ship, then leave for their own store. We never take
- * money or place an order.
+ * The product promise is discovery + handoff: learn who they are and visit
+ * their website or Instagram. Sales and fulfillment stay with the roaster.
  */
 export function RoasterSheet() {
   const selectedRoasterId = useStore((s) => s.selectedRoasterId);
@@ -26,16 +25,10 @@ export function RoasterSheet() {
   const roaster = roasters.find((r) => r.id === selectedRoasterId);
   if (!roaster) return null;
 
-  const shop = roasterShopUrl(roaster);
-  const sellsOnline = roasterSellsOnline(roaster);
-  const brand = roasterBrandUrl(roaster);
-  const trackedShop = shop ? trackedRoasterUrl(shop, roaster.id, "shop") : undefined;
-  const trackedBrand = brand ? trackedRoasterUrl(brand, roaster.id, "website") : undefined;
-  const buyLabel = shop
-    ? sellsOnline
-      ? t("roasters.buy")
-      : t("roasters.visit")
-    : null;
+  const website = roasterWebsiteUrl(roaster);
+  const trackedWebsite = website
+    ? trackedRoasterUrl(website, roaster.id, "website")
+    : undefined;
 
   const share = async () => {
     const url = roasterUrl(roaster.id);
@@ -92,7 +85,6 @@ export function RoasterSheet() {
         </div>
         <p className="sheet__addr">
           {[
-            roaster.address,
             roaster.city,
             roaster.region,
             countryName(roaster.countryCode, roaster.country, lang),
@@ -101,19 +93,12 @@ export function RoasterSheet() {
             .join(", ")}
         </p>
         <div className="sheet__links">
-          <a
-            href={directionsUrl(roaster.lat, roaster.lng)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t("sheet.directions")}
-          </a>
           <button type="button" className="link-like" onClick={() => void share()}>
             {shared ? t("sheet.shareDone") : t("sheet.share")}
           </button>
-          {brand && (
+          {website && (
             <a
-              href={trackedBrand}
+              href={trackedWebsite}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => void recordRoasterReferral(roaster.id, "website")}
@@ -134,93 +119,10 @@ export function RoasterSheet() {
         </div>
       </header>
 
-      {shop && buyLabel && (
-        <div className="roaster__cta">
-          <a
-            className="btn btn--primary roaster__buy"
-            href={trackedShop}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => void recordRoasterReferral(roaster.id, "shop")}
-          >
-            {buyLabel} ↗
-          </a>
-          <p className="field__hint roaster__cta-note">{t("roasters.ctaNote")}</p>
-        </div>
-      )}
-
       {roaster.description && (
         <section className="sheet__section">
           <h3>{t("roasters.about")}</h3>
           <p className="roaster__desc">{roaster.description}</p>
-        </section>
-      )}
-
-      <section className="sheet__section">
-        <h3>{t("roasters.shipping")}</h3>
-        <div className="card__badges">
-          {roaster.shipsLocally ? (
-            <span className="badge badge--flag is-yes">{t("roasters.shipsLocally")}</span>
-          ) : (
-            <span className="badge badge--flag is-no">{t("roasters.noLocalShip")}</span>
-          )}
-          {roaster.shipsInternationally ? (
-            <span className="badge badge--flag is-yes">{t("roasters.shipsInternationally")}</span>
-          ) : (
-            <span className="badge badge--flag is-no">{t("roasters.noIntlShip")}</span>
-          )}
-          {roaster.hasSubscription ? (
-            <span className="badge badge--flag is-yes">{t("roasters.hasSubscription")}</span>
-          ) : (
-            <span className="badge badge--flag is-no">{t("roasters.noSubscription")}</span>
-          )}
-        </div>
-        {roaster.shippingNotes && (
-          <p className="field__hint roaster__ship-note">{roaster.shippingNotes}</p>
-        )}
-      </section>
-
-      {roaster.physicalLocations && roaster.physicalLocations.length > 0 && (
-        <section className="sheet__section">
-          <h3>
-            {t("roasters.locations")}{" "}
-            <span className="count">{roaster.physicalLocations.length}</span>
-          </h3>
-          <ul className="roaster__locations">
-            {roaster.physicalLocations.map((loc, i) => (
-              <li key={`${loc.city}-${loc.name ?? i}`}>
-                <strong>{loc.name ?? loc.city}</strong>
-                <span>
-                  {[
-                    loc.address,
-                    loc.name ? loc.city : null,
-                    countryName(loc.countryCode, loc.country, lang),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {roaster.sources.length > 0 && (
-        <section className="sheet__section">
-          <h3>{t("sheet.sources")}</h3>
-          <ul className="roaster__sources">
-            {roaster.sources.map((src) => (
-              <li key={src}>
-                {/^https?:\/\//i.test(src) ? (
-                  <a href={src} target="_blank" rel="noopener noreferrer">
-                    {src.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                  </a>
-                ) : (
-                  src
-                )}
-              </li>
-            ))}
-          </ul>
         </section>
       )}
 

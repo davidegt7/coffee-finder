@@ -101,10 +101,6 @@ interface State {
   setRoasterCity: (city: string | null) => void;
   setRoasterRegion: (region: string | null) => void;
   setRoasterQuery: (query: string) => void;
-  toggleRoasterShipLocal: () => void;
-  toggleRoasterShipIntl: () => void;
-  toggleRoasterSubscription: () => void;
-  setRoasterBuying: (buying: RoasterFilters["buying"]) => void;
   resetRoasterFilters: () => void;
   select: (id: string | null) => void;
   selectRoaster: (id: string | null) => void;
@@ -520,30 +516,6 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({ roasterFilters: { ...s.roasterFilters, region, city: null } })),
 
   setRoasterQuery: (query) => set((s) => ({ roasterFilters: { ...s.roasterFilters, query } })),
-
-  toggleRoasterShipLocal: () =>
-    set((s) => ({
-      roasterFilters: { ...s.roasterFilters, shipsLocally: !s.roasterFilters.shipsLocally },
-    })),
-
-  toggleRoasterShipIntl: () =>
-    set((s) => ({
-      roasterFilters: {
-        ...s.roasterFilters,
-        shipsInternationally: !s.roasterFilters.shipsInternationally,
-      },
-    })),
-
-  toggleRoasterSubscription: () =>
-    set((s) => ({
-      roasterFilters: {
-        ...s.roasterFilters,
-        hasSubscription: !s.roasterFilters.hasSubscription,
-      },
-    })),
-
-  setRoasterBuying: (buying) =>
-    set((s) => ({ roasterFilters: { ...s.roasterFilters, buying } })),
 
   resetRoasterFilters: () => set({ roasterFilters: { ...EMPTY_ROASTER_FILTERS } }),
 

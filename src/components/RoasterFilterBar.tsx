@@ -9,14 +9,13 @@ import {
 import { CONTINENT_LABELS, continentOf, countryName, type ContinentId } from "../lib/geography";
 import { useT } from "../lib/useT";
 
-type Menu = "where" | "ship" | null;
+type Menu = "where" | null;
 
 /**
- * Filters for the roasters directory: where they are + how they ship.
+ * Filters for the roasters directory: name and home location.
  *
  * Deliberately thinner than the café FilterBar. Claims, wifi, and brunch are
- * café questions; here the useful axes are geography and "can I actually get
- * beans from them".
+ * café questions; sales and fulfillment belong on each roaster's own site.
  */
 export function RoasterFilterBar() {
   const roasters = useStore((s) => s.roasters);
@@ -25,9 +24,6 @@ export function RoasterFilterBar() {
   const setRoasterCity = useStore((s) => s.setRoasterCity);
   const setRoasterRegion = useStore((s) => s.setRoasterRegion);
   const setRoasterQuery = useStore((s) => s.setRoasterQuery);
-  const toggleRoasterShipLocal = useStore((s) => s.toggleRoasterShipLocal);
-  const toggleRoasterShipIntl = useStore((s) => s.toggleRoasterShipIntl);
-  const setRoasterBuying = useStore((s) => s.setRoasterBuying);
   const resetRoasterFilters = useStore((s) => s.resetRoasterFilters);
   const { t, lang } = useT();
 
@@ -87,32 +83,8 @@ export function RoasterFilterBar() {
           )
         : t("where.all");
 
-  const shipActive =
-    (filters.shipsLocally ? 1 : 0) +
-    (filters.shipsInternationally ? 1 : 0);
-
   return (
     <div className="filters filters--roasters" ref={rootRef}>
-      <div className="roaster-channel" role="group" aria-label={t("roasters.buyingChannel")}>
-        {(["all", "online", "inPerson"] as const).map((channel) => (
-          <button
-            key={channel}
-            type="button"
-            className={`roaster-channel__btn ${filters.buying === channel ? "is-on" : ""}`}
-            aria-pressed={filters.buying === channel}
-            onClick={() => setRoasterBuying(channel)}
-          >
-            {t(
-              channel === "all"
-                ? "roasters.channelAll"
-                : channel === "online"
-                  ? "roasters.channelOnline"
-                  : "roasters.channelInPerson",
-            )}
-          </button>
-        ))}
-      </div>
-
       <div className="filters__search">
         <label className="sr-only" htmlFor="roaster-search">
           {t("search.label")}
@@ -135,15 +107,6 @@ export function RoasterFilterBar() {
           aria-expanded={menu === "where"}
         >
           📍 {whereLabel}
-        </button>
-        <button
-          type="button"
-          className={`chip ${menu === "ship" || shipActive > 0 ? "is-on" : ""}`}
-          onClick={() => setMenu(menu === "ship" ? null : "ship")}
-          aria-expanded={menu === "ship"}
-        >
-          📦 {t("roasters.shipMenu")}
-          {shipActive > 0 && <span className="chip__n">{shipActive}</span>}
         </button>
         {active > 0 && (
           <button type="button" className="chip chip--clear" onClick={resetRoasterFilters}>
@@ -259,28 +222,6 @@ export function RoasterFilterBar() {
         </div>
       )}
 
-      {menu === "ship" && (
-        <div className="filters__panel" role="dialog" aria-label={t("roasters.shipMenu")}>
-          <p className="filters__panel-title">{t("roasters.shipPrompt")}</p>
-          <div className="filters__chips">
-            <button
-              type="button"
-              className={`chip ${filters.shipsLocally ? "is-on" : ""}`}
-              onClick={toggleRoasterShipLocal}
-            >
-              {t("roasters.shipsLocally")}
-            </button>
-            <button
-              type="button"
-              className={`chip ${filters.shipsInternationally ? "is-on" : ""}`}
-              onClick={toggleRoasterShipIntl}
-            >
-              {t("roasters.shipsInternationally")}
-            </button>
-          </div>
-          <p className="field__hint">{t("roasters.shipHint")}</p>
-        </div>
-      )}
     </div>
   );
 }
