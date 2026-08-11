@@ -33,7 +33,7 @@ const ES = {
   "search.placeholder": "Buscar café, ciudad, barrio o preparación…",
   "search.label": "Buscar",
   "filter.clear": "Limpiar ({n})",
-  "filter.editSearch": "Editar búsqueda",
+  "filter.open": "Filtros",
 
   "where.prompt": "¿A dónde vas?",
   "where.all": "Todo el mundo",
@@ -415,7 +415,7 @@ const EN: Record<keyof typeof ES, string> = {
   "search.placeholder": "Search café, city, neighborhood or brew…",
   "search.label": "Search",
   "filter.clear": "Clear ({n})",
-  "filter.editSearch": "Edit search",
+  "filter.open": "Filters",
 
   "where.prompt": "Where are you going?",
   "where.all": "Anywhere",

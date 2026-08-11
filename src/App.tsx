@@ -108,12 +108,9 @@ export default function App() {
               type="button"
               className="topbar__compact"
               onClick={() => setMobileControlsCollapsed(false)}
-              aria-label={t("filter.editSearch")}
+              aria-label={t("filter.open")}
             >
-              <strong className="topbar__compact-brand">
-                Coffee<span>Finder</span>
-              </strong>
-              <span className="topbar__compact-action">{t("filter.editSearch")}</span>
+              <span className="topbar__compact-action">{t("filter.open")}</span>
               <span className="topbar__compact-caret" aria-hidden="true">
                 ⌄
               </span>
