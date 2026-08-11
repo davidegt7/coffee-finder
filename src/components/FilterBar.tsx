@@ -101,7 +101,7 @@ function ChainFooter({
   );
 }
 
-export function FilterBar() {
+export function FilterBar({ onComplete }: { onComplete?: () => void }) {
   const {
     filters,
     setClaim,
@@ -276,6 +276,10 @@ export function FilterBar() {
    * the list, not another panel.
    */
   const advance = () => goToStep(stepIndex + 1);
+  const finish = () => {
+    advance();
+    onComplete?.();
+  };
 
   return (
     <div className="filters" ref={rootRef}>
@@ -713,7 +717,7 @@ export function FilterBar() {
                 className={`chip chip--cat ${filters.categories.includes(cat) ? "is-on" : ""}`}
                 onClick={() => {
                   toggleCategory(cat);
-                  advance();
+                  finish();
                 }}
                 aria-pressed={filters.categories.includes(cat)}
               >
@@ -727,7 +731,7 @@ export function FilterBar() {
             step={2}
             total={2}
             onBack={() => goToStep(0)}
-            onNext={advance}
+            onNext={finish}
             labels={{
               back: t("chain.back"),
               next: t("chain.next"),

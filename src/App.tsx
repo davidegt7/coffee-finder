@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "./store";
 import { MapView } from "./components/MapView";
 import { ListSheet } from "./components/ListSheet";
@@ -41,6 +41,7 @@ export default function App() {
     setBrainOpen,
   } = useStore();
   const { t } = useT();
+  const [mobileControlsCollapsed, setMobileControlsCollapsed] = useState(false);
 
   useEffect(() => {
     void init();
@@ -48,6 +49,10 @@ export default function App() {
 
   useEffect(() => {
     document.title = section === "roasters" ? "Roasters · Coffee Finder" : "Coffee Map · Coffee Finder";
+  }, [section]);
+
+  useEffect(() => {
+    setMobileControlsCollapsed(false);
   }, [section]);
 
   // Back/forward — including the phone's back gesture — moves between places
@@ -96,8 +101,26 @@ export default function App() {
               over geography that has nothing to do with online shopping. */}
           {section === "cafes" && <MapView />}
 
-          <div className="topbar">
-            <div className="topbar__brand">
+          <div
+            className={`topbar ${section === "cafes" && mobileControlsCollapsed ? "is-mobile-collapsed" : ""}`}
+          >
+            <button
+              type="button"
+              className="topbar__compact"
+              onClick={() => setMobileControlsCollapsed(false)}
+              aria-label={t("filter.editSearch")}
+            >
+              <strong className="topbar__compact-brand">
+                Coffee<span>Finder</span>
+              </strong>
+              <span className="topbar__compact-action">{t("filter.editSearch")}</span>
+              <span className="topbar__compact-caret" aria-hidden="true">
+                ⌄
+              </span>
+            </button>
+
+            <div className="topbar__full">
+              <div className="topbar__brand">
               {/* Wordmark and subtitle share one pill. The pill exists so the
                   brand stays legible over whatever the map is showing beneath
                   it, and a subtitle sitting outside it would be the one bit of
@@ -114,22 +137,27 @@ export default function App() {
                 </p>
               </div>
               <LangToggle />
-            </div>
-            <div className="topbar__nav">
-              <SectionToggle />
-              {section === "cafes" && (
-                <button
-                  type="button"
-                  className="owner-cta owner-cta--topbar"
-                  onClick={() => setSubmitOpen(true)}
-                >
-                  ＋ {t("submit.cta")}
-                </button>
+              </div>
+              <div className="topbar__nav">
+                <SectionToggle />
+                {section === "cafes" && (
+                  <button
+                    type="button"
+                    className="owner-cta owner-cta--topbar"
+                    onClick={() => setSubmitOpen(true)}
+                  >
+                    ＋ {t("submit.cta")}
+                  </button>
+                )}
+              </div>
+              <AdminBar />
+              {isEditor && section === "cafes" && <SubmissionsQueue />}
+              {section === "cafes" ? (
+                <FilterBar onComplete={() => setMobileControlsCollapsed(true)} />
+              ) : (
+                <RoasterFilterBar />
               )}
             </div>
-            <AdminBar />
-            {isEditor && section === "cafes" && <SubmissionsQueue />}
-            {section === "cafes" ? <FilterBar /> : <RoasterFilterBar />}
           </div>
 
           <ListSheet />

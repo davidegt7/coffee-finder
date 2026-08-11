@@ -45,6 +45,61 @@
   pointer-events: auto;
 }
 
+.topbar__compact {
+  display: none;
+}
+
+/* Once the two-question filter flow is complete, phones give the map and
+   results the screen back. The compact pill is deliberately the only header
+   left visible; one tap restores the full controls without losing choices. */
+@media (max-width: 899px) {
+  .topbar.is-mobile-collapsed {
+    right: auto;
+    padding: max(8px, env(safe-area-inset-top)) 10px 8px;
+    background: transparent;
+  }
+
+  .topbar.is-mobile-collapsed .topbar__full {
+    display: none;
+  }
+
+  .topbar.is-mobile-collapsed .topbar__compact {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-2);
+  }
+
+  .topbar__compact-brand {
+    font-size: 15px;
+    letter-spacing: -0.03em;
+  }
+
+  .topbar__compact-brand span {
+    color: var(--accent);
+  }
+
+  .topbar__compact-action {
+    padding-left: 9px;
+    border-left: 1px solid var(--line-soft);
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .topbar__compact-caret {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1;
+  }
+}
+
 .topbar__brand {
   display: flex;
   align-items: center;
