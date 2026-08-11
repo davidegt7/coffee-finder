@@ -124,7 +124,7 @@ export const CATEGORY_LABELS: Record<Category, { es: string; en: string; icon: s
   cafe: { es: "Cafetería", en: "Café", icon: "☕" },
   roastery: { es: "Tostaduría", en: "Roastery", icon: "🔥" },
   bakery: { es: "Café y panadería", en: "Café & bakery", icon: "🥐" },
-  shop: { es: "Tienda de café", en: "Coffee shop", icon: "🛍️" },
+  shop: { es: "Tienda de café", en: "Coffee Store", icon: "🛍️" },
   cart: { es: "Carrito", en: "Coffee cart", icon: "🛺" },
 };
 

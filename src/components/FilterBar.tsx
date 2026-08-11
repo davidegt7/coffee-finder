@@ -22,7 +22,7 @@ import {
 } from "../types";
 import { CONTINENT_LABELS, continentOf, countryName, type ContinentId } from "../lib/geography";
 
-/** off → some → all → off. One tap deepens, three taps clears. */
+/** Retained for the unpublished characteristics data and editor workflow. */
 const NEXT: Record<ClaimStrictness, ClaimStrictness> = { off: "some", some: "all", all: "off" };
 
 type Menu = "where" | "attrs" | "category" | "item" | null;
@@ -135,11 +135,6 @@ export function FilterBar() {
   };
 
   const count = activeFilterCount(filters);
-  const attrCount =
-    Object.values(filters.claims).filter((v) => v !== "off").length +
-    filters.flags.length +
-    (filters.verifiedOnly ? 1 : 0) +
-    (filters.savedOnly ? 1 : 0);
   const catCount = filters.categories.length;
   const itemCount = filters.items.length;
 
@@ -217,7 +212,6 @@ export function FilterBar() {
     setCountry(s.countryCode);
     if (s.city) setCity(s.city);
     if (s.comuna) toggleComuna(s.comuna);
-    setAttrGroup(null);
     // A barrio is the bottom of the ladder: there is nothing left to choose, so
     // show the results rather than an empty rung.
     setOpen(s.comuna ? null : "where");
@@ -263,17 +257,16 @@ export function FilterBar() {
   const toggle = (menu: Exclude<Menu, null>) => setOpen((cur) => (cur === menu ? null : menu));
 
   /**
-   * The three refining filters are one flow, not three unrelated dropdowns.
+   * The two refining filters are one flow, not unrelated dropdowns.
    *
    * Location is not in it: it's the question you answer first and on its own,
    * and it already ends by closing onto results.
    */
-  const CHAIN = ["item", "attrs", "category"] as const;
+  const CHAIN = ["item", "category"] as const;
   const stepIndex = CHAIN.indexOf(open as (typeof CHAIN)[number]);
 
   /** Each step opens at its own top level rather than wherever it was left. */
   const goToStep = (i: number) => {
-    setAttrGroup(null);
     setOpen(i < 0 || i >= CHAIN.length ? null : CHAIN[i]);
   };
 
@@ -281,11 +274,6 @@ export function FilterBar() {
    * Advance after a choice — and after a skip, which is the same motion. The
    * last step closes the flow, because by then the thing worth looking at is
    * the list, not another panel.
-   *
-   * Deliberately NOT wired to the claim chips. Tapping a claim cycles
-   * off → hay opciones → 100%, so advancing on the first tap would put "100%"
-   * permanently out of reach. A tap that means "I've chosen" advances; a tap
-   * that means "I'm still adjusting" does not.
    */
   const advance = () => goToStep(stepIndex + 1);
 
@@ -490,17 +478,6 @@ export function FilterBar() {
         </button>
 
         <button
-          className={`menu-btn ${open === "attrs" ? "is-open" : ""} ${attrCount ? "is-active" : ""}`}
-          onClick={() => toggle("attrs")}
-          aria-expanded={open === "attrs"}
-          aria-controls="menu-attrs"
-        >
-          {t("menu.attrs")}
-          {attrCount > 0 && <span className="menu-btn__count">{attrCount}</span>}
-          <span className="menu-btn__caret" aria-hidden="true" />
-        </button>
-
-        <button
           className={`menu-btn ${open === "category" ? "is-open" : ""} ${catCount ? "is-active" : ""}`}
           onClick={() => toggle("category")}
           aria-expanded={open === "category"}
@@ -522,7 +499,10 @@ export function FilterBar() {
                 <button
                   key={itemIntent.id}
                   className={`intent ${on ? "is-active" : ""}`}
-                  onClick={() => toggleItem(itemIntent.id)}
+                  onClick={() => {
+                    toggleItem(itemIntent.id);
+                    advance();
+                  }}
                   aria-pressed={on}
                 >
                   <span className="intent__icon" aria-hidden="true">
@@ -539,14 +519,14 @@ export function FilterBar() {
 
           <ChainFooter
             step={1}
-            total={3}
+            total={2}
             onBack={null}
             onNext={advance}
             labels={{
               back: t("chain.back"),
               next: t("chain.next"),
               done: t("chain.done"),
-              step: t("chain.step", { n: 1, total: 3 }),
+              step: t("chain.step", { n: 1, total: 2 }),
             }}
           />
         </div>
@@ -744,15 +724,15 @@ export function FilterBar() {
           </div>
 
           <ChainFooter
-            step={3}
-            total={3}
-            onBack={() => goToStep(1)}
+            step={2}
+            total={2}
+            onBack={() => goToStep(0)}
             onNext={advance}
             labels={{
               back: t("chain.back"),
               next: t("chain.next"),
               done: t("chain.done"),
-              step: t("chain.step", { n: 3, total: 3 }),
+              step: t("chain.step", { n: 2, total: 2 }),
             }}
           />
         </div>
