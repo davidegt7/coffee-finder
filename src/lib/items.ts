@@ -178,6 +178,7 @@ export const INTENTS: ItemIntent[] = [
 export const ITEMS: ItemDef[] = INTENTS.flatMap((i) => i.sections.flatMap((s) => s.items));
 
 const ITEMS_BY_ID = new Map(ITEMS.map((i) => [i.id, i]));
+const INTENTS_BY_ID = new Map(INTENTS.map((intent) => [intent.id, intent]));
 
 export type ItemDisplayGroup = "coffee" | "food" | "beans" | "gear" | "other";
 
@@ -238,6 +239,13 @@ export function itemDisplayGroup(rawItem: string): ItemDisplayGroup {
  * contains the haystack. That direction invents claims.
  */
 export function placeHasItem(place: Place, itemId: string): boolean {
+  const intent = INTENTS_BY_ID.get(itemId as ItemIntent["id"]);
+  if (intent) {
+    return intent.sections.some((section) =>
+      section.items.some((item) => placeHasItem(place, item.id)),
+    );
+  }
+
   const def = ITEMS_BY_ID.get(itemId);
   if (!def) return false;
   const needles = itemNeedles(def);

@@ -10,7 +10,7 @@ import {
   itemCounts,
   type ClaimStrictness,
 } from "../lib/filters";
-import { INTENTS, ITEMS, itemIdsForIntent, type ItemIntent } from "../lib/items";
+import { INTENTS } from "../lib/items";
 import { useT } from "../lib/useT";
 import {
   ATTR_GROUPS,
@@ -26,6 +26,7 @@ import { CONTINENT_LABELS, continentOf, countryName, type ContinentId } from "..
 const NEXT: Record<ClaimStrictness, ClaimStrictness> = { off: "some", some: "all", all: "off" };
 
 type Menu = "where" | "attrs" | "category" | "item" | null;
+const VISIBLE_CATEGORIES = CATEGORIES.filter((category) => category !== "cart");
 
 /**
  * The path back out of a drilled-down menu.
@@ -124,17 +125,7 @@ export function FilterBar() {
   } = useStore();
   const { t, lang } = useT();
   const [open, setOpen] = useState<Menu>(null);
-  // Which top-level intent is expanded inside the "Qué buscas" menu.
-  const [intent, setIntent] = useState<ItemIntent["id"] | null>(null);
   const [attrGroup, setAttrGroup] = useState<string | null>(null);
-  /**
-   * Which section of the chosen errand is showing. "Café para tomar" holds two
-   * — the coffee, then something to eat — and leaving for the next STEP after
-   * the first pick skipped the second entirely, so choosing a flat white meant
-   * never being offered the pastry. Sections nest the way cities nest inside a
-   * country: you move through them, not past them.
-   */
-  const [section, setSection] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const strictnessHint: Record<ClaimStrictness, string> = {
@@ -153,7 +144,7 @@ export function FilterBar() {
   const itemCount = filters.items.length;
 
   const iCounts = useMemo(
-    () => itemCounts(places, filters, ITEMS.map((i) => i.id)),
+    () => itemCounts(places, filters, INTENTS.map((intent) => intent.id)),
     [places, filters],
   );
   const fCounts = useMemo(() => flagCounts(places, filters, [...FLAG_KEYS]), [places, filters]);
@@ -226,8 +217,6 @@ export function FilterBar() {
     setCountry(s.countryCode);
     if (s.city) setCity(s.city);
     if (s.comuna) toggleComuna(s.comuna);
-    setIntent(null);
-    setSection(0);
     setAttrGroup(null);
     // A barrio is the bottom of the ladder: there is nothing left to choose, so
     // show the results rather than an empty rung.
@@ -284,8 +273,6 @@ export function FilterBar() {
 
   /** Each step opens at its own top level rather than wherever it was left. */
   const goToStep = (i: number) => {
-    setIntent(null);
-    setSection(0);
     setAttrGroup(null);
     setOpen(i < 0 || i >= CHAIN.length ? null : CHAIN[i]);
   };
@@ -301,17 +288,6 @@ export function FilterBar() {
    * that means "I'm still adjusting" does not.
    */
   const advance = () => goToStep(stepIndex + 1);
-
-  /**
-   * Forward through the flow: sections first, then steps. Next has to respect
-   * sections for the same reason a selection does — otherwise "skip the
-   * coffee" would silently skip the food along with it.
-   */
-  const forward = () => {
-    const it = INTENTS.find((i) => i.id === intent);
-    if (open === "item" && it && section < it.sections.length - 1) setSection(section + 1);
-    else advance();
-  };
 
   return (
     <div className="filters" ref={rootRef}>
@@ -538,104 +514,34 @@ export function FilterBar() {
 
       {open === "item" && (
         <div className="menu-panel menu-panel--scroll" id="menu-item">
-          {/* Top level is the errand: drinking here, buying beans, buying gear.
-              It used to be an accordion — every errand on screen at once with
-              one expanded underneath — which meant the list you were reading
-              was always sandwiched between two you weren't. Now the errand you
-              pick replaces the others, and the trail brings them back.
-
-              Unlike the location menu this does NOT close when you choose:
-              these are multi-select, and shutting the panel after every tap
-              would make picking three things a nine-tap job. */}
-          {intent === null ? (
-            <div className="intents">
-              {INTENTS.map((it) => {
-                const ids = itemIdsForIntent(it.id);
-                const chosen = ids.filter((id) => filters.items.includes(id)).length;
-                const total = ids.reduce((n, id) => n + (iCounts.get(id) ?? 0), 0);
-                return (
-                  <button
-                    key={it.id}
-                    className={`intent ${chosen ? "is-active" : ""}`}
-                    onClick={() => {
-                      setIntent(it.id);
-                      setSection(0);
-                    }}
-                  >
-                    <span className="intent__icon" aria-hidden="true">
-                      {it.icon}
-                    </span>
-                    <span className="intent__label">{it.label[lang]}</span>
-                    {chosen > 0 ? (
-                      <span className="menu-btn__count">{chosen}</span>
-                    ) : (
-                      <span className="intent__n">{total}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            INTENTS.filter((it) => it.id === intent).map((it) => {
-              const sec = it.sections[Math.min(section, it.sections.length - 1)];
-              const isLastSection = section >= it.sections.length - 1;
+          <div className="intents">
+            {INTENTS.map((itemIntent) => {
+              const on = filters.items.includes(itemIntent.id);
+              const total = iCounts.get(itemIntent.id) ?? 0;
               return (
-                <div key={it.id}>
-                  <Trail
-                    label={t("menu.item")}
-                    crumbs={[
-                      { label: t("menu.item"), onClick: () => setIntent(null) },
-                      {
-                        label: `${it.icon} ${it.label[lang]}`,
-                        // A link back only when there IS a section to come back
-                        // from; on a one-section errand it is just a label.
-                        ...(section > 0 ? { onClick: () => setSection(0) } : {}),
-                      },
-                      ...(sec.label && it.sections.length > 1 ? [{ label: sec.label[lang] }] : []),
-                    ]}
-                  />
-                  <div className="intent-panel">
-                    <div className="menu-panel__chips">
-                      {[...sec.items]
-                        // Real options first: with most of the map untagged,
-                        // alphabetical would bury the few that work under zeros.
-                        .sort((a, b) => (iCounts.get(b.id) ?? 0) - (iCounts.get(a.id) ?? 0))
-                        .map((item) => {
-                          const n = iCounts.get(item.id) ?? 0;
-                          const on = filters.items.includes(item.id);
-                          return (
-                            <button
-                              key={item.id}
-                              className={`chip chip--item ${on ? "is-on" : ""} ${n === 0 ? "is-empty" : ""}`}
-                              onClick={() => {
-                                toggleItem(item.id);
-                                // Through the sections first, out of the step
-                                // only once there are none left.
-                                if (isLastSection) advance();
-                                else setSection(section + 1);
-                              }}
-                              aria-pressed={on}
-                              title={n === 0 ? t("item.emptyTitle") : t("item.countTitle", { n })}
-                            >
-                              {item.label[lang]}
-                              <span className="chip__n">{n}</span>
-                            </button>
-                          );
-                        })}
-                    </div>
-                  </div>
-                </div>
+                <button
+                  key={itemIntent.id}
+                  className={`intent ${on ? "is-active" : ""}`}
+                  onClick={() => toggleItem(itemIntent.id)}
+                  aria-pressed={on}
+                >
+                  <span className="intent__icon" aria-hidden="true">
+                    {itemIntent.icon}
+                  </span>
+                  <span className="intent__label">{itemIntent.label[lang]}</span>
+                  <span className="intent__n">{total}</span>
+                </button>
               );
-            })
-          )}
+            })}
+          </div>
 
-          {intent === null && <p className="menu-panel__hint">{t("item.pickIntent")}</p>}
+          <p className="menu-panel__hint">{t("item.pickIntent")}</p>
 
           <ChainFooter
             step={1}
             total={3}
-            onBack={intent && section > 0 ? () => setSection(section - 1) : null}
-            onNext={forward}
+            onBack={null}
+            onNext={advance}
             labels={{
               back: t("chain.back"),
               next: t("chain.next"),
@@ -821,7 +727,7 @@ export function FilterBar() {
       {open === "category" && (
         <div className="menu-panel" id="menu-category">
           <div className="menu-panel__chips">
-            {CATEGORIES.map((cat) => (
+            {VISIBLE_CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 className={`chip chip--cat ${filters.categories.includes(cat) ? "is-on" : ""}`}
