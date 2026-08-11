@@ -38,6 +38,8 @@ export function BrainChat() {
   const setBrainOpen = useStore((s) => s.setBrainOpen);
   const thread = useStore((s) => s.brainThread);
   const session = useStore((s) => s.brainSession);
+  const input = useStore((s) => s.brainInput);
+  const setInput = useStore((s) => s.setBrainInput);
   const addTurn = useStore((s) => s.addBrainTurn);
   const clearThread = useStore((s) => s.clearBrainThread);
   const setEditing = useStore((s) => s.setEditing);
@@ -45,7 +47,6 @@ export function BrainChat() {
   const swipe = useSwipeToDismiss(() => setBrainOpen(false));
 
   const [health, setHealth] = useState<BrainHealth | null | undefined>(undefined);
-  const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);

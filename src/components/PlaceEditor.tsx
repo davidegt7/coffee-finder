@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
 import { BrainPanel } from "./BrainPanel";
 import { blankPlace } from "../lib/draft";
@@ -52,6 +52,7 @@ const slug = (s: string) =>
 export function PlaceEditor() {
   const editing = useStore((s) => s.editing);
   const setEditing = useStore((s) => s.setEditing);
+  const saveEditingDraft = useStore((s) => s.saveEditingDraft);
   const persistPlace = useStore((s) => s.persistPlace);
   const removePlace = useStore((s) => s.removePlace);
   const session = useStore((s) => s.session);
@@ -76,6 +77,12 @@ export function PlaceEditor() {
   const [upErr, setUpErr] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // The form owns its live value so typing stays instant, while the store owns
+  // the resumable snapshot. This does not bump editSeq or clear a Brain batch.
+  useEffect(() => {
+    saveEditingDraft(place);
+  }, [place, saveEditingDraft]);
 
   const applyGeocodeHit = useCallback((hit: GeocodeHit) => {
     setPlace((current) => ({
@@ -164,7 +171,9 @@ export function PlaceEditor() {
   // A draft opened from the Cerebro chat arrives with an address and no
   // coordinates, so start its search on arrival rather than waiting for the
   // editor to retype what the draft already says.
-  const arrivedWithAddress = editing !== "new" && editing !== null && !editing.id && !!editing.address;
+  const arrivedWithAddress = useRef(
+    editing !== "new" && editing !== null && !editing.id && !!editing.address,
+  ).current;
   useEffect(() => {
     if (!arrivedWithAddress) return;
     const p = editing as Place;

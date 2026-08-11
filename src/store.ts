@@ -75,6 +75,8 @@ interface State {
    *  editor doesn't throw away the conversation that produced it. */
   brainThread: ChatMessage[];
   brainSession?: string;
+  /** The unsent message in the Brain composer. */
+  brainInput: string;
   /** Remaining cafés in a multi-place review, after the one in the editor. */
   draftQueue: Place[];
   draftBatchTotal: number;
@@ -126,6 +128,7 @@ interface State {
   refreshFavorites: () => Promise<void>;
 
   setBrainOpen: (open: boolean) => void;
+  setBrainInput: (input: string) => void;
   addBrainTurn: (turn: ChatMessage, sessionId?: string) => void;
   clearBrainThread: () => void;
   startDraftBatch: (places: Place[]) => void;
@@ -133,10 +136,67 @@ interface State {
 
   refreshAuth: () => Promise<void>;
   setEditing: (p: Place | "new" | null) => void;
+  /** Update the open form without treating it as a newly opened editor. */
+  saveEditingDraft: (p: Place) => void;
   reviewSubmission: (submissionId: string, p: Place) => void;
   persistPlace: (p: Place) => Promise<{ error: string | null }>;
   removePlace: (id: string) => Promise<{ error: string | null }>;
 }
+
+type SavedAdminWork = Pick<
+  State,
+  | "brainOpen"
+  | "brainThread"
+  | "brainSession"
+  | "brainInput"
+  | "editing"
+  | "draftQueue"
+  | "draftBatchTotal"
+  | "reviewingSubmissionId"
+>;
+
+const ADMIN_WORK_KEY = "coffee-finder-admin-work-v1";
+const hasAdminFlag = () => new URLSearchParams(window.location.search).has("admin");
+
+/**
+ * Brain research and a café form can represent a long session. Keep that work
+ * on this device so a reload, closed tab, or browser restart is not a discard.
+ * Public visits deliberately neither read nor overwrite the private admin
+ * snapshot; returning to ?admin=1 is what resumes it.
+ */
+const readSavedAdminWork = (): Partial<SavedAdminWork> => {
+  if (!hasAdminFlag()) return {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem(ADMIN_WORK_KEY) ?? "null") as
+      | Partial<SavedAdminWork>
+      | null;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const savedAdminWork = readSavedAdminWork();
+
+const writeSavedAdminWork = (state: State) => {
+  if (!state.adminMode || !hasAdminFlag()) return;
+  const work: SavedAdminWork = {
+    brainOpen: state.brainOpen,
+    brainThread: state.brainThread,
+    brainSession: state.brainSession,
+    brainInput: state.brainInput,
+    editing: state.editing,
+    draftQueue: state.draftQueue,
+    draftBatchTotal: state.draftBatchTotal,
+    reviewingSubmissionId: state.reviewingSubmissionId,
+  };
+  try {
+    localStorage.setItem(ADMIN_WORK_KEY, JSON.stringify(work));
+  } catch {
+    // Storage can be disabled or full. The editor still works for this tab;
+    // it simply cannot promise a resume after the tab closes.
+  }
+};
 
 export const useStore = create<State>((set, get) => ({
   places: [],
@@ -152,24 +212,25 @@ export const useStore = create<State>((set, get) => ({
   lang: initialLang(),
   theme: initialTheme(),
 
-  adminMode: new URLSearchParams(window.location.search).has("admin"),
+  adminMode: hasAdminFlag(),
   session: null,
   isEditor: false,
   authReady: false,
-  editing: null,
+  editing: savedAdminWork.editing ?? null,
   favorites: [],
   submissions: [],
-  reviewingSubmissionId: null,
+  reviewingSubmissionId: savedAdminWork.reviewingSubmissionId ?? null,
   submitOpen: false,
   beansOpen: false,
   updateReady: false,
   near: null,
   nearStatus: "idle",
-  brainOpen: false,
-  brainThread: [],
-  brainSession: undefined,
-  draftQueue: [],
-  draftBatchTotal: 0,
+  brainOpen: savedAdminWork.brainOpen ?? false,
+  brainThread: Array.isArray(savedAdminWork.brainThread) ? savedAdminWork.brainThread : [],
+  brainSession: savedAdminWork.brainSession,
+  brainInput: savedAdminWork.brainInput ?? "",
+  draftQueue: Array.isArray(savedAdminWork.draftQueue) ? savedAdminWork.draftQueue : [],
+  draftBatchTotal: savedAdminWork.draftBatchTotal ?? 0,
   editSeq: 0,
 
   init: async () => {
@@ -232,7 +293,7 @@ export const useStore = create<State>((set, get) => ({
     else set({ favorites: [] });
   },
 
-  setEditing: (editing) =>
+  setEditing: (editing) => {
     set((s) => ({
       editing,
       editSeq: s.editSeq + 1,
@@ -242,28 +303,50 @@ export const useStore = create<State>((set, get) => ({
       // Opening the editor any other way ends the review it was opened for,
       // or cancelling one request would approve it on the next unrelated save.
       reviewingSubmissionId: null,
-    })),
+    }));
+    writeSavedAdminWork(get());
+  },
 
-  reviewSubmission: (reviewingSubmissionId, place) =>
+  saveEditingDraft: (editing) => {
+    set({ editing });
+    writeSavedAdminWork(get());
+  },
+
+  reviewSubmission: (reviewingSubmissionId, place) => {
     set((s) => ({
       editing: place,
       editSeq: s.editSeq + 1,
       draftQueue: [],
       draftBatchTotal: 0,
       reviewingSubmissionId,
-    })),
+    }));
+    writeSavedAdminWork(get());
+  },
 
-  setBrainOpen: (brainOpen) => set({ brainOpen }),
+  setBrainOpen: (brainOpen) => {
+    set({ brainOpen });
+    writeSavedAdminWork(get());
+  },
 
-  addBrainTurn: (turn, sessionId) =>
+  setBrainInput: (brainInput) => {
+    set({ brainInput });
+    writeSavedAdminWork(get());
+  },
+
+  addBrainTurn: (turn, sessionId) => {
     set((s) => ({
       brainThread: [...s.brainThread, turn],
       // Keep the previous session when a turn carries none: a brain without
       // sessions echoes nothing back, and dropping it would restart the thread.
       brainSession: sessionId ?? s.brainSession,
-    })),
+    }));
+    writeSavedAdminWork(get());
+  },
 
-  clearBrainThread: () => set({ brainThread: [], brainSession: undefined }),
+  clearBrainThread: () => {
+    set({ brainThread: [], brainSession: undefined, brainInput: "" });
+    writeSavedAdminWork(get());
+  },
 
   startDraftBatch: (places) => {
     const [first, ...rest] = places;
@@ -275,9 +358,10 @@ export const useStore = create<State>((set, get) => ({
       draftBatchTotal: places.length,
       brainOpen: false,
     }));
+    writeSavedAdminWork(get());
   },
 
-  skipDraft: () =>
+  skipDraft: () => {
     set((s) => {
       const [next, ...remaining] = s.draftQueue;
       return {
@@ -286,7 +370,9 @@ export const useStore = create<State>((set, get) => ({
         draftBatchTotal: next ? s.draftBatchTotal : 0,
         editSeq: next ? s.editSeq + 1 : s.editSeq,
       };
-    }),
+    });
+    writeSavedAdminWork(get());
+  },
 
   removePlace: async (id) => {
     const res = await deletePlace(id);
@@ -304,6 +390,7 @@ export const useStore = create<State>((set, get) => ({
         selectedId: s.selectedId === id ? null : s.selectedId,
       }));
       if (get().selectedId === null) writePlaceParam(null);
+      writeSavedAdminWork(get());
     }
     return res;
   },
@@ -346,6 +433,7 @@ export const useStore = create<State>((set, get) => ({
           reviewingSubmissionId: null,
         };
       });
+      writeSavedAdminWork(get());
     }
     return res;
   },
