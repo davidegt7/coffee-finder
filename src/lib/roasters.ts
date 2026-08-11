@@ -177,7 +177,6 @@ export function applyRoasterFilters(roasters: Roaster[], filters: RoasterFilters
     }
     if (filters.shipsLocally && !r.shipsLocally) return false;
     if (filters.shipsInternationally && !r.shipsInternationally) return false;
-    if (filters.hasSubscription && !r.hasSubscription) return false;
     if (filters.buying === "online" && !roasterSellsOnline(r)) return false;
     if (filters.buying === "inPerson" && !roasterSellsInPerson(r)) return false;
     if (!matchesQuery(r, filters.query)) return false;
@@ -192,7 +191,6 @@ export function activeRoasterFilterCount(filters: RoasterFilters): number {
   if (filters.region) n += 1;
   if (filters.shipsLocally) n += 1;
   if (filters.shipsInternationally) n += 1;
-  if (filters.hasSubscription) n += 1;
   if (filters.buying !== "all") n += 1;
   if (filters.query.trim()) n += 1;
   return n;

@@ -27,7 +27,6 @@ export function RoasterFilterBar() {
   const setRoasterQuery = useStore((s) => s.setRoasterQuery);
   const toggleRoasterShipLocal = useStore((s) => s.toggleRoasterShipLocal);
   const toggleRoasterShipIntl = useStore((s) => s.toggleRoasterShipIntl);
-  const toggleRoasterSubscription = useStore((s) => s.toggleRoasterSubscription);
   const setRoasterBuying = useStore((s) => s.setRoasterBuying);
   const resetRoasterFilters = useStore((s) => s.resetRoasterFilters);
   const { t, lang } = useT();
@@ -90,8 +89,7 @@ export function RoasterFilterBar() {
 
   const shipActive =
     (filters.shipsLocally ? 1 : 0) +
-    (filters.shipsInternationally ? 1 : 0) +
-    (filters.hasSubscription ? 1 : 0);
+    (filters.shipsInternationally ? 1 : 0);
 
   return (
     <div className="filters filters--roasters" ref={rootRef}>
@@ -278,13 +276,6 @@ export function RoasterFilterBar() {
               onClick={toggleRoasterShipIntl}
             >
               {t("roasters.shipsInternationally")}
-            </button>
-            <button
-              type="button"
-              className={`chip ${filters.hasSubscription ? "is-on" : ""}`}
-              onClick={toggleRoasterSubscription}
-            >
-              {t("roasters.hasSubscription")}
             </button>
           </div>
           <p className="field__hint">{t("roasters.shipHint")}</p>
