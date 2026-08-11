@@ -28,6 +28,7 @@ export function RoasterFilterBar() {
   const toggleRoasterShipLocal = useStore((s) => s.toggleRoasterShipLocal);
   const toggleRoasterShipIntl = useStore((s) => s.toggleRoasterShipIntl);
   const toggleRoasterSubscription = useStore((s) => s.toggleRoasterSubscription);
+  const setRoasterBuying = useStore((s) => s.setRoasterBuying);
   const resetRoasterFilters = useStore((s) => s.resetRoasterFilters);
   const { t, lang } = useT();
 
@@ -94,6 +95,26 @@ export function RoasterFilterBar() {
 
   return (
     <div className="filters filters--roasters" ref={rootRef}>
+      <div className="roaster-channel" role="group" aria-label={t("roasters.buyingChannel")}>
+        {(["all", "online", "inPerson"] as const).map((channel) => (
+          <button
+            key={channel}
+            type="button"
+            className={`roaster-channel__btn ${filters.buying === channel ? "is-on" : ""}`}
+            aria-pressed={filters.buying === channel}
+            onClick={() => setRoasterBuying(channel)}
+          >
+            {t(
+              channel === "all"
+                ? "roasters.channelAll"
+                : channel === "online"
+                  ? "roasters.channelOnline"
+                  : "roasters.channelInPerson",
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="filters__search">
         <label className="sr-only" htmlFor="roaster-search">
           {t("search.label")}

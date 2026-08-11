@@ -18,6 +18,7 @@ export interface RoasterFilters {
   shipsLocally: boolean;
   shipsInternationally: boolean;
   hasSubscription: boolean;
+  buying: "all" | "online" | "inPerson";
   query: string;
 }
 
@@ -28,6 +29,7 @@ export const EMPTY_ROASTER_FILTERS: RoasterFilters = {
   shipsLocally: false,
   shipsInternationally: false,
   hasSubscription: false,
+  buying: "all",
   query: "",
 };
 
@@ -107,6 +109,23 @@ export function roasterShopUrl(roaster: Roaster): string | undefined {
   return roaster.onlineStore?.trim() || roaster.website?.trim() || undefined;
 }
 
+/** A published checkout or a shipping business with a usable brand site. */
+export function roasterSellsOnline(roaster: Roaster): boolean {
+  return Boolean(
+    roaster.onlineStore?.trim() ||
+      (roaster.website?.trim() &&
+        (roaster.shipsLocally || roaster.shipsInternationally || roaster.hasSubscription)),
+  );
+}
+
+/** A public retail location, or a small roaster with no online sales channel. */
+export function roasterSellsInPerson(roaster: Roaster): boolean {
+  return Boolean(
+    roaster.physicalLocations?.length ||
+      (!roasterSellsOnline(roaster) && (roaster.address?.trim() || roaster.city.trim())),
+  );
+}
+
 /**
  * Brand site when it differs from the shop — profile can show both without
  * two identical buttons.
@@ -159,6 +178,8 @@ export function applyRoasterFilters(roasters: Roaster[], filters: RoasterFilters
     if (filters.shipsLocally && !r.shipsLocally) return false;
     if (filters.shipsInternationally && !r.shipsInternationally) return false;
     if (filters.hasSubscription && !r.hasSubscription) return false;
+    if (filters.buying === "online" && !roasterSellsOnline(r)) return false;
+    if (filters.buying === "inPerson" && !roasterSellsInPerson(r)) return false;
     if (!matchesQuery(r, filters.query)) return false;
     return true;
   });
@@ -172,6 +193,7 @@ export function activeRoasterFilterCount(filters: RoasterFilters): number {
   if (filters.shipsLocally) n += 1;
   if (filters.shipsInternationally) n += 1;
   if (filters.hasSubscription) n += 1;
+  if (filters.buying !== "all") n += 1;
   if (filters.query.trim()) n += 1;
   return n;
 }

@@ -104,6 +104,7 @@ interface State {
   toggleRoasterShipLocal: () => void;
   toggleRoasterShipIntl: () => void;
   toggleRoasterSubscription: () => void;
+  setRoasterBuying: (buying: RoasterFilters["buying"]) => void;
   resetRoasterFilters: () => void;
   select: (id: string | null) => void;
   selectRoaster: (id: string | null) => void;
@@ -540,6 +541,9 @@ export const useStore = create<State>((set, get) => ({
         hasSubscription: !s.roasterFilters.hasSubscription,
       },
     })),
+
+  setRoasterBuying: (buying) =>
+    set((s) => ({ roasterFilters: { ...s.roasterFilters, buying } })),
 
   resetRoasterFilters: () => set({ roasterFilters: { ...EMPTY_ROASTER_FILTERS } }),
 

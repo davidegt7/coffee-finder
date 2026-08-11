@@ -19,15 +19,15 @@ export const LANGS: { id: Lang; label: string }[] = [
 
 const ES = {
   "app.tagline": "Café de especialidad, ciudad por ciudad. Gratis, siempre.",
-  "app.subtitle": "Mapa de café de especialidad",
-  "app.subtitleRoasters": "Directorio de tostadores",
+  "app.subtitle": "Cafés y tostadores para visitar",
+  "app.subtitleRoasters": "Dónde comprar grano",
   "app.loading": "Cargando cafés…",
   "app.loadError": "No se pudieron cargar los cafés.",
   "app.updateReady": "Hay una versión nueva",
   "app.updateNow": "Actualizar",
 
   "section.label": "Sección",
-  "section.cafes": "Cafés",
+  "section.cafes": "Mapa",
   "section.roasters": "Tostadores",
 
   "search.placeholder": "Buscar café, ciudad, barrio o preparación…",
@@ -389,6 +389,10 @@ const ES = {
   "roasters.shipPrompt": "¿Cómo quieres comprar?",
   "roasters.shipHint":
     "Los filtros se basan en lo que publica cada tostador. Confirma en su tienda antes de pedir.",
+  "roasters.buyingChannel": "Cómo comprar",
+  "roasters.channelAll": "Todos",
+  "roasters.channelOnline": "Comprar online",
+  "roasters.channelInPerson": "En persona",
   "roasters.shipsLocally": "Envía local",
   "roasters.shipsInternationally": "Envía internacional",
   "roasters.hasSubscription": "Suscripción",
@@ -399,7 +403,7 @@ const ES = {
     "Directorio de tostadores de especialidad. Les compras directo a ellos — no vendemos café ni procesamos pedidos.",
   "roasters.emptyTitle": "Ningún tostador cumple con esto.",
   "roasters.emptyHint": "Prueba ampliando el país o apagando filtros de envío.",
-  "roasters.noShop": "Sin tienda online",
+  "roasters.noShop": "Sin tienda online registrada",
   "roasters.about": "Sobre ellos",
   "roasters.shipping": "Envío y compra",
   "roasters.locations": "Locales",
@@ -412,15 +416,15 @@ const ES = {
 
 const EN: Record<keyof typeof ES, string> = {
   "app.tagline": "Specialty coffee, city by city. Free, always.",
-  "app.subtitle": "Specialty coffee map",
-  "app.subtitleRoasters": "Roaster directory",
+  "app.subtitle": "Cafés & roasteries to visit",
+  "app.subtitleRoasters": "Where to buy beans",
   "app.loading": "Loading cafés…",
   "app.loadError": "Couldn't load cafés.",
   "app.updateReady": "A new version is ready",
   "app.updateNow": "Update",
 
   "section.label": "Section",
-  "section.cafes": "Cafés",
+  "section.cafes": "Map",
   "section.roasters": "Roasters",
 
   "search.placeholder": "Search café, city, neighborhood or brew…",
@@ -781,6 +785,10 @@ const EN: Record<keyof typeof ES, string> = {
   "roasters.shipPrompt": "How do you want to buy?",
   "roasters.shipHint":
     "Filters reflect what each roaster publishes. Confirm on their shop before ordering.",
+  "roasters.buyingChannel": "How to buy",
+  "roasters.channelAll": "All",
+  "roasters.channelOnline": "Shop online",
+  "roasters.channelInPerson": "In person",
   "roasters.shipsLocally": "Ships locally",
   "roasters.shipsInternationally": "Ships internationally",
   "roasters.hasSubscription": "Subscription",
@@ -791,7 +799,7 @@ const EN: Record<keyof typeof ES, string> = {
     "A directory of specialty coffee roasters. You buy direct from them — we don't sell coffee or process orders.",
   "roasters.emptyTitle": "No roasters match this.",
   "roasters.emptyHint": "Try widening the country or turning off shipping filters.",
-  "roasters.noShop": "No online store",
+  "roasters.noShop": "No online store listed",
   "roasters.about": "About",
   "roasters.shipping": "Shipping & buying",
   "roasters.locations": "Locations",

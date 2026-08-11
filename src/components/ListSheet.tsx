@@ -20,8 +20,8 @@ import { RoasterList } from "./RoasterList";
  * your thumb left it feels broken, and the useful states really are "show me the
  * map", "show me both", and "show me the list".
  *
- * Serves both directories: cafés and the roasters directory share this chrome
- * so switching sections feels like changing filters, not opening an app.
+ * The roaster directory reuses the result body but CSS removes the map-sheet
+ * behavior there, turning it into a normal full-page catalog.
  */
 type Snap = "peek" | "half" | "full";
 
@@ -156,28 +156,36 @@ export function ListSheet() {
         } as React.CSSProperties
       }
     >
-      <div
-        className="list-sheet__grip"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        // Tapping the grip cycles rather than requiring a drag — a handle that
-        // only responds to dragging is a handle half of people never use.
-        onClick={() => setSnap(snap === "full" ? "peek" : snap === "half" ? "full" : "half")}
-        role="button"
-        tabIndex={0}
-        aria-label={t("sheet.dragHandle")}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowUp") setSnap(snap === "peek" ? "half" : "full");
-          if (e.key === "ArrowDown") setSnap(snap === "full" ? "half" : "peek");
-        }}
-      >
-        <span className="list-sheet__bar" aria-hidden="true" />
-        <span className="list-sheet__count">
-          {count} {count === 1 ? unitOne : unitMany}
-        </span>
-      </div>
+      {section === "roasters" ? (
+        <div className="list-sheet__grip">
+          <span className="list-sheet__count">
+            {count} {count === 1 ? unitOne : unitMany}
+          </span>
+        </div>
+      ) : (
+        <div
+          className="list-sheet__grip"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          // Tapping the grip cycles rather than requiring a drag — a handle that
+          // only responds to dragging is a handle half of people never use.
+          onClick={() => setSnap(snap === "full" ? "peek" : snap === "half" ? "full" : "half")}
+          role="button"
+          tabIndex={0}
+          aria-label={t("sheet.dragHandle")}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp") setSnap(snap === "peek" ? "half" : "full");
+            if (e.key === "ArrowDown") setSnap(snap === "full" ? "half" : "peek");
+          }}
+        >
+          <span className="list-sheet__bar" aria-hidden="true" />
+          <span className="list-sheet__count">
+            {count} {count === 1 ? unitOne : unitMany}
+          </span>
+        </div>
+      )}
 
       <div className="list-sheet__body">
         {section === "roasters" ? <RoasterList /> : <PlaceList />}

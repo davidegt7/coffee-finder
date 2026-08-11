@@ -1,12 +1,7 @@
 import { useStore } from "../store";
 import { useT } from "../lib/useT";
 
-/**
- * Cafés ↔ Roasters. Same shell, two errands.
- *
- * Lives in the brand row so the visitor always knows which directory they're
- * in — a buried menu would make "why did the filters change?" a support ticket.
- */
+/** Map ↔ Roasters: on-site discovery and bean buying are separate pages. */
 export function SectionToggle() {
   const section = useStore((s) => s.section);
   const setSection = useStore((s) => s.setSection);
@@ -21,7 +16,7 @@ export function SectionToggle() {
         className={`section-toggle__btn ${section === "cafes" ? "is-on" : ""}`}
         onClick={() => setSection("cafes")}
       >
-        ☕ {t("section.cafes")}
+        🗺️ {t("section.cafes")}
       </button>
       <button
         type="button"

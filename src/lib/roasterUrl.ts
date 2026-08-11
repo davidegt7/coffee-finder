@@ -1,10 +1,9 @@
 /**
  * Section + selected roaster in the address bar.
  *
- * Same query-param strategy as places: static hosts (GitHub Pages) have no
- * server to resolve `/roasters/x`, so `?section=roasters&roaster=x` always
- * lands on index.html. Café place params are cleared when entering this
- * section so back never opens a café sheet over the roasters map.
+ * Map and roasters are real, shareable pages. Cloudflare Pages' SPA fallback
+ * serves index.html for both, while the selected record remains a query param
+ * so opening and closing a sheet does not invent another route hierarchy.
  */
 
 import type { AppSection } from "../types";
@@ -14,8 +13,17 @@ const ROASTER_PARAM = "roaster";
 const PLACE_PARAM = "place";
 
 export function readSectionParam(): AppSection {
+  const leaf = window.location.pathname.replace(/\/+$/, "").split("/").pop();
+  if (leaf === "roasters") return "roasters";
+  if (leaf === "map") return "cafes";
+  // Old shared links keep working after the route migration.
   const raw = new URLSearchParams(window.location.search).get(SECTION_PARAM);
   return raw === "roasters" ? "roasters" : "cafes";
+}
+
+function sectionPath(section: AppSection): string {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  return `${base}/${section === "roasters" ? "roasters" : "map"}`.replace(/\/+/g, "/");
 }
 
 export function readRoasterParam(): string | null {
@@ -24,7 +32,8 @@ export function readRoasterParam(): string | null {
 
 export function roasterUrl(id: string): string {
   const url = new URL(window.location.href);
-  url.searchParams.set(SECTION_PARAM, "roasters");
+  url.pathname = sectionPath("roasters");
+  url.searchParams.delete(SECTION_PARAM);
   url.searchParams.set(ROASTER_PARAM, id);
   url.searchParams.delete(PLACE_PARAM);
   return url.toString();
@@ -32,16 +41,10 @@ export function roasterUrl(id: string): string {
 
 export function writeSectionParam(section: AppSection): void {
   const url = new URL(window.location.href);
-  if (section === "cafes") {
-    if (!url.searchParams.has(SECTION_PARAM) && !url.searchParams.has(ROASTER_PARAM)) return;
-    url.searchParams.delete(SECTION_PARAM);
-    url.searchParams.delete(ROASTER_PARAM);
-    window.history.replaceState({ section }, "", url);
-    return;
-  }
-  if (url.searchParams.get(SECTION_PARAM) === "roasters") return;
-  url.searchParams.set(SECTION_PARAM, "roasters");
-  url.searchParams.delete(PLACE_PARAM);
+  url.pathname = sectionPath(section);
+  url.searchParams.delete(SECTION_PARAM);
+  if (section === "cafes") url.searchParams.delete(ROASTER_PARAM);
+  else url.searchParams.delete(PLACE_PARAM);
   window.history.pushState({ section }, "", url);
 }
 
@@ -53,7 +56,8 @@ export function writeRoasterParam(id: string | null): void {
   const url = new URL(window.location.href);
   if (id) {
     if (url.searchParams.get(ROASTER_PARAM) === id) return;
-    url.searchParams.set(SECTION_PARAM, "roasters");
+    url.pathname = sectionPath("roasters");
+    url.searchParams.delete(SECTION_PARAM);
     url.searchParams.set(ROASTER_PARAM, id);
     url.searchParams.delete(PLACE_PARAM);
     window.history.pushState({ roaster: id }, "", url);

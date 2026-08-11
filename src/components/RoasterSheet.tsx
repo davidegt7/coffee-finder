@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../store";
-import { roasterBrandUrl, roasterShopUrl } from "../lib/roasters";
+import { roasterBrandUrl, roasterSellsOnline, roasterShopUrl } from "../lib/roasters";
 import { directionsUrl, instagramUrl } from "../lib/links";
 import { roasterUrl } from "../lib/roasterUrl";
 import { recordRoasterReferral, trackedRoasterUrl } from "../lib/referrals";
@@ -27,11 +27,12 @@ export function RoasterSheet() {
   if (!roaster) return null;
 
   const shop = roasterShopUrl(roaster);
+  const sellsOnline = roasterSellsOnline(roaster);
   const brand = roasterBrandUrl(roaster);
   const trackedShop = shop ? trackedRoasterUrl(shop, roaster.id, "shop") : undefined;
   const trackedBrand = brand ? trackedRoasterUrl(brand, roaster.id, "website") : undefined;
   const buyLabel = shop
-    ? roaster.onlineStore
+    ? sellsOnline
       ? t("roasters.buy")
       : t("roasters.visit")
     : null;

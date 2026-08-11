@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { useStore } from "../store";
-import { applyRoasterFilters, roasterShopUrl } from "../lib/roasters";
+import {
+  applyRoasterFilters,
+  roasterSellsInPerson,
+  roasterSellsOnline,
+} from "../lib/roasters";
 import { countryName } from "../lib/geography";
 import { useT } from "../lib/useT";
 
@@ -37,7 +41,8 @@ export function RoasterList() {
       <p className="roasters__intro">{t("roasters.listIntro")}</p>
 
       {visible.map((roaster) => {
-        const shop = roasterShopUrl(roaster);
+        const online = roasterSellsOnline(roaster);
+        const inPerson = roasterSellsInPerson(roaster);
         return (
           <button
             key={roaster.id}
@@ -68,6 +73,12 @@ export function RoasterList() {
             )}
 
             <div className="card__badges">
+              {online && (
+                <span className="badge badge--flag">{t("roasters.channelOnline")}</span>
+              )}
+              {inPerson && (
+                <span className="badge badge--flag">{t("roasters.channelInPerson")}</span>
+              )}
               {roaster.shipsLocally && (
                 <span className="badge badge--flag">{t("roasters.shipsLocally")}</span>
               )}
@@ -77,7 +88,7 @@ export function RoasterList() {
               {roaster.hasSubscription && (
                 <span className="badge badge--flag">{t("roasters.hasSubscription")}</span>
               )}
-              {!shop && (
+              {!online && (
                 <span className="badge badge--warn">{t("roasters.noShop")}</span>
               )}
             </div>

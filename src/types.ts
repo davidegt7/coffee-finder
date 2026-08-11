@@ -166,9 +166,8 @@ export interface Place {
 // ---------------------------------------------------------------- app section
 
 /**
- * Two products share one shell: cafés you visit for a drink, and roasters you
- * discover so you can buy beans from them directly. Same map chrome, different
- * data, different filters, different primary action.
+ * Two products share one brand: a map of places you can visit and a directory
+ * of roaster brands you can buy beans from online or in person.
  */
 export type AppSection = "cafes" | "roasters";
 

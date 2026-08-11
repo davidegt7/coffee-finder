@@ -46,6 +46,10 @@ export default function App() {
     void init();
   }, [init]);
 
+  useEffect(() => {
+    document.title = section === "roasters" ? "Roasters · Coffee Finder" : "Map · Coffee Finder";
+  }, [section]);
+
   // Back/forward — including the phone's back gesture — moves between places
   // rather than leaving the app, which is what someone who just tapped into a
   // café expects "back" to undo.
@@ -68,7 +72,7 @@ export default function App() {
   }, [selectedId, selectedRoasterId, select, selectRoaster]);
 
   return (
-    <div className="app">
+    <div className={`app app--${section}`}>
       {/* A stale installed app is indistinguishable from a broken one, so say
           which it is. A prompt rather than an automatic reload: reloading
           underneath someone mid-review would be the worse bug. */}
@@ -87,8 +91,10 @@ export default function App() {
 
       {status === "ready" && (
         <>
-          {/* Map is the canvas, not a panel. Everything else floats on it. */}
-          <MapView />
+          {/* The map is the canvas of the on-site product. The roaster
+              directory is intentionally a different page, not a list laid
+              over geography that has nothing to do with online shopping. */}
+          {section === "cafes" && <MapView />}
 
           <div className="topbar">
             <div className="topbar__brand">
