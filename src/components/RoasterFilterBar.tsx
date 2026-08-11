@@ -17,7 +17,7 @@ type Menu = "where" | null;
  * Deliberately thinner than the café FilterBar. Claims, wifi, and brunch are
  * café questions; sales and fulfillment belong on each roaster's own site.
  */
-export function RoasterFilterBar() {
+export function RoasterFilterBar({ onComplete }: { onComplete?: () => void }) {
   const roasters = useStore((s) => s.roasters);
   const filters = useStore((s) => s.roasterFilters);
   const setRoasterCountry = useStore((s) => s.setRoasterCountry);
@@ -83,6 +83,11 @@ export function RoasterFilterBar() {
           )
         : t("where.all");
 
+  const finish = () => {
+    setMenu(null);
+    onComplete?.();
+  };
+
   return (
     <div className="filters filters--roasters" ref={rootRef}>
       <div className="filters__search">
@@ -94,6 +99,9 @@ export function RoasterFilterBar() {
           type="search"
           value={filters.query}
           onChange={(e) => setRoasterQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && filters.query.trim()) finish();
+          }}
           placeholder={t("roasters.searchPlaceholder")}
           autoComplete="off"
         />
@@ -124,6 +132,7 @@ export function RoasterFilterBar() {
             onClick={() => {
               setRoasterCountry(null);
               setRoasterRegion(null);
+              finish();
             }}
           >
             {t("where.all")}
@@ -140,7 +149,13 @@ export function RoasterFilterBar() {
                         key={c.code}
                         type="button"
                         className="chip"
-                        onClick={() => setRoasterCountry(c.code)}
+                        onClick={() => {
+                          setRoasterCountry(c.code);
+                          const hasNext =
+                            roasterRegionCounts(roasters, c.code).length > 0 ||
+                            roasterCityCounts(roasters, c.code).length > 0;
+                          if (!hasNext) finish();
+                        }}
                       >
                         {countryName(c.code, c.country, lang)}
                         <span className="chip__n">{c.n}</span>
@@ -177,7 +192,10 @@ export function RoasterFilterBar() {
                     <button
                       type="button"
                       className={`chip ${!filters.region ? "is-on" : ""}`}
-                      onClick={() => setRoasterRegion(null)}
+                      onClick={() => {
+                        setRoasterRegion(null);
+                        finish();
+                      }}
                     >
                       {t("where.all")}
                     </button>
@@ -186,7 +204,10 @@ export function RoasterFilterBar() {
                         key={r.region}
                         type="button"
                         className={`chip ${filters.region === r.region ? "is-on" : ""}`}
-                        onClick={() => setRoasterRegion(filters.region === r.region ? null : r.region)}
+                        onClick={() => {
+                          setRoasterRegion(filters.region === r.region ? null : r.region);
+                          finish();
+                        }}
                       >
                         {r.region}
                         <span className="chip__n">{r.n}</span>
@@ -201,7 +222,10 @@ export function RoasterFilterBar() {
                 <button
                   type="button"
                   className={`chip ${!filters.city ? "is-on" : ""}`}
-                  onClick={() => setRoasterCity(null)}
+                  onClick={() => {
+                    setRoasterCity(null);
+                    finish();
+                  }}
                 >
                   {t("where.all")}
                 </button>
@@ -210,7 +234,10 @@ export function RoasterFilterBar() {
                     key={c.city}
                     type="button"
                     className={`chip ${filters.city === c.city ? "is-on" : ""}`}
-                    onClick={() => setRoasterCity(filters.city === c.city ? null : c.city)}
+                    onClick={() => {
+                      setRoasterCity(filters.city === c.city ? null : c.city);
+                      finish();
+                    }}
                   >
                     {c.city}
                     <span className="chip__n">{c.n}</span>

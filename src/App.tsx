@@ -154,7 +154,7 @@ export default function App() {
                 ) : (
                   <>
                     <AdminBar />
-                    <RoasterFilterBar />
+                    <RoasterFilterBar onComplete={() => setMobileControlsCollapsed(true)} />
                   </>
                 )}
               </div>
