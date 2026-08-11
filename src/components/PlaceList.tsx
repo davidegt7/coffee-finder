@@ -14,7 +14,6 @@ export function PlaceList() {
   const filters = useStore((s) => s.filters);
   const select = useStore((s) => s.select);
   const resetFilters = useStore((s) => s.resetFilters);
-  const setSubmitOpen = useStore((s) => s.setSubmitOpen);
   const setBeansOpen = useStore((s) => s.setBeansOpen);
   const near = useStore((s) => s.near);
   const { t, lang } = useT();
@@ -120,12 +119,6 @@ export function PlaceList() {
         </div>
       ))}
 
-      {/* Owner CTA lives at the end of the list rather than floating over it.
-          It's a rare action for a different audience, and a fixed pill in the
-          thumb zone was covering a card on every screen. */}
-      <button className="owner-cta" onClick={() => setSubmitOpen(true)}>
-        {t("submit.cta")}
-      </button>
     </div>
   );
 }

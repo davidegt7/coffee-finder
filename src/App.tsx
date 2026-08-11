@@ -115,7 +115,18 @@ export default function App() {
               </div>
               <LangToggle />
             </div>
-            <SectionToggle />
+            <div className="topbar__nav">
+              <SectionToggle />
+              {section === "cafes" && (
+                <button
+                  type="button"
+                  className="owner-cta owner-cta--topbar"
+                  onClick={() => setSubmitOpen(true)}
+                >
+                  ＋ {t("submit.cta")}
+                </button>
+              )}
+            </div>
             <AdminBar />
             {isEditor && section === "cafes" && <SubmissionsQueue />}
             {section === "cafes" ? <FilterBar /> : <RoasterFilterBar />}

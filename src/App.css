@@ -109,10 +109,18 @@
 }
 
 /* Map ↔ Roasters. One brand, two clearly separated product pages. */
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
 .section-toggle {
   display: flex;
   gap: 4px;
-  margin: 0 0 9px;
+  margin: 0;
   padding: 3px;
   border-radius: var(--r-pill, 999px);
   border: 1px solid var(--line-soft);
@@ -2301,6 +2309,19 @@
 .owner-cta:hover {
   color: var(--text);
   border-color: var(--accent);
+}
+
+.owner-cta--topbar {
+  width: auto;
+  flex: 0 0 auto;
+  height: 34px;
+  margin: 0;
+  padding: 0 12px;
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--accent-strong);
+  box-shadow: var(--shadow-1);
+  white-space: nowrap;
 }
 
 /* Sits above the first card. Quieter than a card so it doesn't read as a
