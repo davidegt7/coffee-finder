@@ -33,15 +33,9 @@
   left: 0;
   right: 0;
   padding: max(10px, env(safe-area-inset-top)) 12px 0;
-  /* Fades the map out behind the controls so text stays readable over any
-     part of it, without a hard panel edge that would re-create the old
-     stacked look. */
-  background: linear-gradient(
-    to bottom,
-    var(--bg) 0%,
-    color-mix(in srgb, var(--bg) 88%, transparent) 62%,
-    transparent 100%
-  );
+  /* The controls belong to the results panel, so keep the whole header on the
+     same solid surface instead of letting map labels and pins show through. */
+  background: var(--bg);
   padding-bottom: 26px;
   pointer-events: none;
 }
@@ -345,7 +339,7 @@
   .topbar {
     right: auto;
     width: 400px;
-    background: none;
+    background: var(--bg);
     padding-bottom: 0;
   }
 
