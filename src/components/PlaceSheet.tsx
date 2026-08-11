@@ -12,7 +12,7 @@ import { AdSlot } from "./AdSlot";
 import { PlacePhoto } from "./PlacePhoto";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
 import { countryName } from "../lib/geography";
-import { itemDisplayGroup } from "../lib/items";
+import { INTENTS, placeHasItem } from "../lib/items";
 
 /**
  * Signing in is required to review. That's friction on purpose: an open write
@@ -182,7 +182,6 @@ export function PlaceSheet() {
   const refreshAuth = useStore((s) => s.refreshAuth);
   const favorites = useStore((s) => s.favorites);
   const toggleFavorite = useStore((s) => s.toggleFavorite);
-  const filters = useStore((s) => s.filters);
   const { t, lang } = useT();
   const [writing, setWriting] = useState(false);
   // Collapsed by default: the evidence is long, and the summary in the header
@@ -223,11 +222,14 @@ export function PlaceSheet() {
 
   const teamCount = reviews.filter((r) => r.isTeam).length;
   const isFav = favorites.includes(place.id);
-  const findItems = place.items.filter((item) => {
-    const group = itemDisplayGroup(item);
-    const intent = group === "coffee" || group === "food" ? "drink" : group;
-    return filters.items.includes(intent);
-  });
+  const availableIntents = INTENTS.filter(
+    (intent) =>
+      placeHasItem(place, intent.id) ||
+      (intent.id === "beans" && place.flags.includes("sellsBeans")),
+  );
+  // "Coffee beans" replaces the redundant "Sells beans" chip below. Other
+  // flags remain useful specifics rather than restating the three errands.
+  const aboutFlags = place.flags.filter((flag) => flag !== "sellsBeans");
 
   return (
     <div
@@ -323,22 +325,6 @@ export function PlaceSheet() {
         </div>
       </header>
 
-      {findItems.length > 0 && (
-        <section className="sheet__section">
-          <h3>{t("sheet.whatYouFind")}</h3>
-          <div className="sheet__items">
-            {findItems.map((item) => (
-              <span
-                key={item}
-                className={`chip chip--static item-chip item-chip--${itemDisplayGroup(item)}`}
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
       <section className={`sheet__section claims-section ${claimsOpen ? "is-open" : ""}`}>
         <div className="claims-head">
           <button
@@ -366,11 +352,19 @@ export function PlaceSheet() {
         )}
       </section>
 
-      {place.flags.length > 0 && (
+      {(availableIntents.length > 0 || aboutFlags.length > 0) && (
         <section className="sheet__section">
           <h3>{t("sheet.amenities")}</h3>
           <div className="sheet__items">
-            {place.flags.map((f) => (
+            {availableIntents.map((intent) => (
+              <span
+                key={intent.id}
+                className={`chip chip--static item-chip item-chip--${intent.id === "drink" ? "coffee" : intent.id}`}
+              >
+                <span aria-hidden="true">{intent.icon}</span> {intent.label[lang]}
+              </span>
+            ))}
+            {aboutFlags.map((f) => (
               <span key={f} className="chip chip--static">
                 {FLAG_LABELS[f][lang]}
               </span>
