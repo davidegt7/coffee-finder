@@ -6,7 +6,7 @@ import { directionsUrl, instagramUrl } from "../lib/links";
 import { placeUrl } from "../lib/placeUrl";
 import { useT } from "../lib/useT";
 import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
-import { ClaimRow, UnknownClaims } from "./ClaimBadge";
+import { ClaimRow } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
 import { AdSlot } from "./AdSlot";
 import { PlacePhoto } from "./PlacePhoto";
@@ -220,7 +220,6 @@ export function PlaceSheet() {
   if (!place) return null;
 
   const teamCount = reviews.filter((r) => r.isTeam).length;
-  const unknownKeys = CLAIM_KEYS.filter((k) => place.claims[k].scope === "unknown");
   const isFav = favorites.includes(place.id);
 
   return (
@@ -353,7 +352,6 @@ export function PlaceSheet() {
             {CLAIM_KEYS.map((key) => (
               <ClaimRow key={key} claimKey={key} claim={place.claims[key]} />
             ))}
-            <UnknownClaims keys={unknownKeys} />
           </div>
         )}
       </section>
