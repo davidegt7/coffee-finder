@@ -1001,6 +1001,33 @@
   color: var(--text-2);
 }
 
+/* "What you'll find" mirrors the filter taxonomy: drinks, food, beans and
+   gear keep their own quiet hue, so a mixed list can be scanned by errand. */
+.item-chip {
+  background: color-mix(in srgb, var(--item-tone) 20%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--item-tone) 62%, var(--line));
+}
+
+.item-chip--coffee {
+  --item-tone: #c27637;
+}
+
+.item-chip--food {
+  --item-tone: #c65e7b;
+}
+
+.item-chip--beans {
+  --item-tone: #70a84f;
+}
+
+.item-chip--gear {
+  --item-tone: #4f8fbd;
+}
+
+.item-chip--other {
+  --item-tone: #887568;
+}
+
 /* ============================================================
    Map
    ============================================================ */

@@ -12,6 +12,7 @@ import { AdSlot } from "./AdSlot";
 import { PlacePhoto } from "./PlacePhoto";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
 import { countryName } from "../lib/geography";
+import { itemDisplayGroup } from "../lib/items";
 
 /**
  * Signing in is required to review. That's friction on purpose: an open write
@@ -321,7 +322,10 @@ export function PlaceSheet() {
           <h3>{t("sheet.whatYouFind")}</h3>
           <div className="sheet__items">
             {place.items.map((item) => (
-              <span key={item} className="chip chip--static">
+              <span
+                key={item}
+                className={`chip chip--static item-chip item-chip--${itemDisplayGroup(item)}`}
+              >
                 {item}
               </span>
             ))}

@@ -179,6 +179,19 @@ export const ITEMS: ItemDef[] = INTENTS.flatMap((i) => i.sections.flatMap((s) =>
 
 const ITEMS_BY_ID = new Map(ITEMS.map((i) => [i.id, i]));
 
+export type ItemDisplayGroup = "coffee" | "food" | "beans" | "gear" | "other";
+
+const DISPLAY_GROUP_BY_ID = new Map<string, ItemDisplayGroup>(
+  INTENTS.flatMap((intent) =>
+    intent.sections.flatMap((section) =>
+      section.items.map((item) => [
+        item.id,
+        intent.id === "drink" ? (section.id === "food" ? "food" : "coffee") : intent.id,
+      ] as const),
+    ),
+  ),
+);
+
 /** Every item id under an intent — used to select or clear it wholesale. */
 export function itemIdsForIntent(intentId: ItemIntent["id"]): string[] {
   const intent = INTENTS.find((i) => i.id === intentId);
@@ -187,6 +200,36 @@ export function itemIdsForIntent(intentId: ItemIntent["id"]): string[] {
 
 /** Accent- and case-insensitive: Place.items is hand-written, "Té" must match "te". */
 const norm = fold;
+
+const itemNeedles = (def: ItemDef) => [
+  def.id.replace(/-/g, " "),
+  def.label.es,
+  def.label.en,
+  ...(def.aliases ?? []),
+].map(norm);
+
+const containsItemNeedle = (hay: string, needle: string) => {
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}($|[^\\p{L}\\p{N}])`, "u").test(hay);
+};
+
+/** The same taxonomy used by the filter, exposed for listing presentation. */
+export function itemDisplayGroup(rawItem: string): ItemDisplayGroup {
+  const hay = norm(rawItem);
+  // Stored items are normally canonical labels. Exact matches first prevent a
+  // short label such as "Té" from claiming "Entero" before beans are reached.
+  for (const def of ITEMS) {
+    if (itemNeedles(def).includes(hay)) {
+      return DISPLAY_GROUP_BY_ID.get(def.id) ?? "other";
+    }
+  }
+  for (const def of ITEMS) {
+    if (itemNeedles(def).some((needle) => containsItemNeedle(hay, needle))) {
+      return DISPLAY_GROUP_BY_ID.get(def.id) ?? "other";
+    }
+  }
+  return "other";
+}
 
 /**
  * One-directional on purpose: the place's text must CONTAIN the item, never the
@@ -197,15 +240,10 @@ const norm = fold;
 export function placeHasItem(place: Place, itemId: string): boolean {
   const def = ITEMS_BY_ID.get(itemId);
   if (!def) return false;
-  const needles = [
-    def.id.replace(/-/g, " "),
-    def.label.es,
-    def.label.en,
-    ...(def.aliases ?? []),
-  ].map(norm);
+  const needles = itemNeedles(def);
   return place.items.some((raw) => {
     const hay = norm(raw);
-    return needles.some((n) => hay.includes(n));
+    return needles.some((n) => containsItemNeedle(hay, n));
   });
 }
 
