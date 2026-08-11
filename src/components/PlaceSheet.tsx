@@ -182,6 +182,7 @@ export function PlaceSheet() {
   const refreshAuth = useStore((s) => s.refreshAuth);
   const favorites = useStore((s) => s.favorites);
   const toggleFavorite = useStore((s) => s.toggleFavorite);
+  const filters = useStore((s) => s.filters);
   const { t, lang } = useT();
   const [writing, setWriting] = useState(false);
   // Collapsed by default: the evidence is long, and the summary in the header
@@ -222,6 +223,11 @@ export function PlaceSheet() {
 
   const teamCount = reviews.filter((r) => r.isTeam).length;
   const isFav = favorites.includes(place.id);
+  const findItems = place.items.filter((item) => {
+    const group = itemDisplayGroup(item);
+    const intent = group === "coffee" || group === "food" ? "drink" : group;
+    return filters.items.includes(intent);
+  });
 
   return (
     <div
@@ -317,11 +323,11 @@ export function PlaceSheet() {
         </div>
       </header>
 
-      {place.items.length > 0 && (
+      {findItems.length > 0 && (
         <section className="sheet__section">
           <h3>{t("sheet.whatYouFind")}</h3>
           <div className="sheet__items">
-            {place.items.map((item) => (
+            {findItems.map((item) => (
               <span
                 key={item}
                 className={`chip chip--static item-chip item-chip--${itemDisplayGroup(item)}`}

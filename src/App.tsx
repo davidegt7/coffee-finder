@@ -102,58 +102,62 @@ export default function App() {
           {section === "cafes" && <MapView />}
 
           <div
-            className={`topbar ${section === "cafes" && mobileControlsCollapsed ? "is-mobile-collapsed" : ""}`}
+            className={`topbar ${mobileControlsCollapsed ? "is-mobile-collapsed" : ""}`}
           >
-            <button
-              type="button"
-              className="topbar__compact"
-              onClick={() => setMobileControlsCollapsed(false)}
-              aria-label={t("filter.open")}
-            >
-              <span className="topbar__compact-action">{t("filter.open")}</span>
-              <span className="topbar__compact-caret" aria-hidden="true">
-                ⌄
-              </span>
-            </button>
-
             <div className="topbar__full">
               <div className="topbar__brand">
-              {/* Wordmark and subtitle share one pill. The pill exists so the
-                  brand stays legible over whatever the map is showing beneath
-                  it, and a subtitle sitting outside it would be the one bit of
-                  text that isn't. */}
-              <div className="brandmark">
-                <div className="brandmark__title">
-                  <h1>
-                    Coffee<span>Finder</span>
-                  </h1>
-                  <span className="brandmark__beta">Beta</span>
+                {/* Wordmark and subtitle share one pill. The pill exists so the
+                    brand stays legible over whatever the map is showing beneath
+                    it, and a subtitle sitting outside it would be the one bit of
+                    text that isn't. */}
+                <div className="brandmark">
+                  <div className="brandmark__title">
+                    <h1>
+                      Coffee<span>Finder</span>
+                    </h1>
+                    <span className="brandmark__beta">Beta</span>
+                  </div>
+                  <p className="brandmark__sub">
+                    {section === "roasters" ? t("app.subtitleRoasters") : t("app.subtitle")}
+                  </p>
                 </div>
-                <p className="brandmark__sub">
-                  {section === "roasters" ? t("app.subtitleRoasters") : t("app.subtitle")}
-                </p>
+                <LangToggle />
               </div>
-              <LangToggle />
-              </div>
-              <div className="topbar__nav">
-                <SectionToggle />
-                {section === "cafes" && (
-                  <button
-                    type="button"
-                    className="owner-cta owner-cta--topbar"
-                    onClick={() => setSubmitOpen(true)}
-                  >
-                    ＋ {t("submit.cta")}
-                  </button>
+              <button
+                type="button"
+                className="topbar__filter-toggle"
+                onClick={() => setMobileControlsCollapsed((collapsed) => !collapsed)}
+                aria-expanded={!mobileControlsCollapsed}
+              >
+                <span>{t("filter.open")}</span>
+                <span className="topbar__filter-caret" aria-hidden="true">
+                  {mobileControlsCollapsed ? "⌄" : "⌃"}
+                </span>
+              </button>
+              <div className="topbar__collapsible">
+                <div className="topbar__nav">
+                  <SectionToggle />
+                </div>
+                {section === "cafes" ? (
+                  <>
+                    <button
+                      type="button"
+                      className="owner-cta owner-cta--topbar"
+                      onClick={() => setSubmitOpen(true)}
+                    >
+                      ＋ {t("submit.cta")}
+                    </button>
+                    <AdminBar />
+                    {isEditor && <SubmissionsQueue />}
+                    <FilterBar onComplete={() => setMobileControlsCollapsed(true)} />
+                  </>
+                ) : (
+                  <>
+                    <AdminBar />
+                    <RoasterFilterBar />
+                  </>
                 )}
               </div>
-              <AdminBar />
-              {isEditor && section === "cafes" && <SubmissionsQueue />}
-              {section === "cafes" ? (
-                <FilterBar onComplete={() => setMobileControlsCollapsed(true)} />
-              ) : (
-                <RoasterFilterBar />
-              )}
             </div>
           </div>
 

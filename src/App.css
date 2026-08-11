@@ -45,49 +45,51 @@
   pointer-events: auto;
 }
 
-.topbar__compact {
+.topbar__filter-toggle {
   display: none;
 }
 
-/* Once the two-question filter flow is complete, phones give the map and
-   results the screen back. The compact pill is deliberately the only header
-   left visible; one tap restores the full controls without losing choices. */
+.topbar__collapsible > .owner-cta--topbar {
+  margin: 0 16px 9px;
+}
+
+/* The brand and product switch stay put on phones. Filters is a real accordion
+   beneath them, so opening the controls never strands someone with no way to
+   give the map its space back. */
 @media (max-width: 899px) {
   .topbar.is-mobile-collapsed {
-    right: auto;
-    padding: max(8px, env(safe-area-inset-top)) 10px 8px;
-    background: transparent;
+    padding-bottom: 10px;
   }
 
-  .topbar.is-mobile-collapsed .topbar__full {
+  .topbar.is-mobile-collapsed .topbar__collapsible {
     display: none;
   }
 
-  .topbar.is-mobile-collapsed .topbar__compact {
+  .topbar__filter-toggle {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 9px;
     min-height: 42px;
-    min-width: 116px;
+    width: 100%;
     padding: 0 14px;
     border: 1px solid var(--line-soft);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-md);
     background: var(--surface);
     color: var(--text);
     box-shadow: var(--shadow-2);
-  }
-
-  .topbar__compact-action {
-    color: var(--text);
     font-size: 13px;
     font-weight: 650;
   }
 
-  .topbar__compact-caret {
+  .topbar__filter-caret {
     color: var(--muted);
     font-size: 15px;
     line-height: 1;
+  }
+
+  .topbar__collapsible > .owner-cta--topbar {
+    margin-top: 9px;
   }
 }
 
