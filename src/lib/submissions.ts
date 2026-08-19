@@ -29,7 +29,12 @@ export interface Submission {
   contactName?: string;
   /** Claim/flag keys the owner says apply. Their word, recorded as their word. */
   asserts: string[];
+  /** Broad public-search intents: drink here, buy beans, or buy equipment. */
   items: string[];
+  coffeeBrand: string;
+  specialtyCoffee?: boolean;
+  photoUrls: string[];
+  /** First photo retained for compatibility with older editor builds. */
   photoUrl?: string;
   note?: string;
   status: "pending" | "approved" | "rejected";
@@ -51,6 +56,9 @@ interface SubmissionRow {
   contact_name: string | null;
   asserts: string[] | null;
   items: string[] | null;
+  coffee_brand: string | null;
+  specialty_coffee: boolean | null;
+  photo_urls: string[] | null;
   photo_url: string | null;
   note: string | null;
   status: Submission["status"];
@@ -72,6 +80,9 @@ const rowToSubmission = (r: SubmissionRow): Submission => ({
   contactName: r.contact_name ?? undefined,
   asserts: r.asserts ?? [],
   items: r.items ?? [],
+  coffeeBrand: r.coffee_brand ?? "",
+  specialtyCoffee: r.specialty_coffee ?? undefined,
+  photoUrls: r.photo_urls?.length ? r.photo_urls : r.photo_url ? [r.photo_url] : [],
   photoUrl: r.photo_url ?? undefined,
   note: r.note ?? undefined,
   status: r.status,
@@ -92,7 +103,9 @@ export async function submitPlace(input: {
   contactName?: string;
   asserts: string[];
   items: string[];
-  photoUrl?: string;
+  coffeeBrand: string;
+  specialtyCoffee: boolean;
+  photoUrls: string[];
   note?: string;
 }): Promise<{ error: string | null }> {
   if (!isSupabaseConfigured()) return { error: "Supabase no está configurado." };
@@ -111,7 +124,10 @@ export async function submitPlace(input: {
     contact_name: input.contactName?.trim() || null,
     asserts: input.asserts,
     items: input.items,
-    photo_url: input.photoUrl?.trim() || null,
+    coffee_brand: input.coffeeBrand.trim(),
+    specialty_coffee: input.specialtyCoffee,
+    photo_urls: input.photoUrls,
+    photo_url: input.photoUrls[0] ?? null,
     note: input.note?.trim() || null,
   });
   return { error: error?.message ?? null };

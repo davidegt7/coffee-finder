@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { setSubmissionStatus, type Submission } from "../lib/submissions";
+import { INTENTS } from "../lib/items";
 import { useT } from "../lib/useT";
 import {
   CATEGORY_LABELS,
@@ -27,7 +28,14 @@ function submissionToPlace(s: Submission, today: string): Place {
   const claims = Object.fromEntries(
     CLAIM_KEYS.map((k) => [
       k,
-      s.asserts.includes(k)
+      k === "specialty" && typeof s.specialtyCoffee === "boolean"
+        ? {
+            scope: s.specialtyCoffee ? ("all" as const) : ("none" as const),
+            confidence: "claimed" as const,
+            source: `Declarado por el local (${s.contactEmail})`,
+            checkedAt: today,
+          }
+        : s.asserts.includes(k)
         ? {
             scope: "all" as const,
             confidence: "claimed" as const,
@@ -54,10 +62,13 @@ function submissionToPlace(s: Submission, today: string): Place {
     website: s.website,
     instagram: s.instagram,
     items: s.items,
-    photoUrl: s.photoUrl,
+    photoUrl: s.photoUrls[0] ?? s.photoUrl,
     claims,
     flags: s.asserts.filter((a): a is FlagKey => (FLAG_KEYS as readonly string[]).includes(a)),
-    sources: [`Solicitud del local, ${s.contactEmail}, ${s.createdAt.slice(0, 10)}`],
+    sources: [
+      `Solicitud del local, ${s.contactEmail}, ${s.createdAt.slice(0, 10)}`,
+      ...(s.coffeeBrand ? [`Marca de café declarada: ${s.coffeeBrand}`] : []),
+    ],
     addedAt: today,
   };
 }
@@ -92,10 +103,34 @@ export function SubmissionsQueue() {
                 {s.comuna && `, ${s.comuna}`}
                 {`, ${s.city}, ${s.country}`}
               </p>
-              {s.asserts.length > 0 && (
+              {s.items.length > 0 && (
+                <p className="queue__asserts">
+                  {t("queue.offers")} {s.items
+                    .map((id) => INTENTS.find((intent) => intent.id === id)?.label[lang] ?? id)
+                    .join(", ")}
+                </p>
+              )}
+              {s.coffeeBrand && (
+                <p className="queue__asserts">
+                  {t("queue.coffeeBrand")} {s.coffeeBrand}
+                </p>
+              )}
+              {typeof s.specialtyCoffee === "boolean" && (
+                <p className="queue__asserts">
+                  {t("queue.specialty")} {s.specialtyCoffee
+                    ? t("submit.specialtyYes")
+                    : t("submit.specialtyNo")}
+                </p>
+              )}
+              {s.asserts.some(
+                (a) => !(a === "specialty" && typeof s.specialtyCoffee === "boolean"),
+              ) && (
                 <p className="queue__asserts">
                   {t("queue.claims")}{" "}
                   {s.asserts
+                    .filter(
+                      (a) => !(a === "specialty" && typeof s.specialtyCoffee === "boolean"),
+                    )
                     .map(
                       (a) =>
                         CLAIM_LABELS[a as ClaimKey]?.[lang] ?? FLAG_LABELS[a as FlagKey]?.[lang] ?? a,
@@ -104,6 +139,13 @@ export function SubmissionsQueue() {
                 </p>
               )}
               {s.note && <p className="queue__note">“{s.note}”</p>}
+              {s.photoUrls.length > 0 && (
+                <div className="queue__photos">
+                  {s.photoUrls.map((url, index) => (
+                    <img key={url} src={url} alt={t("submit.photoAlt", { n: index + 1 })} />
+                  ))}
+                </div>
+              )}
               <p className="queue__contact">
                 {s.contactName ? `${s.contactName} · ` : ""}
                 <a href={`mailto:${s.contactEmail}`}>{s.contactEmail}</a>

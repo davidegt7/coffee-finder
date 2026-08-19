@@ -10,7 +10,7 @@ import {
   type GeocodeHit,
 } from "../lib/geocode";
 import { uploadPlacePhoto } from "../lib/photos";
-import { ITEMS } from "../lib/items";
+import { INTENTS, ITEMS } from "../lib/items";
 import { useT } from "../lib/useT";
 import type { StringKey } from "../lib/i18n";
 import {
@@ -400,6 +400,24 @@ export function PlaceEditor() {
       <section className="sheet__section">
         <h3>{t("sheet.whatYouFind")}</h3>
         <div className="menu-panel__chips">
+          {INTENTS.map((intent) => {
+            const on = place.items.includes(intent.id);
+            return (
+              <button
+                key={intent.id}
+                className={`chip chip--item ${on ? "is-on" : ""}`}
+                onClick={() =>
+                  patch({
+                    items: on
+                      ? place.items.filter((i) => i !== intent.id)
+                      : [...place.items, intent.id],
+                  })
+                }
+              >
+                {intent.icon} {intent.label[lang]}
+              </button>
+            );
+          })}
           {ITEMS.map((item) => {
             // Store items in Spanish regardless of UI language, so the data stays
             // consistent and placeHasItem's aliases keep matching.

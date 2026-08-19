@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { submitPlace } from "../lib/submissions";
-import { ITEMS } from "../lib/items";
+import { INTENTS } from "../lib/items";
+import { uploadSubmissionPhoto } from "../lib/photos";
 import { useT } from "../lib/useT";
 import {
   CATEGORIES,
   CATEGORY_LABELS,
-  CLAIM_KEYS,
-  CLAIM_LABELS,
-  FLAG_KEYS,
-  FLAG_LABELS,
   type Category,
 } from "../types";
+
+const OWNER_CATEGORIES = CATEGORIES.filter((candidate) => candidate !== "cart");
+const MAX_OWNER_PHOTOS = 3;
 
 /**
  * The public "list my café" form, for owners.
@@ -20,12 +20,9 @@ import {
  * That's safe because this is a dead end: submissions render nowhere public and
  * only editors can read them.
  *
- * What the owner ticks under "what applies to you" is recorded as *assertions*,
- * not as claims. An owner saying "we roast on site" is the definition of a
- * `claimed` fact with the owner as its source, and it only reaches the map when
- * an editor promotes it — carrying that provenance with it. The copy says so
- * plainly, because a form that implies "tick this and it's true" would quietly
- * launder marketing into the one thing this app is for.
+ * The choices deliberately mirror the two public search filters. Owners do not
+ * need to classify every drink, food, amenity and production claim before they
+ * can ask to be listed; an editor can add those specifics during review.
  */
 export function SubmitPlace() {
   const setSubmitOpen = useStore((s) => s.setSubmitOpen);
@@ -41,9 +38,12 @@ export function SubmitPlace() {
   const [instagram, setInstagram] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactName, setContactName] = useState("");
-  const [asserts, setAsserts] = useState<string[]>([]);
-  const [items, setItems] = useState<string[]>([]);
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [items, setItems] = useState<string[]>(["drink"]);
+  const [coffeeBrand, setCoffeeBrand] = useState("");
+  const [specialtyCoffee, setSpecialtyCoffee] = useState<boolean | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [upBusy, setUpBusy] = useState(false);
+  const [upErr, setUpErr] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -57,7 +57,10 @@ export function SubmitPlace() {
     address.trim().length > 3 &&
     city.trim().length > 1 &&
     country.trim().length > 1 &&
+    coffeeBrand.trim().length > 1 &&
+    specialtyCoffee !== null &&
     /\S+@\S+\.\S+/.test(contactEmail) &&
+    !upBusy &&
     !busy;
 
   if (done) {
@@ -106,16 +109,6 @@ export function SubmitPlace() {
           <input value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="field">
-          <span>{t("editor.type")}</span>
-          <select value={category} onChange={(e) => setCategory(e.target.value as Category)}>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABELS[c].icon} {CATEGORY_LABELS[c][lang]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
           <span>{t("submit.address")} *</span>
           <input
             value={address}
@@ -145,62 +138,131 @@ export function SubmitPlace() {
           <span>Instagram</span>
           <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@…" />
         </label>
+      </section>
+
+      <section className="sheet__section">
+        <h3>{t("menu.item")}</h3>
+        <div className="intents submit__intents">
+          {INTENTS.map((intent) => (
+            <button
+              key={intent.id}
+              type="button"
+              className={`intent ${items.includes(intent.id) ? "is-active" : ""}`}
+              onClick={() => toggle(items, intent.id, setItems)}
+              aria-pressed={items.includes(intent.id)}
+            >
+              <span className="intent__icon" aria-hidden="true">{intent.icon}</span>
+              <span className="intent__label">{intent.label[lang]}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="sheet__section">
+        <h3>{t("menu.category")}</h3>
+        <div className="menu-panel__chips">
+          {OWNER_CATEGORIES.map((candidate) => (
+            <button
+              key={candidate}
+              type="button"
+              className={`chip chip--cat ${category === candidate ? "is-on" : ""}`}
+              onClick={() => setCategory(candidate as Category)}
+              aria-pressed={category === candidate}
+            >
+              <span aria-hidden="true">{CATEGORY_LABELS[candidate].icon}</span>{" "}
+              {CATEGORY_LABELS[candidate][lang]}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="sheet__section">
+        <h3>{t("submit.coffeeTitle")}</h3>
         <label className="field">
-          <span>{t("submit.photo")}</span>
+          <span>{t("submit.coffeeBrand")} *</span>
           <input
-            value={photoUrl}
-            onChange={(e) => setPhotoUrl(e.target.value)}
-            placeholder="https://…"
+            value={coffeeBrand}
+            onChange={(event) => setCoffeeBrand(event.target.value)}
+            placeholder={t("submit.coffeeBrandPlaceholder")}
           />
-          <small className="field__hint">{t("submit.photoNote")}</small>
         </label>
+        <fieldset className="submit__choice">
+          <legend>{t("submit.specialtyQuestion")} *</legend>
+          <div className="submit__choice-row">
+            <button
+              type="button"
+              className={`chip chip--cat ${specialtyCoffee === true ? "is-on" : ""}`}
+              onClick={() => setSpecialtyCoffee(true)}
+              aria-pressed={specialtyCoffee === true}
+            >
+              {t("submit.specialtyYes")}
+            </button>
+            <button
+              type="button"
+              className={`chip chip--cat ${specialtyCoffee === false ? "is-on" : ""}`}
+              onClick={() => setSpecialtyCoffee(false)}
+              aria-pressed={specialtyCoffee === false}
+            >
+              {t("submit.specialtyNo")}
+            </button>
+          </div>
+        </fieldset>
       </section>
 
       <section className="sheet__section">
-        <h3>{t("submit.whatApplies")}</h3>
-        {/* Framed as "what you'd tell us", not "tick to make it true". */}
-        <p className="field__hint">{t("submit.assertsNote")}</p>
-        <div className="menu-panel__chips">
-          {CLAIM_KEYS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              className={`chip chip--claim ${asserts.includes(k) ? "is-some" : ""}`}
-              onClick={() => toggle(asserts, k, setAsserts)}
-              aria-pressed={asserts.includes(k)}
-            >
-              {CLAIM_LABELS[k][lang]}
-            </button>
-          ))}
-          {FLAG_KEYS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              className={`chip chip--flag ${asserts.includes(k) ? "is-on" : ""}`}
-              onClick={() => toggle(asserts, k, setAsserts)}
-              aria-pressed={asserts.includes(k)}
-            >
-              {FLAG_LABELS[k][lang]}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="sheet__section">
-        <h3>{t("sheet.whatYouFind")}</h3>
-        <div className="menu-panel__chips">
-          {ITEMS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`chip chip--item ${items.includes(item.label.es) ? "is-on" : ""}`}
-              onClick={() => toggle(items, item.label.es, setItems)}
-              aria-pressed={items.includes(item.label.es)}
-            >
-              {item.label[lang]}
-            </button>
-          ))}
-        </div>
+        <h3>{t("submit.photosTitle")}</h3>
+        <p className="field__hint">{t("submit.photoNote")}</p>
+        {photoUrls.length < MAX_OWNER_PHOTOS && (
+          <label className="photo-pick">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={upBusy}
+              onChange={async (event) => {
+                const files = [...(event.target.files ?? [])].slice(
+                  0,
+                  MAX_OWNER_PHOTOS - photoUrls.length,
+                );
+                if (!files.length) return;
+                setUpBusy(true);
+                setUpErr(null);
+                const uploaded: string[] = [];
+                for (const file of files) {
+                  const { url, error } = await uploadSubmissionPhoto(file);
+                  if (error) {
+                    setUpErr(error);
+                    break;
+                  }
+                  if (url) uploaded.push(url);
+                }
+                setPhotoUrls((current) => [...current, ...uploaded]);
+                setUpBusy(false);
+                event.target.value = "";
+              }}
+            />
+            <span className="photo-pick__face">
+              {upBusy ? t("editor.photoUploading") : t("submit.photoPick")}
+            </span>
+          </label>
+        )}
+        {upErr && <p className="field__err">{upErr}</p>}
+        {photoUrls.length > 0 && (
+          <div className="submit__photos">
+            {photoUrls.map((url, index) => (
+              <div className="submit__photo" key={url}>
+                <img src={url} alt={t("submit.photoAlt", { n: index + 1 })} />
+                <button
+                  type="button"
+                  onClick={() => setPhotoUrls((current) => current.filter((item) => item !== url))}
+                  aria-label={t("editor.photoRemove")}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="sheet__section">
@@ -253,9 +315,11 @@ export function SubmitPlace() {
               instagram,
               contactEmail,
               contactName,
-              asserts,
+              asserts: specialtyCoffee ? ["specialty"] : [],
               items,
-              photoUrl,
+              coffeeBrand,
+              specialtyCoffee: specialtyCoffee!,
+              photoUrls,
               note,
             });
             setBusy(false);

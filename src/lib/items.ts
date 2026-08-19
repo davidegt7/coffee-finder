@@ -217,6 +217,11 @@ const containsItemNeedle = (hay: string, needle: string) => {
 /** The same taxonomy used by the filter, exposed for listing presentation. */
 export function itemDisplayGroup(rawItem: string): ItemDisplayGroup {
   const hay = norm(rawItem);
+  const directIntent = INTENTS.find(
+    (intent) =>
+      norm(intent.id) === hay || norm(intent.label.es) === hay || norm(intent.label.en) === hay,
+  );
+  if (directIntent) return directIntent.id === "drink" ? "coffee" : directIntent.id;
   // Stored items are normally canonical labels. Exact matches first prevent a
   // short label such as "Té" from claiming "Entero" before beans are reached.
   for (const def of ITEMS) {
@@ -241,6 +246,8 @@ export function itemDisplayGroup(rawItem: string): ItemDisplayGroup {
 export function placeHasItem(place: Place, itemId: string): boolean {
   const intent = INTENTS_BY_ID.get(itemId as ItemIntent["id"]);
   if (intent) {
+    const direct = [intent.id, intent.label.es, intent.label.en].map(norm);
+    if (place.items.some((raw) => direct.includes(norm(raw)))) return true;
     return intent.sections.some((section) =>
       section.items.some((item) => placeHasItem(place, item.id)),
     );
@@ -256,5 +263,5 @@ export function placeHasItem(place: Place, itemId: string): boolean {
 }
 
 export function itemLabel(id: string, lang: "es" | "en" = "es"): string {
-  return ITEMS_BY_ID.get(id)?.label[lang] ?? id;
+  return INTENTS_BY_ID.get(id as ItemIntent["id"])?.label[lang] ?? ITEMS_BY_ID.get(id)?.label[lang] ?? id;
 }

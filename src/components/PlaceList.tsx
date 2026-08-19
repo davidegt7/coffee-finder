@@ -6,6 +6,7 @@ import { useT } from "../lib/useT";
 import { PlacePhoto } from "./PlacePhoto";
 import { FLAG_LABELS } from "../types";
 import { countryName } from "../lib/geography";
+import { itemLabel } from "../lib/items";
 
 export function PlaceList() {
   const places = useStore((s) => s.places);
@@ -108,7 +109,9 @@ export function PlaceList() {
               </div>
             )}
             {place.items.length > 0 && (
-              <p className="card__items">{place.items.slice(0, 4).join(" · ")}</p>
+              <p className="card__items">
+                {place.items.slice(0, 4).map((item) => itemLabel(item, lang)).join(" · ")}
+              </p>
             )}
           </button>
         </div>

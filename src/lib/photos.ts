@@ -48,7 +48,11 @@ export interface UploadResult {
   error: string | null;
 }
 
-export async function uploadPlacePhoto(file: File, placeId: string): Promise<UploadResult> {
+async function uploadPhoto(
+  file: File,
+  bucket: "place-photos" | "submission-photos",
+  key: string,
+): Promise<UploadResult> {
   const sb = await supabase();
   if (!sb) return { url: null, error: "Supabase no está configurado." };
 
@@ -63,16 +67,28 @@ export async function uploadPlacePhoto(file: File, placeId: string): Promise<Upl
     return { url: null, error: e instanceof Error ? e.message : String(e) };
   }
 
-  // Keyed by place, with a timestamp so replacing a photo busts the CDN cache
-  // rather than serving the old one from an unchanged URL.
-  const key = `${placeId || "new"}/${Date.now()}.jpg`;
-
   const { error } = await sb.storage
-    .from("place-photos")
+    .from(bucket)
     .upload(key, blob, { contentType: "image/jpeg", upsert: true });
 
   if (error) return { url: null, error: error.message };
 
-  const { data } = sb.storage.from("place-photos").getPublicUrl(key);
+  const { data } = sb.storage.from(bucket).getPublicUrl(key);
   return { url: data.publicUrl, error: null };
+}
+
+export async function uploadPlacePhoto(file: File, placeId: string): Promise<UploadResult> {
+  // Keyed by place, with a timestamp so replacing a photo busts the CDN cache
+  // rather than serving the old one from an unchanged URL.
+  const key = `${placeId || "new"}/${Date.now()}.jpg`;
+  return uploadPhoto(file, "place-photos", key);
+}
+
+/** Anonymous owner uploads go to their own tightly limited bucket. */
+export async function uploadSubmissionPhoto(file: File): Promise<UploadResult> {
+  const id =
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return uploadPhoto(file, "submission-photos", `submissions/${id}.jpg`);
 }
