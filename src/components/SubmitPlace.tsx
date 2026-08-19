@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { submitPlace } from "../lib/submissions";
 import { INTENTS } from "../lib/items";
-import { uploadSubmissionPhoto } from "../lib/photos";
+import { uploadSubmissionCoffeePhoto, uploadSubmissionPhoto } from "../lib/photos";
 import { useT } from "../lib/useT";
 import {
   CATEGORIES,
@@ -41,6 +41,9 @@ export function SubmitPlace() {
   const [items, setItems] = useState<string[]>(["drink"]);
   const [coffeeBrand, setCoffeeBrand] = useState("");
   const [specialtyCoffee, setSpecialtyCoffee] = useState<boolean | null>(null);
+  const [coffeePhotoUrl, setCoffeePhotoUrl] = useState("");
+  const [coffeeUpBusy, setCoffeeUpBusy] = useState(false);
+  const [coffeeUpErr, setCoffeeUpErr] = useState<string | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [upBusy, setUpBusy] = useState(false);
   const [upErr, setUpErr] = useState<string | null>(null);
@@ -60,6 +63,7 @@ export function SubmitPlace() {
     coffeeBrand.trim().length > 1 &&
     specialtyCoffee !== null &&
     /\S+@\S+\.\S+/.test(contactEmail) &&
+    !coffeeUpBusy &&
     !upBusy &&
     !busy;
 
@@ -207,6 +211,48 @@ export function SubmitPlace() {
             </button>
           </div>
         </fieldset>
+        <div className="submit__coffee-photo">
+          <h4>{t("submit.coffeePhotoTitle")}</h4>
+          <p className="field__hint">{t("submit.coffeePhotoNote")}</p>
+          {!coffeePhotoUrl && (
+            <label className="photo-pick">
+              <input
+                type="file"
+                accept="image/*"
+                disabled={coffeeUpBusy}
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  setCoffeeUpBusy(true);
+                  setCoffeeUpErr(null);
+                  const { url, error } = await uploadSubmissionCoffeePhoto(file);
+                  setCoffeeUpBusy(false);
+                  if (error) setCoffeeUpErr(error);
+                  else if (url) setCoffeePhotoUrl(url);
+                  event.target.value = "";
+                }}
+              />
+              <span className="photo-pick__face">
+                {coffeeUpBusy ? t("editor.photoUploading") : t("submit.coffeePhotoPick")}
+              </span>
+            </label>
+          )}
+          {coffeeUpErr && <p className="field__err">{coffeeUpErr}</p>}
+          {coffeePhotoUrl && (
+            <div className="submit__photos submit__photos--coffee">
+              <div className="submit__photo">
+                <img src={coffeePhotoUrl} alt={t("submit.coffeePhotoAlt")} />
+                <button
+                  type="button"
+                  onClick={() => setCoffeePhotoUrl("")}
+                  aria-label={t("editor.photoRemove")}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="sheet__section">
@@ -319,6 +365,7 @@ export function SubmitPlace() {
               items,
               coffeeBrand,
               specialtyCoffee: specialtyCoffee!,
+              coffeePhotoUrl,
               photoUrls,
               note,
             });

@@ -122,6 +122,12 @@ export function SubmissionsQueue() {
                     : t("submit.specialtyNo")}
                 </p>
               )}
+              {s.coffeePhotoUrl && (
+                <div className="queue__coffee-photo">
+                  <span>{t("queue.coffeePhoto")}</span>
+                  <img src={s.coffeePhotoUrl} alt={t("submit.coffeePhotoAlt")} />
+                </div>
+              )}
               {s.asserts.some(
                 (a) => !(a === "specialty" && typeof s.specialtyCoffee === "boolean"),
               ) && (

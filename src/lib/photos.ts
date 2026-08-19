@@ -92,3 +92,12 @@ export async function uploadSubmissionPhoto(file: File): Promise<UploadResult> {
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   return uploadPhoto(file, "submission-photos", `submissions/${id}.jpg`);
 }
+
+/** A separate product photo lets editors see the actual coffee/brand in use. */
+export async function uploadSubmissionCoffeePhoto(file: File): Promise<UploadResult> {
+  const id =
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return uploadPhoto(file, "submission-photos", `submissions/coffee/${id}.jpg`);
+}

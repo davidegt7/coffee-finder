@@ -11,6 +11,7 @@ import { AdminBar } from "./components/AdminBar";
 import { PlaceEditor } from "./components/PlaceEditor";
 import { LangToggle } from "./components/LangToggle";
 import { SubmitPlace } from "./components/SubmitPlace";
+import { AboutUs } from "./components/AboutUs";
 import { BeansSheet } from "./components/BeansSheet";
 import { applyUpdate } from "./lib/appUpdate";
 import { SubmissionsQueue } from "./components/SubmissionsQueue";
@@ -44,6 +45,7 @@ export default function App() {
   // Phones should open on the map, not on a wall of controls. Search remains
   // visible in the compact state; everything else lives under Filters.
   const [mobileControlsCollapsed, setMobileControlsCollapsed] = useState(true);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   useEffect(() => {
     void init();
@@ -116,6 +118,7 @@ export default function App() {
                     </h1>
                     <span className="brandmark__beta">Beta</span>
                   </div>
+                  <div className="brandmark__tagline">{t("brand.specialty")}</div>
                 </div>
                 <LangToggle />
               </div>
@@ -136,13 +139,22 @@ export default function App() {
                 </div>
                 {section === "cafes" ? (
                   <>
-                    <button
-                      type="button"
-                      className="owner-cta owner-cta--topbar"
-                      onClick={() => setSubmitOpen(true)}
-                    >
-                      ＋ {t("submit.cta")}
-                    </button>
+                    <div className="topbar__secondary-actions">
+                      <button
+                        type="button"
+                        className="owner-cta owner-cta--topbar"
+                        onClick={() => setSubmitOpen(true)}
+                      >
+                        ＋ {t("submit.cta")}
+                      </button>
+                      <button
+                        type="button"
+                        className="owner-cta owner-cta--topbar about-cta"
+                        onClick={() => setAboutOpen(true)}
+                      >
+                        {t("about.cta")}
+                      </button>
+                    </div>
                     <AdminBar />
                     {isEditor && <SubmissionsQueue />}
                     <FilterBar onComplete={() => setMobileControlsCollapsed(true)} />
@@ -179,6 +191,13 @@ export default function App() {
         <>
           <div className="scrim" onClick={() => setSubmitOpen(false)} />
           <SubmitPlace />
+        </>
+      )}
+
+      {aboutOpen && (
+        <>
+          <div className="scrim" onClick={() => setAboutOpen(false)} />
+          <AboutUs onClose={() => setAboutOpen(false)} />
         </>
       )}
 

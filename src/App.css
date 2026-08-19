@@ -49,7 +49,7 @@
   display: none;
 }
 
-.topbar__collapsible > .owner-cta--topbar {
+.topbar__collapsible > .topbar__secondary-actions {
   margin: 0 16px 9px;
 }
 
@@ -109,7 +109,7 @@
     line-height: 1;
   }
 
-  .topbar__collapsible > .owner-cta--topbar {
+  .topbar__collapsible > .topbar__secondary-actions {
     margin-top: 9px;
   }
 
@@ -145,6 +145,16 @@
   display: flex;
   align-items: center;
   gap: 7px;
+}
+
+.brandmark__tagline {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
 }
 
 .brandmark__beta {
@@ -2385,6 +2395,91 @@
   color: var(--accent-strong);
   box-shadow: var(--shadow-1);
   white-space: nowrap;
+}
+
+.topbar__secondary-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.about-cta {
+  border-color: var(--line);
+  color: var(--text-2);
+}
+
+.submit__coffee-photo {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.submit__coffee-photo h4 {
+  margin: 0 0 5px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.submit__photos--coffee {
+  grid-template-columns: minmax(0, 132px);
+}
+
+.queue__coffee-photo {
+  margin: 9px 0;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.queue__coffee-photo img {
+  display: block;
+  width: 92px;
+  aspect-ratio: 1;
+  margin-top: 6px;
+  border-radius: var(--r-md);
+  object-fit: cover;
+}
+
+.sheet--about {
+  max-width: 460px;
+}
+
+.about__values {
+  display: grid;
+  gap: 10px;
+}
+
+.about__values > div {
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+
+.about__values > div > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 9px;
+  border-radius: var(--r-pill);
+  background: var(--accent-wash);
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.about__values h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.about__values p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 /* Sits above the first card. Quieter than a card so it doesn't read as a

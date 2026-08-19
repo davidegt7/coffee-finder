@@ -33,6 +33,7 @@ export interface Submission {
   items: string[];
   coffeeBrand: string;
   specialtyCoffee?: boolean;
+  coffeePhotoUrl?: string;
   photoUrls: string[];
   /** First photo retained for compatibility with older editor builds. */
   photoUrl?: string;
@@ -58,6 +59,7 @@ interface SubmissionRow {
   items: string[] | null;
   coffee_brand: string | null;
   specialty_coffee: boolean | null;
+  coffee_photo_url: string | null;
   photo_urls: string[] | null;
   photo_url: string | null;
   note: string | null;
@@ -82,6 +84,7 @@ const rowToSubmission = (r: SubmissionRow): Submission => ({
   items: r.items ?? [],
   coffeeBrand: r.coffee_brand ?? "",
   specialtyCoffee: r.specialty_coffee ?? undefined,
+  coffeePhotoUrl: r.coffee_photo_url ?? undefined,
   photoUrls: r.photo_urls?.length ? r.photo_urls : r.photo_url ? [r.photo_url] : [],
   photoUrl: r.photo_url ?? undefined,
   note: r.note ?? undefined,
@@ -105,6 +108,7 @@ export async function submitPlace(input: {
   items: string[];
   coffeeBrand: string;
   specialtyCoffee: boolean;
+  coffeePhotoUrl?: string;
   photoUrls: string[];
   note?: string;
 }): Promise<{ error: string | null }> {
@@ -126,6 +130,7 @@ export async function submitPlace(input: {
     items: input.items,
     coffee_brand: input.coffeeBrand.trim(),
     specialty_coffee: input.specialtyCoffee,
+    coffee_photo_url: input.coffeePhotoUrl || null,
     photo_urls: input.photoUrls,
     photo_url: input.photoUrls[0] ?? null,
     note: input.note?.trim() || null,
