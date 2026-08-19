@@ -1229,6 +1229,47 @@
   transform: translateY(-1px);
 }
 
+/* Advanced coffee criteria are intentionally a ranking signal, not an
+   exclusion rule. A calm green treatment identifies the complete matches
+   while ordinary cards remain in the results below. */
+.card--advanced-match {
+  border-color: #72a17c;
+  background:
+    linear-gradient(135deg, rgba(90, 151, 104, 0.14), rgba(90, 151, 104, 0.04)),
+    var(--surface);
+  box-shadow: 0 7px 22px rgba(45, 104, 59, 0.14);
+}
+
+.card--advanced-match:hover {
+  border-color: #4f895d;
+  box-shadow: 0 9px 26px rgba(45, 104, 59, 0.2);
+}
+
+.card__advanced-match {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 9px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #236334;
+  background: rgba(91, 163, 108, 0.17);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .card--advanced-match {
+  border-color: #6fa27a;
+  background:
+    linear-gradient(135deg, rgba(84, 151, 100, 0.24), rgba(84, 151, 100, 0.07)),
+    var(--surface);
+}
+
+[data-theme="dark"] .card__advanced-match {
+  color: #b9e7c3;
+  background: rgba(79, 145, 94, 0.3);
+}
+
 .card:active {
   transform: translateY(0) scale(0.995);
 }

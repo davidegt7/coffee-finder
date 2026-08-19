@@ -122,18 +122,11 @@ export function applyFilters(places: Place[], filters: Filters, favorites: strin
       filters.drinkStyles.length &&
       !filters.drinkStyles.some((style) => placeHasDrinkStyle(place, style))
     ) return false;
-    if (
-      filters.roastLevels.length &&
-      !filters.roastLevels.some((level) => placeHasRoastLevel(place, level))
-    ) return false;
-    if (
-      filters.minCuppingScore !== null &&
-      !placeMeetsCuppingScore(place, filters.minCuppingScore)
-    ) return false;
-    if (
-      filters.sourcing.length &&
-      !filters.sourcing.some((wanted) => placeMatchesSourcing(place, wanted))
-    ) return false;
+    // Advanced coffee details are recommendations, not gates. Most listings
+    // will not have this specialist data yet, so hiding unknowns would turn a
+    // precise search into an empty screen. PlaceList ranks complete matches
+    // first and gives them a distinct treatment while retaining everything
+    // that passes the ordinary filters.
     if (filters.flags.length && !filters.flags.every((f) => place.flags.includes(f))) return false;
 
     // "Solo comprobado" with no claim axis selected still has to mean something,
@@ -151,6 +144,46 @@ export function applyFilters(places: Place[], filters: Filters, favorites: strin
       matchesClaim(place.claims[key], want, filters.verifiedOnly),
     );
   });
+}
+
+/** Advanced coffee criteria are grouped by axis; choices within an axis are OR'd. */
+export function advancedCriteriaCount(filters: Filters): number {
+  return (
+    (filters.roastLevels.length ? 1 : 0) +
+    (filters.minCuppingScore !== null ? 1 : 0) +
+    (filters.sourcing.length ? 1 : 0)
+  );
+}
+
+/** True only when a place satisfies every active advanced coffee axis. */
+export function matchesAllAdvancedCoffee(place: Place, filters: Filters): boolean {
+  if (advancedCriteriaCount(filters) === 0) return false;
+
+  if (
+    filters.roastLevels.length &&
+    !filters.roastLevels.some((level) => placeHasRoastLevel(place, level))
+  ) return false;
+  if (
+    filters.minCuppingScore !== null &&
+    !placeMeetsCuppingScore(place, filters.minCuppingScore)
+  ) return false;
+  if (
+    filters.sourcing.length &&
+    !filters.sourcing.some((wanted) => placeMatchesSourcing(place, wanted))
+  ) return false;
+
+  return true;
+}
+
+/** Stable partition: full advanced matches first, everyone else stays in order. */
+export function rankByAdvancedCoffee<T extends Place>(places: T[], filters: Filters): T[] {
+  if (advancedCriteriaCount(filters) === 0) return places;
+  const exact: T[] = [];
+  const rest: T[] = [];
+  for (const place of places) {
+    (matchesAllAdvancedCoffee(place, filters) ? exact : rest).push(place);
+  }
+  return [...exact, ...rest];
 }
 
 export function activeFilterCount(filters: Filters): number {

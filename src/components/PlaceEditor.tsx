@@ -478,6 +478,7 @@ export function PlaceEditor() {
       </section>
 
       {(place.category === "roastery" ||
+        placeHasItem(place, "drink") ||
         placeHasItem(place, "beans") ||
         place.flags.includes("sellsBeans")) && (
         <section className="sheet__section">

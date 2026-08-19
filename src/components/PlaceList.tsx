@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { useStore } from "../store";
-import { applyFilters } from "../lib/filters";
+import {
+  applyFilters,
+  matchesAllAdvancedCoffee,
+  rankByAdvancedCoffee,
+} from "../lib/filters";
 import { distanceKm, formatDistance } from "../lib/geo";
 import { useT } from "../lib/useT";
 import { PlacePhoto } from "./PlacePhoto";
@@ -24,12 +28,14 @@ export function PlaceList() {
     // Nearest first once we know where you are. Sorted rather than cut off at a
     // radius: a hard cutoff turns "nothing within 2km" into an empty screen,
     // when "the closest is 6km away" is the more useful answer.
-    if (!near) return matched;
-    return [...matched].sort(
-      (a, b) =>
-        distanceKm(near, { lat: a.lat, lng: a.lng }) -
-        distanceKm(near, { lat: b.lat, lng: b.lng }),
-    );
+    const ordered = near
+      ? [...matched].sort(
+          (a, b) =>
+            distanceKm(near, { lat: a.lat, lng: a.lng }) -
+            distanceKm(near, { lat: b.lat, lng: b.lng }),
+        )
+      : matched;
+    return rankByAdvancedCoffee(ordered, filters);
   }, [places, filters, favorites, near]);
 
   if (visible.length === 0) {
@@ -52,71 +58,79 @@ export function PlaceList() {
         {t("beans.cta")}
       </button>
 
-      {visible.map((place) => (
-        <div key={place.id}>
-          <button className="card" onClick={() => select(place.id)}>
-            <div className="card__head">
-              <PlacePhoto place={place} variant="card" />
-              <div className="card__title">
-                <h3>{place.name}</h3>
-                <p className="card__comuna">
-                  {[place.comuna ?? place.city, countryName(place.countryCode, place.country, lang)]
-                    .filter(Boolean)
-                    .join(" · ")}
-                  {/* Only while sorting by distance — a number with nothing to
+      {visible.map((place) => {
+        const advancedMatch = matchesAllAdvancedCoffee(place, filters);
+        return (
+          <div key={place.id}>
+            <button
+              className={`card ${advancedMatch ? "card--advanced-match" : ""}`}
+              onClick={() => select(place.id)}
+            >
+              {advancedMatch && (
+                <span className="card__advanced-match">✓ {t("beans.bestMatch")}</span>
+              )}
+              <div className="card__head">
+                <PlacePhoto place={place} variant="card" />
+                <div className="card__title">
+                  <h3>{place.name}</h3>
+                  <p className="card__comuna">
+                    {[place.comuna ?? place.city, countryName(place.countryCode, place.country, lang)]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    {/* Only while sorting by distance — a number with nothing to
                       measure from would be decoration. */}
-                  {near && (
-                    <span className="card__distance">
-                      {formatDistance(distanceKm(near, { lat: place.lat, lng: place.lng }), lang)}
-                    </span>
-                  )}
-                </p>
-              </div>
-              {session && (
-                // A span, not a button: this sits inside the card's own <button>
-                // and nesting buttons is invalid HTML that browsers silently
-                // restructure, which breaks the click target.
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className={`fav fav--card ${favorites.includes(place.id) ? "is-on" : ""}`}
-                  aria-pressed={favorites.includes(place.id)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void toggleFavorite(place.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
+                    {near && (
+                      <span className="card__distance">
+                        {formatDistance(distanceKm(near, { lat: place.lat, lng: place.lng }), lang)}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                {session && (
+                  // A span, not a button: this sits inside the card's own <button>
+                  // and nesting buttons is invalid HTML that browsers silently
+                  // restructure, which breaks the click target.
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className={`fav fav--card ${favorites.includes(place.id) ? "is-on" : ""}`}
+                    aria-pressed={favorites.includes(place.id)}
+                    onClick={(e) => {
                       e.stopPropagation();
                       void toggleFavorite(place.id);
-                    }
-                  }}
-                >
-                  {favorites.includes(place.id) ? "♥" : "♡"}
-                </span>
-              )}
-            </div>
-            {place.flags.length > 0 && (
-              <div className="card__badges">
-                {/* Result cards stay scannable: detailed claims and their
-                    evidence belong inside the place page, not on every row. */}
-                {place.flags.slice(0, 3).map((f) => (
-                  <span key={f} className="badge badge--flag">
-                    {FLAG_LABELS[f][lang]}
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void toggleFavorite(place.id);
+                      }
+                    }}
+                  >
+                    {favorites.includes(place.id) ? "♥" : "♡"}
                   </span>
-                ))}
+                )}
               </div>
-            )}
-            {place.items.length > 0 && (
-              <p className="card__items">
-                {place.items.slice(0, 4).map((item) => itemLabel(item, lang)).join(" · ")}
-              </p>
-            )}
-          </button>
-        </div>
-      ))}
-
+              {place.flags.length > 0 && (
+                <div className="card__badges">
+                  {/* Result cards stay scannable: detailed claims and their
+                    evidence belong inside the place page, not on every row. */}
+                  {place.flags.slice(0, 3).map((f) => (
+                    <span key={f} className="badge badge--flag">
+                      {FLAG_LABELS[f][lang]}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {place.items.length > 0 && (
+                <p className="card__items">
+                  {place.items.slice(0, 4).map((item) => itemLabel(item, lang)).join(" · ")}
+                </p>
+              )}
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

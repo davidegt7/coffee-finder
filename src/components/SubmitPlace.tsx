@@ -56,6 +56,7 @@ export function SubmitPlace() {
   const [cuppingScoreMin, setCuppingScoreMin] = useState<number | undefined>();
   const [cuppingScoreMax, setCuppingScoreMax] = useState<number | undefined>();
   const [sourcingModel, setSourcingModel] = useState<SourcingModel | undefined>();
+  const [advancedCoffeeOpen, setAdvancedCoffeeOpen] = useState(false);
   const [coffeePhotoUrl, setCoffeePhotoUrl] = useState("");
   const [coffeeUpBusy, setCoffeeUpBusy] = useState(false);
   const [coffeeUpErr, setCoffeeUpErr] = useState<string | null>(null);
@@ -288,20 +289,33 @@ export function SubmitPlace() {
         </div>
       </section>
 
-      {(items.includes("beans") || category === "roastery") && (
+      {(items.includes("drink") || items.includes("beans") || category === "roastery") && (
         <section className="sheet__section">
-          <h3>{t("beans.formTitle")}</h3>
-          <BeanDetailsFields
-            roastLevels={roastLevels}
-            onRoastLevelsChange={setRoastLevels}
-            cuppingScoreMin={cuppingScoreMin}
-            onCuppingScoreMinChange={setCuppingScoreMin}
-            cuppingScoreMax={cuppingScoreMax}
-            onCuppingScoreMaxChange={setCuppingScoreMax}
-            isRoastery={category === "roastery"}
-            sourcingModel={sourcingModel}
-            onSourcingModelChange={setSourcingModel}
-          />
+          <button
+            type="button"
+            className={`advanced-toggle ${advancedCoffeeOpen ? "is-open" : ""}`}
+            onClick={() => setAdvancedCoffeeOpen((open) => !open)}
+            aria-expanded={advancedCoffeeOpen}
+          >
+            <span>{t("beans.advanced")}</span>
+            <span aria-hidden="true">{advancedCoffeeOpen ? "−" : "+"}</span>
+          </button>
+          {advancedCoffeeOpen && (
+            <div className="bean-filter__advanced">
+              <h3>{t("beans.formTitle")}</h3>
+              <BeanDetailsFields
+                roastLevels={roastLevels}
+                onRoastLevelsChange={setRoastLevels}
+                cuppingScoreMin={cuppingScoreMin}
+                onCuppingScoreMinChange={setCuppingScoreMin}
+                cuppingScoreMax={cuppingScoreMax}
+                onCuppingScoreMaxChange={setCuppingScoreMax}
+                isRoastery={category === "roastery"}
+                sourcingModel={sourcingModel}
+                onSourcingModelChange={setSourcingModel}
+              />
+            </div>
+          )}
         </section>
       )}
 

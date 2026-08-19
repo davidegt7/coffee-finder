@@ -138,7 +138,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
   const [open, setOpen] = useState<Menu>(null);
   const [attrGroup, setAttrGroup] = useState<string | null>(null);
   const [itemLevel, setItemLevel] = useState<"intent" | "drink" | "beans">("intent");
-  const [beanAdvanced, setBeanAdvanced] = useState(false);
+  const [coffeeAdvanced, setCoffeeAdvanced] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const strictnessHint: Record<ClaimStrictness, string> = {
@@ -288,7 +288,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
     const target = i < 0 || i >= CHAIN.length ? null : CHAIN[i];
     if (target === "item") {
       setItemLevel("intent");
-      setBeanAdvanced(false);
+      setCoffeeAdvanced(false);
     }
     setOpen(target);
   };
@@ -303,6 +303,98 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
     advance();
     onComplete?.();
   };
+
+  const advancedChoiceCount =
+    filters.roastLevels.length +
+    (filters.minCuppingScore !== null ? 1 : 0) +
+    filters.sourcing.length;
+
+  // Shared by Coffee to drink and Coffee beans: these describe the coffee
+  // program, not one shopping intent. Keeping one panel also guarantees both
+  // branches expose the exact same specialist choices.
+  const advancedCoffeeFilters = () => (
+    <>
+      <button
+        type="button"
+        className={`advanced-toggle ${coffeeAdvanced ? "is-open" : ""}`}
+        onClick={() => setCoffeeAdvanced((open) => !open)}
+        aria-expanded={coffeeAdvanced}
+      >
+        <span>
+          {t("beans.advanced")}
+          {advancedChoiceCount > 0 && (
+            <span className="menu-btn__count">{advancedChoiceCount}</span>
+          )}
+        </span>
+        <span aria-hidden="true">{coffeeAdvanced ? "−" : "+"}</span>
+      </button>
+
+      {coffeeAdvanced && (
+        <div className="bean-filter__advanced">
+          <div className="menu-panel__group">
+            <h4 className="menu-panel__group-title">{t("beans.roastLevels")}</h4>
+            <div className="menu-panel__chips">
+              {ROAST_LEVELS.map((level) => {
+                const on = filters.roastLevels.includes(level.id);
+                return (
+                  <button
+                    key={level.id}
+                    type="button"
+                    className={`chip chip--cat ${on ? "is-on" : ""}`}
+                    onClick={() => toggleRoastLevel(level.id)}
+                    aria-pressed={on}
+                  >
+                    <span aria-hidden="true">{level.icon}</span> {level.label[lang]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="menu-panel__group">
+            <h4 className="menu-panel__group-title">{t("beans.cuppingFilter")}</h4>
+            <div className="menu-panel__chips">
+              {CUPPING_THRESHOLDS.map((score) => (
+                <button
+                  key={score}
+                  type="button"
+                  className={`chip chip--cat ${filters.minCuppingScore === score ? "is-on" : ""}`}
+                  onClick={() =>
+                    setMinCuppingScore(filters.minCuppingScore === score ? null : score)
+                  }
+                  aria-pressed={filters.minCuppingScore === score}
+                >
+                  {score}+
+                </button>
+              ))}
+            </div>
+            <p className="field__hint">{t("beans.cuppingFilterHint")}</p>
+          </div>
+
+          <div className="menu-panel__group">
+            <h4 className="menu-panel__group-title">{t("beans.sourcingTitle")}</h4>
+            <div className="menu-panel__chips">
+              {SOURCING_FILTERS.map((model) => {
+                const on = filters.sourcing.includes(model.id);
+                return (
+                  <button
+                    key={model.id}
+                    type="button"
+                    className={`chip chip--cat ${on ? "is-on" : ""}`}
+                    onClick={() => toggleSourcing(model.id)}
+                    aria-pressed={on}
+                  >
+                    {model.label[lang]}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="field__hint">{t("beans.sourcingFilterHint")}</p>
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div className="filters" ref={rootRef}>
@@ -507,7 +599,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
           className={`menu-btn ${open === "item" ? "is-open" : ""} ${itemCount ? "is-active" : ""}`}
           onClick={() => {
             if (open !== "item") setItemLevel("intent");
-            if (open !== "item") setBeanAdvanced(false);
+            if (open !== "item") setCoffeeAdvanced(false);
             toggle("item");
           }}
           aria-expanded={open === "item"}
@@ -546,7 +638,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
                         if (itemIntent.id === "drink" || itemIntent.id === "beans") {
                           if (!on) toggleItem(itemIntent.id);
                           setItemLevel(itemIntent.id);
-                          if (itemIntent.id === "beans") setBeanAdvanced(false);
+                          setCoffeeAdvanced(false);
                           return;
                         }
                         toggleItem(itemIntent.id);
@@ -594,6 +686,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
                 })}
               </div>
               <p className="menu-panel__hint">{t("coffee.filterHint")}</p>
+              {advancedCoffeeFilters()}
             </div>
           ) : (
             <div className="intent-panel bean-filter">
@@ -605,78 +698,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
                 ]}
               />
 
-              <h4 className="menu-panel__group-title">{t("beans.roastLevels")}</h4>
-              <div className="menu-panel__chips">
-                {ROAST_LEVELS.map((level) => {
-                  const on = filters.roastLevels.includes(level.id);
-                  return (
-                    <button
-                      key={level.id}
-                      type="button"
-                      className={`chip chip--cat ${on ? "is-on" : ""}`}
-                      onClick={() => toggleRoastLevel(level.id)}
-                      aria-pressed={on}
-                    >
-                      <span aria-hidden="true">{level.icon}</span> {level.label[lang]}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                type="button"
-                className={`advanced-toggle ${beanAdvanced ? "is-open" : ""}`}
-                onClick={() => setBeanAdvanced((open) => !open)}
-                aria-expanded={beanAdvanced}
-              >
-                <span>{t("beans.advanced")}</span>
-                <span aria-hidden="true">{beanAdvanced ? "−" : "+"}</span>
-              </button>
-
-              {beanAdvanced && (
-                <div className="bean-filter__advanced">
-                  <div className="menu-panel__group">
-                    <h4 className="menu-panel__group-title">{t("beans.cuppingFilter")}</h4>
-                    <div className="menu-panel__chips">
-                      {CUPPING_THRESHOLDS.map((score) => (
-                        <button
-                          key={score}
-                          type="button"
-                          className={`chip chip--cat ${filters.minCuppingScore === score ? "is-on" : ""}`}
-                          onClick={() =>
-                            setMinCuppingScore(filters.minCuppingScore === score ? null : score)
-                          }
-                          aria-pressed={filters.minCuppingScore === score}
-                        >
-                          {score}+
-                        </button>
-                      ))}
-                    </div>
-                    <p className="field__hint">{t("beans.cuppingFilterHint")}</p>
-                  </div>
-
-                  <div className="menu-panel__group">
-                    <h4 className="menu-panel__group-title">{t("beans.sourcingTitle")}</h4>
-                    <div className="menu-panel__chips">
-                      {SOURCING_FILTERS.map((model) => {
-                        const on = filters.sourcing.includes(model.id);
-                        return (
-                          <button
-                            key={model.id}
-                            type="button"
-                            className={`chip chip--cat ${on ? "is-on" : ""}`}
-                            onClick={() => toggleSourcing(model.id)}
-                            aria-pressed={on}
-                          >
-                            {model.label[lang]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="field__hint">{t("beans.sourcingFilterHint")}</p>
-                  </div>
-                </div>
-              )}
+              {advancedCoffeeFilters()}
             </div>
           )}
 
