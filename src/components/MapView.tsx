@@ -7,6 +7,7 @@ import {
   type MapLayerMouseEvent,
   setWorkerUrl,
 } from "maplibre-gl";
+import type { AllPaintProperties } from "@maplibre/maplibre-gl-style-spec";
 import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
 import { applyRoasterFilters } from "../lib/roasters";
@@ -110,51 +111,95 @@ function roasterFeatureCollection(roasters: Roaster[], selectedId: string | null
  * we don't control, and if OpenFreeMap renames one the map must come out
  * merely untinted rather than broken.
  */
-const BASEMAP_TINT: Record<"light" | "dark", Record<string, string>> = {
+type BasemapPaint = Record<
+  string,
+  Partial<Record<keyof AllPaintProperties, string>>
+>;
+
+const BASEMAP_TINT: Record<"light" | "dark", BasemapPaint> = {
   light: {
-    background: "#f7f2ea", // warm paper, not the stock grey
-    water: "#a7cbdb",
-    waterway: "#a7cbdb",
-    park: "#cfe2c4",
-    landuse_park: "#cfe2c4",
-    landcover_wood: "#c2d9b6",
-    landcover_grass: "#d7e6cc",
-    landuse_residential: "#f1eae0",
-    building: "#e6dbcc",
+    background: { "background-color": "#f7f2ea" }, // warm paper, not the stock grey
+    water: { "fill-color": "#a7cbdb" },
+    waterway: { "line-color": "#a7cbdb" },
+    park: { "fill-color": "#cfe2c4" },
+    landuse_park: { "fill-color": "#cfe2c4" },
+    landcover_wood: { "fill-color": "#c2d9b6" },
+    landcover_grass: { "fill-color": "#d7e6cc" },
+    landuse_residential: { "fill-color": "#f1eae0" },
+    building: { "fill-color": "#e6dbcc" },
   },
   dark: {
-    background: "#141110", // matches --bg so the map reads as part of the app
-    water: "#16272f",
-    waterway: "#16272f",
-    park: "#16241a",
-    landuse_park: "#16241a",
-    landcover_wood: "#182a1c",
-    landcover_grass: "#152218",
-    landuse_residential: "#1b1614",
-    building: "#221b18",
+    // Still unmistakably dark, but no longer a near-black silhouette. The map
+    // is the product, so streets, neighbourhoods and geography need to read at
+    // a glance rather than disappear behind the café pins.
+    background: { "background-color": "#322c29" },
+    water: { "fill-color": "#326b80" },
+    waterway: { "line-color": "#44879c" },
+    landuse_residential: { "fill-color": "#413833" },
+    landcover_wood: { "fill-color": "#315a3d" },
+    landuse_park: { "fill-color": "#3a6446" },
+    building: {
+      "fill-color": "#594940",
+      "fill-outline-color": "#705b51",
+    },
+
+    // Road hierarchy: quiet local streets, brighter primary roads, and a warm
+    // motorway accent. Casings stay darker so each line remains crisp.
+    highway_path: { "line-color": "#655a52" },
+    highway_minor: { "line-color": "#796b61" },
+    highway_major_casing: { "line-color": "#2a2421" },
+    highway_major_inner: { "line-color": "#a88b73" },
+    highway_major_subtle: { "line-color": "#67564c" },
+    highway_motorway_casing: { "line-color": "#2c231e" },
+    highway_motorway_inner: { "line-color": "#d39862" },
+    highway_motorway_subtle: { "line-color": "#74533a" },
+    railway_transit: { "line-color": "#806f65" },
+    railway_minor: { "line-color": "#6d5e57" },
+    railway: { "line-color": "#6d5e57" },
+
+    // The stock dark style renders labels around 40% grey. Warm near-white
+    // lettering with a dark halo remains legible over every colour above.
+    water_name: {
+      "text-color": "#b4d9e5",
+      "text-halo-color": "#203943",
+    },
+    highway_name_other: {
+      "text-color": "#d8cabe",
+      "text-halo-color": "#211c19",
+    },
+    highway_name_motorway: {
+      "text-color": "#efd0b0",
+      "text-halo-color": "#211c19",
+    },
+    place_other: { "text-color": "#c8bcb2", "text-halo-color": "#211c19" },
+    place_suburb: { "text-color": "#d2c5ba", "text-halo-color": "#211c19" },
+    place_village: { "text-color": "#ddd0c5", "text-halo-color": "#211c19" },
+    place_town: { "text-color": "#e9ddd3", "text-halo-color": "#211c19" },
+    place_city: { "text-color": "#f4e8de", "text-halo-color": "#211c19" },
+    place_city_large: { "text-color": "#fff3e8", "text-halo-color": "#211c19" },
+    place_state: { "text-color": "#d9cbc0", "text-halo-color": "#211c19" },
+    place_country_other: { "text-color": "#d8cbc1", "text-halo-color": "#211c19" },
+    place_country_minor: { "text-color": "#e4d7cc", "text-halo-color": "#211c19" },
+    place_country_major: { "text-color": "#f1e4d8", "text-halo-color": "#211c19" },
+    boundary_state: { "line-color": "#6e625b" },
+    "boundary_country_z0-4": { "line-color": "#83756c" },
+    "boundary_country_z5-": { "line-color": "#83756c" },
   },
 };
 
 function tintBasemap(map: MapLibreMap) {
   const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-  for (const [id, color] of Object.entries(BASEMAP_TINT[theme])) {
-    const layer = map.getLayer(id);
-    if (!layer) continue;
-    // The paint property is named after the layer type: a background layer has
-    // no fill-color and setting one throws.
-    const property =
-      layer.type === "background"
-        ? "background-color"
-        : layer.type === "line"
-          ? "line-color"
-          : layer.type === "fill"
-            ? "fill-color"
-            : null;
-    if (!property) continue;
-    try {
-      map.setPaintProperty(id, property, color);
-    } catch {
-      // An upstream style change is a cosmetic loss, never a broken map.
+  for (const [id, paint] of Object.entries(BASEMAP_TINT[theme])) {
+    if (!map.getLayer(id)) continue;
+    for (const [property, value] of Object.entries(paint) as [
+      keyof AllPaintProperties,
+      string,
+    ][]) {
+      try {
+        map.setPaintProperty(id, property, value);
+      } catch {
+        // An upstream style change is a cosmetic loss, never a broken map.
+      }
     }
   }
 }
