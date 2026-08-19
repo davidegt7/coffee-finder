@@ -41,7 +41,9 @@ export default function App() {
     setBrainOpen,
   } = useStore();
   const { t } = useT();
-  const [mobileControlsCollapsed, setMobileControlsCollapsed] = useState(false);
+  // Phones should open on the map, not on a wall of controls. Search remains
+  // visible in the compact state; everything else lives under Filters.
+  const [mobileControlsCollapsed, setMobileControlsCollapsed] = useState(true);
 
   useEffect(() => {
     void init();
@@ -52,7 +54,7 @@ export default function App() {
   }, [section]);
 
   useEffect(() => {
-    setMobileControlsCollapsed(false);
+    setMobileControlsCollapsed(true);
   }, [section]);
 
   // Back/forward — including the phone's back gesture — moves between places
@@ -106,10 +108,7 @@ export default function App() {
           >
             <div className="topbar__full">
               <div className="topbar__brand">
-                {/* Wordmark and subtitle share one pill. The pill exists so the
-                    brand stays legible over whatever the map is showing beneath
-                    it, and a subtitle sitting outside it would be the one bit of
-                    text that isn't. */}
+                {/* The wordmark stays legible over whatever the map is showing. */}
                 <div className="brandmark">
                   <div className="brandmark__title">
                     <h1>
@@ -117,9 +116,6 @@ export default function App() {
                     </h1>
                     <span className="brandmark__beta">Beta</span>
                   </div>
-                  <p className="brandmark__sub">
-                    {section === "roasters" ? t("app.subtitleRoasters") : t("app.subtitle")}
-                  </p>
                 </div>
                 <LangToggle />
               </div>
