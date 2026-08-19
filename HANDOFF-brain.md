@@ -6,7 +6,7 @@ Written 2026-07-30. Paste this into a fresh chat to pick the work up.
 
 ## 1. What the app is
 
-**Coffee Finder** — a PWA map of specialty coffee in Santiago, Chile. Free, ad-supported.
+**Coffee Finder** — a free, ad-free PWA map of specialty coffee in Santiago, Chile.
 Live: <https://davidegt7.github.io/coffee-finder/> · repo `~/coffee-finder` (clean, last commit `632cf2d`).
 
 It was pivoted from an earlier app, **Vital Map** (<https://davidegt7.github.io/vital-map/>), which is still online and must not be touched.

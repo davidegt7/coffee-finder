@@ -8,7 +8,6 @@ import { useT } from "../lib/useT";
 import { useSwipeToDismiss } from "../lib/useSwipeToDismiss";
 import { ClaimRow } from "./ClaimBadge";
 import { OAuthButtons } from "./OAuthButtons";
-import { AdSlot } from "./AdSlot";
 import { PlacePhoto } from "./PlacePhoto";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
 import { countryName } from "../lib/geography";
@@ -372,8 +371,6 @@ export function PlaceSheet() {
           </div>
         </section>
       )}
-
-      <AdSlot where="detail" />
 
       <section className="sheet__section">
         <h3>

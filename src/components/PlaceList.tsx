@@ -3,7 +3,6 @@ import { useStore } from "../store";
 import { applyFilters } from "../lib/filters";
 import { distanceKm, formatDistance } from "../lib/geo";
 import { useT } from "../lib/useT";
-import { AdSlot } from "./AdSlot";
 import { PlacePhoto } from "./PlacePhoto";
 import { FLAG_LABELS } from "../types";
 import { countryName } from "../lib/geography";
@@ -52,7 +51,7 @@ export function PlaceList() {
         {t("beans.cta")}
       </button>
 
-      {visible.map((place, i) => (
+      {visible.map((place) => (
         <div key={place.id}>
           <button className="card" onClick={() => select(place.id)}>
             <div className="card__head">
@@ -112,8 +111,6 @@ export function PlaceList() {
               <p className="card__items">{place.items.slice(0, 4).join(" · ")}</p>
             )}
           </button>
-          {/* One slot, a third of the way down — enough to be seen, not enough to be the product. */}
-          {i === 2 && <AdSlot where="list" />}
         </div>
       ))}
 
