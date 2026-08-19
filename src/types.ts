@@ -146,6 +146,14 @@ export interface Place {
   instagram?: string;
   /** Searchable menu items: "flat white", "V60", "cold brew", "grano para llevar". */
   items: string[];
+  /** The two coffee programs visitors can explicitly search for. */
+  drinkStyles?: DrinkStyle[];
+  /** Structured coffee-bar details, shared by owner intake and the team editor. */
+  coffeeBrand?: string;
+  espressoMachineBrand?: string;
+  espressoGrinderBrand?: string;
+  filterGrinderBrand?: string;
+  filterMethods?: FilterMethod[];
   claims: Record<ClaimKey, Claim>;
   /** Only what's true. Absent ≠ false, it means nobody has said. */
   flags: FlagKey[];
@@ -164,6 +172,17 @@ export interface Place {
   sources: string[];
   addedAt: string;
 }
+
+export type DrinkStyle = "espresso" | "filter";
+export type FilterMethod =
+  | "v60"
+  | "chemex"
+  | "aeropress"
+  | "kalita"
+  | "origami"
+  | "batch-brew"
+  | "french-press"
+  | "siphon";
 
 // ---------------------------------------------------------------- app section
 

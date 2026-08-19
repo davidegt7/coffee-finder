@@ -12,6 +12,7 @@ import {
 import { uploadPlacePhoto } from "../lib/photos";
 import { INTENTS, ITEMS } from "../lib/items";
 import { useT } from "../lib/useT";
+import { CoffeeDetailsFields } from "./CoffeeDetailsFields";
 import type { StringKey } from "../lib/i18n";
 import {
   ATTR_GROUPS,
@@ -440,6 +441,34 @@ export function PlaceEditor() {
             );
           })}
         </div>
+      </section>
+
+      <section className="sheet__section">
+        <h3>{t("submit.coffeeTitle")}</h3>
+        <label className="field">
+          <span>{t("submit.coffeeBrand")}</span>
+          <input
+            value={place.coffeeBrand ?? ""}
+            onChange={(event) => patch({ coffeeBrand: event.target.value || undefined })}
+            placeholder={t("submit.coffeeBrandPlaceholder")}
+          />
+        </label>
+        <CoffeeDetailsFields
+          drinkStyles={place.drinkStyles ?? []}
+          onDrinkStylesChange={(drinkStyles) => patch({ drinkStyles })}
+          espressoMachineBrand={place.espressoMachineBrand ?? ""}
+          onEspressoMachineBrandChange={(value) =>
+            patch({ espressoMachineBrand: value || undefined })
+          }
+          espressoGrinderBrand={place.espressoGrinderBrand ?? ""}
+          onEspressoGrinderBrandChange={(value) =>
+            patch({ espressoGrinderBrand: value || undefined })
+          }
+          filterGrinderBrand={place.filterGrinderBrand ?? ""}
+          onFilterGrinderBrandChange={(value) => patch({ filterGrinderBrand: value || undefined })}
+          filterMethods={place.filterMethods ?? []}
+          onFilterMethodsChange={(filterMethods) => patch({ filterMethods })}
+        />
       </section>
 
       <section className="sheet__section">

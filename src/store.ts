@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Session } from "@supabase/supabase-js";
-import type { AppSection, Category, ClaimKey, FlagKey, Place, Roaster } from "./types";
+import type { AppSection, Category, ClaimKey, DrinkStyle, FlagKey, Place, Roaster } from "./types";
 import type { ChatMessage } from "./lib/brain";
 import { deletePlace, loadPlaces, savePlace } from "./lib/places";
 import { addReview, loadReviews, type Review } from "./lib/reviews";
@@ -90,6 +90,7 @@ interface State {
   toggleFlag: (flag: FlagKey) => void;
   toggleCategory: (category: Category) => void;
   toggleItem: (itemId: string) => void;
+  toggleDrinkStyle: (style: DrinkStyle) => void;
   setQuery: (query: string) => void;
   setVerifiedOnly: (value: boolean) => void;
   setSavedOnly: (value: boolean) => void;
@@ -465,6 +466,16 @@ export const useStore = create<State>((set, get) => ({
         items: s.filters.items.includes(itemId)
           ? s.filters.items.filter((i) => i !== itemId)
           : [...s.filters.items, itemId],
+      },
+    })),
+
+  toggleDrinkStyle: (style) =>
+    set((s) => ({
+      filters: {
+        ...s.filters,
+        drinkStyles: s.filters.drinkStyles.includes(style)
+          ? s.filters.drinkStyles.filter((item) => item !== style)
+          : [...s.filters.drinkStyles, style],
       },
     })),
 

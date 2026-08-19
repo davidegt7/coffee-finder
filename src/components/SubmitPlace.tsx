@@ -4,10 +4,13 @@ import { submitPlace } from "../lib/submissions";
 import { INTENTS } from "../lib/items";
 import { uploadSubmissionCoffeePhoto, uploadSubmissionPhoto } from "../lib/photos";
 import { useT } from "../lib/useT";
+import { CoffeeDetailsFields } from "./CoffeeDetailsFields";
 import {
   CATEGORIES,
   CATEGORY_LABELS,
   type Category,
+  type DrinkStyle,
+  type FilterMethod,
 } from "../types";
 
 const OWNER_CATEGORIES = CATEGORIES.filter((candidate) => candidate !== "cart");
@@ -41,6 +44,11 @@ export function SubmitPlace() {
   const [items, setItems] = useState<string[]>(["drink"]);
   const [coffeeBrand, setCoffeeBrand] = useState("");
   const [specialtyCoffee, setSpecialtyCoffee] = useState<boolean | null>(null);
+  const [drinkStyles, setDrinkStyles] = useState<DrinkStyle[]>([]);
+  const [espressoMachineBrand, setEspressoMachineBrand] = useState("");
+  const [espressoGrinderBrand, setEspressoGrinderBrand] = useState("");
+  const [filterGrinderBrand, setFilterGrinderBrand] = useState("");
+  const [filterMethods, setFilterMethods] = useState<FilterMethod[]>([]);
   const [coffeePhotoUrl, setCoffeePhotoUrl] = useState("");
   const [coffeeUpBusy, setCoffeeUpBusy] = useState(false);
   const [coffeeUpErr, setCoffeeUpErr] = useState<string | null>(null);
@@ -62,6 +70,7 @@ export function SubmitPlace() {
     country.trim().length > 1 &&
     coffeeBrand.trim().length > 1 &&
     specialtyCoffee !== null &&
+    (!items.includes("drink") || drinkStyles.length > 0) &&
     /\S+@\S+\.\S+/.test(contactEmail) &&
     !coffeeUpBusy &&
     !upBusy &&
@@ -211,6 +220,18 @@ export function SubmitPlace() {
             </button>
           </div>
         </fieldset>
+        <CoffeeDetailsFields
+          drinkStyles={drinkStyles}
+          onDrinkStylesChange={setDrinkStyles}
+          espressoMachineBrand={espressoMachineBrand}
+          onEspressoMachineBrandChange={setEspressoMachineBrand}
+          espressoGrinderBrand={espressoGrinderBrand}
+          onEspressoGrinderBrandChange={setEspressoGrinderBrand}
+          filterGrinderBrand={filterGrinderBrand}
+          onFilterGrinderBrandChange={setFilterGrinderBrand}
+          filterMethods={filterMethods}
+          onFilterMethodsChange={setFilterMethods}
+        />
         <div className="submit__coffee-photo">
           <h4>{t("submit.coffeePhotoTitle")}</h4>
           <p className="field__hint">{t("submit.coffeePhotoNote")}</p>
@@ -365,6 +386,11 @@ export function SubmitPlace() {
               items,
               coffeeBrand,
               specialtyCoffee: specialtyCoffee!,
+              drinkStyles,
+              espressoMachineBrand,
+              espressoGrinderBrand,
+              filterGrinderBrand,
+              filterMethods,
               coffeePhotoUrl,
               photoUrls,
               note,

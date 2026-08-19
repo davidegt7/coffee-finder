@@ -1,4 +1,4 @@
-import type { Category } from "../types";
+import type { Category, DrinkStyle, FilterMethod } from "../types";
 import { isSupabaseConfigured, supabase } from "./auth";
 
 /**
@@ -33,6 +33,11 @@ export interface Submission {
   items: string[];
   coffeeBrand: string;
   specialtyCoffee?: boolean;
+  drinkStyles: DrinkStyle[];
+  espressoMachineBrand?: string;
+  espressoGrinderBrand?: string;
+  filterGrinderBrand?: string;
+  filterMethods: FilterMethod[];
   coffeePhotoUrl?: string;
   photoUrls: string[];
   /** First photo retained for compatibility with older editor builds. */
@@ -59,6 +64,11 @@ interface SubmissionRow {
   items: string[] | null;
   coffee_brand: string | null;
   specialty_coffee: boolean | null;
+  drink_styles: DrinkStyle[] | null;
+  espresso_machine_brand: string | null;
+  espresso_grinder_brand: string | null;
+  filter_grinder_brand: string | null;
+  filter_methods: FilterMethod[] | null;
   coffee_photo_url: string | null;
   photo_urls: string[] | null;
   photo_url: string | null;
@@ -84,6 +94,11 @@ const rowToSubmission = (r: SubmissionRow): Submission => ({
   items: r.items ?? [],
   coffeeBrand: r.coffee_brand ?? "",
   specialtyCoffee: r.specialty_coffee ?? undefined,
+  drinkStyles: r.drink_styles ?? [],
+  espressoMachineBrand: r.espresso_machine_brand ?? undefined,
+  espressoGrinderBrand: r.espresso_grinder_brand ?? undefined,
+  filterGrinderBrand: r.filter_grinder_brand ?? undefined,
+  filterMethods: r.filter_methods ?? [],
   coffeePhotoUrl: r.coffee_photo_url ?? undefined,
   photoUrls: r.photo_urls?.length ? r.photo_urls : r.photo_url ? [r.photo_url] : [],
   photoUrl: r.photo_url ?? undefined,
@@ -108,6 +123,11 @@ export async function submitPlace(input: {
   items: string[];
   coffeeBrand: string;
   specialtyCoffee: boolean;
+  drinkStyles: DrinkStyle[];
+  espressoMachineBrand?: string;
+  espressoGrinderBrand?: string;
+  filterGrinderBrand?: string;
+  filterMethods: FilterMethod[];
   coffeePhotoUrl?: string;
   photoUrls: string[];
   note?: string;
@@ -130,6 +150,11 @@ export async function submitPlace(input: {
     items: input.items,
     coffee_brand: input.coffeeBrand.trim(),
     specialty_coffee: input.specialtyCoffee,
+    drink_styles: input.drinkStyles,
+    espresso_machine_brand: input.espressoMachineBrand?.trim() || null,
+    espresso_grinder_brand: input.espressoGrinderBrand?.trim() || null,
+    filter_grinder_brand: input.filterGrinderBrand?.trim() || null,
+    filter_methods: input.filterMethods,
     coffee_photo_url: input.coffeePhotoUrl || null,
     photo_urls: input.photoUrls,
     photo_url: input.photoUrls[0] ?? null,

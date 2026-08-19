@@ -1,4 +1,10 @@
-import { CATEGORIES, UNKNOWN_CLAIM, type Place } from "../types";
+import {
+  CATEGORIES,
+  UNKNOWN_CLAIM,
+  type DrinkStyle,
+  type FilterMethod,
+  type Place,
+} from "../types";
 import { isSupabaseConfigured, supabase } from "./auth";
 import { DEFAULT_COUNTRY, DEFAULT_COUNTRY_CODE, normalizeCountryCode } from "./geography";
 
@@ -33,6 +39,12 @@ interface PlaceRow {
   website: string | null;
   instagram: string | null;
   items: string[];
+  drink_styles: DrinkStyle[] | null;
+  coffee_brand: string | null;
+  espresso_machine_brand: string | null;
+  espresso_grinder_brand: string | null;
+  filter_grinder_brand: string | null;
+  filter_methods: FilterMethod[] | null;
   claims: Place["claims"];
   flags: Place["flags"];
   photo_url: string | null;
@@ -62,6 +74,12 @@ const rowToPlace = (r: PlaceRow): Place => ({
   website: r.website ?? undefined,
   instagram: r.instagram ?? undefined,
   items: r.items ?? [],
+  drinkStyles: r.drink_styles ?? [],
+  coffeeBrand: r.coffee_brand ?? undefined,
+  espressoMachineBrand: r.espresso_machine_brand ?? undefined,
+  espressoGrinderBrand: r.espresso_grinder_brand ?? undefined,
+  filterGrinderBrand: r.filter_grinder_brand ?? undefined,
+  filterMethods: r.filter_methods ?? [],
   claims: {
     roastsOnSite: r.claims?.roastsOnSite ?? { ...UNKNOWN_CLAIM },
     specialty: r.claims?.specialty ?? { ...UNKNOWN_CLAIM },
@@ -107,6 +125,12 @@ const placeToRow = (p: Place) => ({
   website: p.website ?? null,
   instagram: p.instagram ?? null,
   items: p.items,
+  drink_styles: p.drinkStyles ?? [],
+  coffee_brand: p.coffeeBrand ?? null,
+  espresso_machine_brand: p.espressoMachineBrand ?? null,
+  espresso_grinder_brand: p.espressoGrinderBrand ?? null,
+  filter_grinder_brand: p.filterGrinderBrand ?? null,
+  filter_methods: p.filterMethods ?? [],
   claims: p.claims,
   flags: p.flags,
   photo_url: p.photoUrl ?? null,

@@ -12,6 +12,7 @@ import { PlacePhoto } from "./PlacePhoto";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
 import { countryName } from "../lib/geography";
 import { INTENTS, placeHasItem } from "../lib/items";
+import { DRINK_STYLES, FILTER_METHODS } from "../lib/coffee";
 
 /**
  * Signing in is required to review. That's friction on purpose: an open write
@@ -229,6 +230,14 @@ export function PlaceSheet() {
   // "Coffee beans" replaces the redundant "Sells beans" chip below. Other
   // flags remain useful specifics rather than restating the three errands.
   const aboutFlags = place.flags.filter((flag) => flag !== "sellsBeans");
+  const hasCoffeeDetails = Boolean(
+    place.coffeeBrand ||
+      place.drinkStyles?.length ||
+      place.espressoMachineBrand ||
+      place.espressoGrinderBrand ||
+      place.filterGrinderBrand ||
+      place.filterMethods?.length,
+  );
 
   return (
     <div
@@ -369,6 +378,42 @@ export function PlaceSheet() {
               </span>
             ))}
           </div>
+        </section>
+      )}
+
+      {hasCoffeeDetails && (
+        <section className="sheet__section">
+          <h3>{t("sheet.coffeeSetup")}</h3>
+          <dl className="coffee-facts">
+            {place.coffeeBrand && (
+              <div><dt>{t("submit.coffeeBrand")}</dt><dd>{place.coffeeBrand}</dd></div>
+            )}
+            {Boolean(place.drinkStyles?.length) && (
+              <div>
+                <dt>{t("coffee.program")}</dt>
+                <dd>{place.drinkStyles!
+                  .map((id) => DRINK_STYLES.find((style) => style.id === id)?.label[lang] ?? id)
+                  .join(", ")}</dd>
+              </div>
+            )}
+            {place.espressoMachineBrand && (
+              <div><dt>{t("coffee.espressoMachine")}</dt><dd>{place.espressoMachineBrand}</dd></div>
+            )}
+            {place.espressoGrinderBrand && (
+              <div><dt>{t("coffee.espressoGrinder")}</dt><dd>{place.espressoGrinderBrand}</dd></div>
+            )}
+            {place.filterGrinderBrand && (
+              <div><dt>{t("coffee.filterGrinder")}</dt><dd>{place.filterGrinderBrand}</dd></div>
+            )}
+            {Boolean(place.filterMethods?.length) && (
+              <div>
+                <dt>{t("coffee.filterMethods")}</dt>
+                <dd>{place.filterMethods!
+                  .map((id) => FILTER_METHODS.find((method) => method.id === id)?.label[lang] ?? id)
+                  .join(", ")}</dd>
+              </div>
+            )}
+          </dl>
         </section>
       )}
 

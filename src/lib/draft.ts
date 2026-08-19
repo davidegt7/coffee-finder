@@ -36,6 +36,8 @@ export const blankPlace = (): Place => ({
   country: "",
   countryCode: "",
   items: [],
+  drinkStyles: [],
+  filterMethods: [],
   claims: {
     roastsOnSite: { ...UNKNOWN_CLAIM },
     specialty: { ...UNKNOWN_CLAIM },

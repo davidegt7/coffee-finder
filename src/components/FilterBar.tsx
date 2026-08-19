@@ -7,10 +7,12 @@ import {
   countryCounts,
   locationSuggestions,
   flagCounts,
+  drinkStyleCounts,
   itemCounts,
   type ClaimStrictness,
 } from "../lib/filters";
 import { INTENTS } from "../lib/items";
+import { DRINK_STYLES } from "../lib/coffee";
 import { useT } from "../lib/useT";
 import {
   ATTR_GROUPS,
@@ -108,6 +110,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
     toggleFlag,
     toggleCategory,
     toggleItem,
+    toggleDrinkStyle,
     setQuery,
     setVerifiedOnly,
     setSavedOnly,
@@ -126,6 +129,7 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
   const { t, lang } = useT();
   const [open, setOpen] = useState<Menu>(null);
   const [attrGroup, setAttrGroup] = useState<string | null>(null);
+  const [itemLevel, setItemLevel] = useState<"intent" | "drink">("intent");
   const rootRef = useRef<HTMLDivElement>(null);
 
   const strictnessHint: Record<ClaimStrictness, string> = {
@@ -140,6 +144,10 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
 
   const iCounts = useMemo(
     () => itemCounts(places, filters, INTENTS.map((intent) => intent.id)),
+    [places, filters],
+  );
+  const drinkCounts = useMemo(
+    () => drinkStyleCounts(places, filters, DRINK_STYLES.map((style) => style.id)),
     [places, filters],
   );
   const fCounts = useMemo(() => flagCounts(places, filters, [...FLAG_KEYS]), [places, filters]);
@@ -268,7 +276,9 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
 
   /** Each step opens at its own top level rather than wherever it was left. */
   const goToStep = (i: number) => {
-    setOpen(i < 0 || i >= CHAIN.length ? null : CHAIN[i]);
+    const target = i < 0 || i >= CHAIN.length ? null : CHAIN[i];
+    if (target === "item") setItemLevel("intent");
+    setOpen(target);
   };
 
   /**
@@ -483,7 +493,10 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
       <div className="filters__menus">
         <button
           className={`menu-btn ${open === "item" ? "is-open" : ""} ${itemCount ? "is-active" : ""}`}
-          onClick={() => toggle("item")}
+          onClick={() => {
+            if (open !== "item") setItemLevel("intent");
+            toggle("item");
+          }}
           aria-expanded={open === "item"}
           aria-controls="menu-item"
         >
@@ -506,31 +519,69 @@ export function FilterBar({ onComplete }: { onComplete?: () => void }) {
 
       {open === "item" && (
         <div className="menu-panel menu-panel--scroll" id="menu-item">
-          <div className="intents">
-            {INTENTS.map((itemIntent) => {
-              const on = filters.items.includes(itemIntent.id);
-              const total = iCounts.get(itemIntent.id) ?? 0;
-              return (
-                <button
-                  key={itemIntent.id}
-                  className={`intent ${on ? "is-active" : ""}`}
-                  onClick={() => {
-                    toggleItem(itemIntent.id);
-                    advance();
-                  }}
-                  aria-pressed={on}
-                >
-                  <span className="intent__icon" aria-hidden="true">
-                    {itemIntent.icon}
-                  </span>
-                  <span className="intent__label">{itemIntent.label[lang]}</span>
-                  <span className="intent__n">{total}</span>
-                </button>
-              );
-            })}
-          </div>
+          {itemLevel === "intent" ? (
+            <>
+              <div className="intents">
+                {INTENTS.map((itemIntent) => {
+                  const on = filters.items.includes(itemIntent.id);
+                  const total = iCounts.get(itemIntent.id) ?? 0;
+                  return (
+                    <button
+                      key={itemIntent.id}
+                      className={`intent ${on ? "is-active" : ""}`}
+                      onClick={() => {
+                        if (itemIntent.id === "drink") {
+                          if (!on) toggleItem(itemIntent.id);
+                          setItemLevel("drink");
+                          return;
+                        }
+                        toggleItem(itemIntent.id);
+                        advance();
+                      }}
+                      aria-pressed={on}
+                    >
+                      <span className="intent__icon" aria-hidden="true">
+                        {itemIntent.icon}
+                      </span>
+                      <span className="intent__label">{itemIntent.label[lang]}</span>
+                      <span className="intent__n">{total}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
-          <p className="menu-panel__hint">{t("item.pickIntent")}</p>
+              <p className="menu-panel__hint">{t("item.pickIntent")}</p>
+            </>
+          ) : (
+            <div className="intent-panel">
+              <Trail
+                label={t("menu.item")}
+                crumbs={[
+                  { label: t("menu.item"), onClick: () => setItemLevel("intent") },
+                  { label: t("coffee.program") },
+                ]}
+              />
+              <div className="intents intents--coffee">
+                {DRINK_STYLES.map((style) => {
+                  const on = filters.drinkStyles.includes(style.id);
+                  const total = drinkCounts.get(style.id) ?? 0;
+                  return (
+                    <button
+                      key={style.id}
+                      className={`intent ${on ? "is-active" : ""}`}
+                      onClick={() => toggleDrinkStyle(style.id)}
+                      aria-pressed={on}
+                    >
+                      <span className="intent__icon" aria-hidden="true">{style.icon}</span>
+                      <span className="intent__label">{style.label[lang]}</span>
+                      <span className="intent__n">{total}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="menu-panel__hint">{t("coffee.filterHint")}</p>
+            </div>
+          )}
 
           <ChainFooter
             step={1}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { setSubmissionStatus, type Submission } from "../lib/submissions";
 import { INTENTS } from "../lib/items";
+import { DRINK_STYLES, FILTER_METHODS } from "../lib/coffee";
 import { useT } from "../lib/useT";
 import {
   CATEGORY_LABELS,
@@ -62,12 +63,17 @@ function submissionToPlace(s: Submission, today: string): Place {
     website: s.website,
     instagram: s.instagram,
     items: s.items,
+    drinkStyles: s.drinkStyles,
+    coffeeBrand: s.coffeeBrand || undefined,
+    espressoMachineBrand: s.espressoMachineBrand,
+    espressoGrinderBrand: s.espressoGrinderBrand,
+    filterGrinderBrand: s.filterGrinderBrand,
+    filterMethods: s.filterMethods,
     photoUrl: s.photoUrls[0] ?? s.photoUrl,
     claims,
     flags: s.asserts.filter((a): a is FlagKey => (FLAG_KEYS as readonly string[]).includes(a)),
     sources: [
       `Solicitud del local, ${s.contactEmail}, ${s.createdAt.slice(0, 10)}`,
-      ...(s.coffeeBrand ? [`Marca de café declarada: ${s.coffeeBrand}`] : []),
     ],
     addedAt: today,
   };
@@ -120,6 +126,30 @@ export function SubmissionsQueue() {
                   {t("queue.specialty")} {s.specialtyCoffee
                     ? t("submit.specialtyYes")
                     : t("submit.specialtyNo")}
+                </p>
+              )}
+              {s.drinkStyles.length > 0 && (
+                <p className="queue__asserts">
+                  {t("queue.program")} {s.drinkStyles
+                    .map((id) => DRINK_STYLES.find((style) => style.id === id)?.label[lang] ?? id)
+                    .join(", ")}
+                </p>
+              )}
+              {(s.espressoMachineBrand || s.espressoGrinderBrand) && (
+                <p className="queue__asserts">
+                  {t("queue.espressoSetup")} {[s.espressoMachineBrand, s.espressoGrinderBrand]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )}
+              {(s.filterGrinderBrand || s.filterMethods.length > 0) && (
+                <p className="queue__asserts">
+                  {t("queue.filterSetup")} {[
+                    s.filterGrinderBrand,
+                    ...s.filterMethods.map(
+                      (id) => FILTER_METHODS.find((method) => method.id === id)?.label[lang] ?? id,
+                    ),
+                  ].filter(Boolean).join(" · ")}
                 </p>
               )}
               {s.coffeePhotoUrl && (

@@ -1,4 +1,5 @@
-import type { Category, Claim, ClaimKey, FlagKey, Place } from "../types";
+import type { Category, Claim, ClaimKey, DrinkStyle, FlagKey, Place } from "../types";
+import { placeHasDrinkStyle } from "./coffee";
 import { placeHasItem } from "./items";
 import { fold } from "./text";
 
@@ -25,6 +26,8 @@ export interface Filters {
   categories: Category[];
   /** OR'd — "espresso or flat white" means either will do. */
   items: string[];
+  /** OR'd within the coffee-to-drink branch: espresso or filter coffee. */
+  drinkStyles: DrinkStyle[];
   query: string;
   /** Only count a claim if someone actually checked it. */
   verifiedOnly: boolean;
@@ -40,6 +43,7 @@ export const EMPTY_FILTERS: Filters = {
   flags: [],
   categories: [],
   items: [],
+  drinkStyles: [],
   query: "",
   verifiedOnly: false,
   savedOnly: false,
@@ -93,6 +97,10 @@ export function applyFilters(places: Place[], filters: Filters, favorites: strin
     if (filters.categories.length && !filters.categories.includes(place.category)) return false;
     if (!matchesQuery(place, filters.query)) return false;
     if (filters.items.length && !filters.items.some((id) => placeHasItem(place, id))) return false;
+    if (
+      filters.drinkStyles.length &&
+      !filters.drinkStyles.some((style) => placeHasDrinkStyle(place, style))
+    ) return false;
     if (filters.flags.length && !filters.flags.every((f) => place.flags.includes(f))) return false;
 
     // "Solo comprobado" with no claim axis selected still has to mean something,
@@ -123,6 +131,7 @@ export function activeFilterCount(filters: Filters): number {
     filters.flags.length +
     filters.categories.length +
     filters.items.length +
+    filters.drinkStyles.length +
     (filters.query.trim() ? 1 : 0)
   );
 }
@@ -136,8 +145,17 @@ export function activeFilterCount(filters: Filters): number {
  * instead of an empty screen after a hopeful tap.
  */
 export function itemCounts(places: Place[], filters: Filters, ids: string[]): Map<string, number> {
-  const base = applyFilters(places, { ...filters, items: [] });
+  const base = applyFilters(places, { ...filters, items: [], drinkStyles: [] });
   return new Map(ids.map((id) => [id, base.filter((p) => placeHasItem(p, id)).length]));
+}
+
+export function drinkStyleCounts(
+  places: Place[],
+  filters: Filters,
+  ids: DrinkStyle[],
+): Map<DrinkStyle, number> {
+  const base = applyFilters(places, { ...filters, drinkStyles: [] });
+  return new Map(ids.map((id) => [id, base.filter((p) => placeHasDrinkStyle(p, id)).length]));
 }
 
 /** Same idea for amenity flags. */
