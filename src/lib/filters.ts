@@ -1,5 +1,19 @@
-import type { Category, Claim, ClaimKey, DrinkStyle, FlagKey, Place } from "../types";
-import { placeHasDrinkStyle } from "./coffee";
+import type {
+  Category,
+  Claim,
+  ClaimKey,
+  DrinkStyle,
+  FlagKey,
+  Place,
+  RoastLevel,
+} from "../types";
+import {
+  placeHasDrinkStyle,
+  placeHasRoastLevel,
+  placeMatchesSourcing,
+  placeMeetsCuppingScore,
+  type SourcingFilter,
+} from "./coffee";
 import { placeHasItem } from "./items";
 import { fold } from "./text";
 
@@ -28,6 +42,10 @@ export interface Filters {
   items: string[];
   /** OR'd within the coffee-to-drink branch: espresso or filter coffee. */
   drinkStyles: DrinkStyle[];
+  /** Bean-program refinements; intentionally nested behind Advanced in the UI. */
+  roastLevels: RoastLevel[];
+  minCuppingScore: number | null;
+  sourcing: SourcingFilter[];
   query: string;
   /** Only count a claim if someone actually checked it. */
   verifiedOnly: boolean;
@@ -44,6 +62,9 @@ export const EMPTY_FILTERS: Filters = {
   categories: [],
   items: [],
   drinkStyles: [],
+  roastLevels: [],
+  minCuppingScore: null,
+  sourcing: [],
   query: "",
   verifiedOnly: false,
   savedOnly: false,
@@ -101,6 +122,18 @@ export function applyFilters(places: Place[], filters: Filters, favorites: strin
       filters.drinkStyles.length &&
       !filters.drinkStyles.some((style) => placeHasDrinkStyle(place, style))
     ) return false;
+    if (
+      filters.roastLevels.length &&
+      !filters.roastLevels.some((level) => placeHasRoastLevel(place, level))
+    ) return false;
+    if (
+      filters.minCuppingScore !== null &&
+      !placeMeetsCuppingScore(place, filters.minCuppingScore)
+    ) return false;
+    if (
+      filters.sourcing.length &&
+      !filters.sourcing.some((wanted) => placeMatchesSourcing(place, wanted))
+    ) return false;
     if (filters.flags.length && !filters.flags.every((f) => place.flags.includes(f))) return false;
 
     // "Solo comprobado" with no claim axis selected still has to mean something,
@@ -132,6 +165,9 @@ export function activeFilterCount(filters: Filters): number {
     filters.categories.length +
     filters.items.length +
     filters.drinkStyles.length +
+    filters.roastLevels.length +
+    (filters.minCuppingScore !== null ? 1 : 0) +
+    filters.sourcing.length +
     (filters.query.trim() ? 1 : 0)
   );
 }
@@ -145,7 +181,14 @@ export function activeFilterCount(filters: Filters): number {
  * instead of an empty screen after a hopeful tap.
  */
 export function itemCounts(places: Place[], filters: Filters, ids: string[]): Map<string, number> {
-  const base = applyFilters(places, { ...filters, items: [], drinkStyles: [] });
+  const base = applyFilters(places, {
+    ...filters,
+    items: [],
+    drinkStyles: [],
+    roastLevels: [],
+    minCuppingScore: null,
+    sourcing: [],
+  });
   return new Map(ids.map((id) => [id, base.filter((p) => placeHasItem(p, id)).length]));
 }
 

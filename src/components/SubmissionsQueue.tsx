@@ -2,7 +2,12 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { setSubmissionStatus, type Submission } from "../lib/submissions";
 import { INTENTS } from "../lib/items";
-import { DRINK_STYLES, FILTER_METHODS } from "../lib/coffee";
+import {
+  DRINK_STYLES,
+  FILTER_METHODS,
+  ROAST_LEVELS,
+  SOURCING_MODELS,
+} from "../lib/coffee";
 import { useT } from "../lib/useT";
 import {
   CATEGORY_LABELS,
@@ -69,6 +74,10 @@ function submissionToPlace(s: Submission, today: string): Place {
     espressoGrinderBrand: s.espressoGrinderBrand,
     filterGrinderBrand: s.filterGrinderBrand,
     filterMethods: s.filterMethods,
+    roastLevels: s.roastLevels,
+    cuppingScoreMin: s.cuppingScoreMin,
+    cuppingScoreMax: s.cuppingScoreMax,
+    sourcingModel: s.category === "roastery" ? s.sourcingModel : undefined,
     photoUrl: s.photoUrls[0] ?? s.photoUrl,
     claims,
     flags: s.asserts.filter((a): a is FlagKey => (FLAG_KEYS as readonly string[]).includes(a)),
@@ -150,6 +159,28 @@ export function SubmissionsQueue() {
                       (id) => FILTER_METHODS.find((method) => method.id === id)?.label[lang] ?? id,
                     ),
                   ].filter(Boolean).join(" · ")}
+                </p>
+              )}
+              {s.roastLevels.length > 0 && (
+                <p className="queue__asserts">
+                  {t("queue.roastLevels")} {s.roastLevels
+                    .map((id) => ROAST_LEVELS.find((level) => level.id === id)?.label[lang] ?? id)
+                    .join(", ")}
+                </p>
+              )}
+              {(typeof s.cuppingScoreMin === "number" ||
+                typeof s.cuppingScoreMax === "number") && (
+                <p className="queue__asserts">
+                  {t("queue.cuppingScore")} {typeof s.cuppingScoreMin === "number"
+                    ? s.cuppingScoreMin
+                    : "—"}–{typeof s.cuppingScoreMax === "number" ? s.cuppingScoreMax : "—"}
+                </p>
+              )}
+              {s.category === "roastery" && s.sourcingModel && (
+                <p className="queue__asserts">
+                  {t("queue.sourcing")} {SOURCING_MODELS.find(
+                    (model) => model.id === s.sourcingModel,
+                  )?.label[lang] ?? s.sourcingModel}
                 </p>
               )}
               {s.coffeePhotoUrl && (

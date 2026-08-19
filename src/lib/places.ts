@@ -4,6 +4,8 @@ import {
   type DrinkStyle,
   type FilterMethod,
   type Place,
+  type RoastLevel,
+  type SourcingModel,
 } from "../types";
 import { isSupabaseConfigured, supabase } from "./auth";
 import { DEFAULT_COUNTRY, DEFAULT_COUNTRY_CODE, normalizeCountryCode } from "./geography";
@@ -45,6 +47,10 @@ interface PlaceRow {
   espresso_grinder_brand: string | null;
   filter_grinder_brand: string | null;
   filter_methods: FilterMethod[] | null;
+  roast_levels: RoastLevel[] | null;
+  cupping_score_min: number | null;
+  cupping_score_max: number | null;
+  sourcing_model: SourcingModel | null;
   claims: Place["claims"];
   flags: Place["flags"];
   photo_url: string | null;
@@ -80,6 +86,10 @@ const rowToPlace = (r: PlaceRow): Place => ({
   espressoGrinderBrand: r.espresso_grinder_brand ?? undefined,
   filterGrinderBrand: r.filter_grinder_brand ?? undefined,
   filterMethods: r.filter_methods ?? [],
+  roastLevels: r.roast_levels ?? [],
+  cuppingScoreMin: r.cupping_score_min ?? undefined,
+  cuppingScoreMax: r.cupping_score_max ?? undefined,
+  sourcingModel: r.sourcing_model ?? undefined,
   claims: {
     roastsOnSite: r.claims?.roastsOnSite ?? { ...UNKNOWN_CLAIM },
     specialty: r.claims?.specialty ?? { ...UNKNOWN_CLAIM },
@@ -131,6 +141,10 @@ const placeToRow = (p: Place) => ({
   espresso_grinder_brand: p.espressoGrinderBrand ?? null,
   filter_grinder_brand: p.filterGrinderBrand ?? null,
   filter_methods: p.filterMethods ?? [],
+  roast_levels: p.roastLevels ?? [],
+  cupping_score_min: p.cuppingScoreMin ?? null,
+  cupping_score_max: p.cuppingScoreMax ?? null,
+  sourcing_model: p.category === "roastery" ? (p.sourcingModel ?? null) : null,
   claims: p.claims,
   flags: p.flags,
   photo_url: p.photoUrl ?? null,

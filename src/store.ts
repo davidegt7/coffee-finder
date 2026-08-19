@@ -1,6 +1,16 @@
 import { create } from "zustand";
 import type { Session } from "@supabase/supabase-js";
-import type { AppSection, Category, ClaimKey, DrinkStyle, FlagKey, Place, Roaster } from "./types";
+import type {
+  AppSection,
+  Category,
+  ClaimKey,
+  DrinkStyle,
+  FlagKey,
+  Place,
+  RoastLevel,
+  Roaster,
+} from "./types";
+import type { SourcingFilter } from "./lib/coffee";
 import type { ChatMessage } from "./lib/brain";
 import { deletePlace, loadPlaces, savePlace } from "./lib/places";
 import { addReview, loadReviews, type Review } from "./lib/reviews";
@@ -91,6 +101,9 @@ interface State {
   toggleCategory: (category: Category) => void;
   toggleItem: (itemId: string) => void;
   toggleDrinkStyle: (style: DrinkStyle) => void;
+  toggleRoastLevel: (level: RoastLevel) => void;
+  setMinCuppingScore: (score: number | null) => void;
+  toggleSourcing: (model: SourcingFilter) => void;
   setQuery: (query: string) => void;
   setVerifiedOnly: (value: boolean) => void;
   setSavedOnly: (value: boolean) => void;
@@ -476,6 +489,29 @@ export const useStore = create<State>((set, get) => ({
         drinkStyles: s.filters.drinkStyles.includes(style)
           ? s.filters.drinkStyles.filter((item) => item !== style)
           : [...s.filters.drinkStyles, style],
+      },
+    })),
+
+  toggleRoastLevel: (level) =>
+    set((s) => ({
+      filters: {
+        ...s.filters,
+        roastLevels: s.filters.roastLevels.includes(level)
+          ? s.filters.roastLevels.filter((item) => item !== level)
+          : [...s.filters.roastLevels, level],
+      },
+    })),
+
+  setMinCuppingScore: (minCuppingScore) =>
+    set((s) => ({ filters: { ...s.filters, minCuppingScore } })),
+
+  toggleSourcing: (model) =>
+    set((s) => ({
+      filters: {
+        ...s.filters,
+        sourcing: s.filters.sourcing.includes(model)
+          ? s.filters.sourcing.filter((item) => item !== model)
+          : [...s.filters.sourcing, model],
       },
     })),
 

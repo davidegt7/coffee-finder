@@ -12,7 +12,12 @@ import { PlacePhoto } from "./PlacePhoto";
 import { CATEGORY_LABELS, CLAIM_KEYS, CLAIM_LABELS, FLAG_LABELS, type ClaimKey } from "../types";
 import { countryName } from "../lib/geography";
 import { INTENTS, placeHasItem } from "../lib/items";
-import { DRINK_STYLES, FILTER_METHODS } from "../lib/coffee";
+import {
+  DRINK_STYLES,
+  FILTER_METHODS,
+  ROAST_LEVELS,
+  SOURCING_MODELS,
+} from "../lib/coffee";
 
 /**
  * Signing in is required to review. That's friction on purpose: an open write
@@ -238,6 +243,12 @@ export function PlaceSheet() {
       place.filterGrinderBrand ||
       place.filterMethods?.length,
   );
+  const hasBeanDetails = Boolean(
+    place.roastLevels?.length ||
+      typeof place.cuppingScoreMin === "number" ||
+      typeof place.cuppingScoreMax === "number" ||
+      (place.category === "roastery" && place.sourcingModel),
+  );
 
   return (
     <div
@@ -414,6 +425,46 @@ export function PlaceSheet() {
               </div>
             )}
           </dl>
+        </section>
+      )}
+
+      {hasBeanDetails && (
+        <section className="sheet__section">
+          <h3>{t("beans.publicTitle")}</h3>
+          <dl className="coffee-facts">
+            {Boolean(place.roastLevels?.length) && (
+              <div>
+                <dt>{t("beans.roastLevels")}</dt>
+                <dd>{place.roastLevels!
+                  .map((id) => ROAST_LEVELS.find((level) => level.id === id)?.label[lang] ?? id)
+                  .join(", ")}</dd>
+              </div>
+            )}
+            {(typeof place.cuppingScoreMin === "number" ||
+              typeof place.cuppingScoreMax === "number") && (
+              <div>
+                <dt>{t("beans.cuppingTitle")}</dt>
+                <dd>
+                  {typeof place.cuppingScoreMin === "number" &&
+                  typeof place.cuppingScoreMax === "number"
+                    ? `${place.cuppingScoreMin}–${place.cuppingScoreMax}`
+                    : typeof place.cuppingScoreMin === "number"
+                      ? `${place.cuppingScoreMin}+`
+                      : `${t("beans.upTo")} ${place.cuppingScoreMax}`}
+                </dd>
+              </div>
+            )}
+            {place.category === "roastery" && place.sourcingModel && (
+              <div>
+                <dt>{t("beans.sourcingTitle")}</dt>
+                <dd>{SOURCING_MODELS.find((model) => model.id === place.sourcingModel)?.label[lang] ??
+                  place.sourcingModel}</dd>
+              </div>
+            )}
+          </dl>
+          {place.category === "roastery" && place.sourcingModel && (
+            <p className="field__hint">{t("beans.sourcingPublicNote")}</p>
+          )}
         </section>
       )}
 

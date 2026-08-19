@@ -38,6 +38,7 @@ export const blankPlace = (): Place => ({
   items: [],
   drinkStyles: [],
   filterMethods: [],
+  roastLevels: [],
   claims: {
     roastsOnSite: { ...UNKNOWN_CLAIM },
     specialty: { ...UNKNOWN_CLAIM },

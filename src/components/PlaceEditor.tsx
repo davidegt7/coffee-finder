@@ -10,9 +10,10 @@ import {
   type GeocodeHit,
 } from "../lib/geocode";
 import { uploadPlacePhoto } from "../lib/photos";
-import { INTENTS, ITEMS } from "../lib/items";
+import { INTENTS, ITEMS, placeHasItem } from "../lib/items";
 import { useT } from "../lib/useT";
 import { CoffeeDetailsFields } from "./CoffeeDetailsFields";
+import { BeanDetailsFields } from "./BeanDetailsFields";
 import type { StringKey } from "../lib/i18n";
 import {
   ATTR_GROUPS,
@@ -249,6 +250,11 @@ export function PlaceEditor() {
           claims: unsourcedClaims.map((k) => CLAIM_LABELS[k][lang]).join(", "),
         })
       : null,
+    typeof place.cuppingScoreMin === "number" &&
+    typeof place.cuppingScoreMax === "number" &&
+    place.cuppingScoreMin > place.cuppingScoreMax
+      ? t("beans.scoreRangeError")
+      : null,
   ].filter((message): message is string => Boolean(message));
   const canSave = missingRequirements.length === 0;
 
@@ -470,6 +476,25 @@ export function PlaceEditor() {
           onFilterMethodsChange={(filterMethods) => patch({ filterMethods })}
         />
       </section>
+
+      {(place.category === "roastery" ||
+        placeHasItem(place, "beans") ||
+        place.flags.includes("sellsBeans")) && (
+        <section className="sheet__section">
+          <h3>{t("beans.formTitle")}</h3>
+          <BeanDetailsFields
+            roastLevels={place.roastLevels ?? []}
+            onRoastLevelsChange={(roastLevels) => patch({ roastLevels })}
+            cuppingScoreMin={place.cuppingScoreMin}
+            onCuppingScoreMinChange={(cuppingScoreMin) => patch({ cuppingScoreMin })}
+            cuppingScoreMax={place.cuppingScoreMax}
+            onCuppingScoreMaxChange={(cuppingScoreMax) => patch({ cuppingScoreMax })}
+            isRoastery={place.category === "roastery"}
+            sourcingModel={place.sourcingModel}
+            onSourcingModelChange={(sourcingModel) => patch({ sourcingModel })}
+          />
+        </section>
+      )}
 
       <section className="sheet__section">
         <h3>{t("sheet.whatWeKnow")}</h3>

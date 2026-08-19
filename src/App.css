@@ -1008,6 +1008,42 @@
   min-height: 94px;
 }
 
+.bean-filter > .menu-panel__group-title {
+  margin-top: 14px;
+}
+
+.advanced-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.advanced-toggle.is-open {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.bean-filter__advanced {
+  display: grid;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.bean-filter__advanced .field__hint {
+  margin: 8px 0 0;
+}
+
 /* ============================================================
    Chips
    ============================================================ */

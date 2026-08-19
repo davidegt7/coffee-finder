@@ -1,4 +1,10 @@
-import type { Category, DrinkStyle, FilterMethod } from "../types";
+import type {
+  Category,
+  DrinkStyle,
+  FilterMethod,
+  RoastLevel,
+  SourcingModel,
+} from "../types";
 import { isSupabaseConfigured, supabase } from "./auth";
 
 /**
@@ -38,6 +44,10 @@ export interface Submission {
   espressoGrinderBrand?: string;
   filterGrinderBrand?: string;
   filterMethods: FilterMethod[];
+  roastLevels: RoastLevel[];
+  cuppingScoreMin?: number;
+  cuppingScoreMax?: number;
+  sourcingModel?: SourcingModel;
   coffeePhotoUrl?: string;
   photoUrls: string[];
   /** First photo retained for compatibility with older editor builds. */
@@ -69,6 +79,10 @@ interface SubmissionRow {
   espresso_grinder_brand: string | null;
   filter_grinder_brand: string | null;
   filter_methods: FilterMethod[] | null;
+  roast_levels: RoastLevel[] | null;
+  cupping_score_min: number | null;
+  cupping_score_max: number | null;
+  sourcing_model: SourcingModel | null;
   coffee_photo_url: string | null;
   photo_urls: string[] | null;
   photo_url: string | null;
@@ -99,6 +113,10 @@ const rowToSubmission = (r: SubmissionRow): Submission => ({
   espressoGrinderBrand: r.espresso_grinder_brand ?? undefined,
   filterGrinderBrand: r.filter_grinder_brand ?? undefined,
   filterMethods: r.filter_methods ?? [],
+  roastLevels: r.roast_levels ?? [],
+  cuppingScoreMin: r.cupping_score_min ?? undefined,
+  cuppingScoreMax: r.cupping_score_max ?? undefined,
+  sourcingModel: r.sourcing_model ?? undefined,
   coffeePhotoUrl: r.coffee_photo_url ?? undefined,
   photoUrls: r.photo_urls?.length ? r.photo_urls : r.photo_url ? [r.photo_url] : [],
   photoUrl: r.photo_url ?? undefined,
@@ -128,6 +146,10 @@ export async function submitPlace(input: {
   espressoGrinderBrand?: string;
   filterGrinderBrand?: string;
   filterMethods: FilterMethod[];
+  roastLevels: RoastLevel[];
+  cuppingScoreMin?: number;
+  cuppingScoreMax?: number;
+  sourcingModel?: SourcingModel;
   coffeePhotoUrl?: string;
   photoUrls: string[];
   note?: string;
@@ -155,6 +177,10 @@ export async function submitPlace(input: {
     espresso_grinder_brand: input.espressoGrinderBrand?.trim() || null,
     filter_grinder_brand: input.filterGrinderBrand?.trim() || null,
     filter_methods: input.filterMethods,
+    roast_levels: input.roastLevels,
+    cupping_score_min: input.cuppingScoreMin ?? null,
+    cupping_score_max: input.cuppingScoreMax ?? null,
+    sourcing_model: input.sourcingModel ?? null,
     coffee_photo_url: input.coffeePhotoUrl || null,
     photo_urls: input.photoUrls,
     photo_url: input.photoUrls[0] ?? null,

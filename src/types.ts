@@ -154,6 +154,12 @@ export interface Place {
   espressoGrinderBrand?: string;
   filterGrinderBrand?: string;
   filterMethods?: FilterMethod[];
+  /** Bean offering. A place can carry several roast profiles and scores. */
+  roastLevels?: RoastLevel[];
+  cuppingScoreMin?: number;
+  cuppingScoreMax?: number;
+  /** Roastery-only sourcing model, recorded as what the roaster declares. */
+  sourcingModel?: SourcingModel;
   claims: Record<ClaimKey, Claim>;
   /** Only what's true. Absent ≠ false, it means nobody has said. */
   flags: FlagKey[];
@@ -174,6 +180,8 @@ export interface Place {
 }
 
 export type DrinkStyle = "espresso" | "filter";
+export type RoastLevel = "light" | "medium" | "dark";
+export type SourcingModel = "direct" | "third-party" | "both";
 export type FilterMethod =
   | "v60"
   | "chemex"

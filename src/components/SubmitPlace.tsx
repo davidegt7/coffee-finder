@@ -5,12 +5,15 @@ import { INTENTS } from "../lib/items";
 import { uploadSubmissionCoffeePhoto, uploadSubmissionPhoto } from "../lib/photos";
 import { useT } from "../lib/useT";
 import { CoffeeDetailsFields } from "./CoffeeDetailsFields";
+import { BeanDetailsFields } from "./BeanDetailsFields";
 import {
   CATEGORIES,
   CATEGORY_LABELS,
   type Category,
   type DrinkStyle,
   type FilterMethod,
+  type RoastLevel,
+  type SourcingModel,
 } from "../types";
 
 const OWNER_CATEGORIES = CATEGORIES.filter((candidate) => candidate !== "cart");
@@ -49,6 +52,10 @@ export function SubmitPlace() {
   const [espressoGrinderBrand, setEspressoGrinderBrand] = useState("");
   const [filterGrinderBrand, setFilterGrinderBrand] = useState("");
   const [filterMethods, setFilterMethods] = useState<FilterMethod[]>([]);
+  const [roastLevels, setRoastLevels] = useState<RoastLevel[]>([]);
+  const [cuppingScoreMin, setCuppingScoreMin] = useState<number | undefined>();
+  const [cuppingScoreMax, setCuppingScoreMax] = useState<number | undefined>();
+  const [sourcingModel, setSourcingModel] = useState<SourcingModel | undefined>();
   const [coffeePhotoUrl, setCoffeePhotoUrl] = useState("");
   const [coffeeUpBusy, setCoffeeUpBusy] = useState(false);
   const [coffeeUpErr, setCoffeeUpErr] = useState<string | null>(null);
@@ -71,6 +78,11 @@ export function SubmitPlace() {
     coffeeBrand.trim().length > 1 &&
     specialtyCoffee !== null &&
     (!items.includes("drink") || drinkStyles.length > 0) &&
+    !(
+      typeof cuppingScoreMin === "number" &&
+      typeof cuppingScoreMax === "number" &&
+      cuppingScoreMin > cuppingScoreMax
+    ) &&
     /\S+@\S+\.\S+/.test(contactEmail) &&
     !coffeeUpBusy &&
     !upBusy &&
@@ -276,6 +288,23 @@ export function SubmitPlace() {
         </div>
       </section>
 
+      {(items.includes("beans") || category === "roastery") && (
+        <section className="sheet__section">
+          <h3>{t("beans.formTitle")}</h3>
+          <BeanDetailsFields
+            roastLevels={roastLevels}
+            onRoastLevelsChange={setRoastLevels}
+            cuppingScoreMin={cuppingScoreMin}
+            onCuppingScoreMinChange={setCuppingScoreMin}
+            cuppingScoreMax={cuppingScoreMax}
+            onCuppingScoreMaxChange={setCuppingScoreMax}
+            isRoastery={category === "roastery"}
+            sourcingModel={sourcingModel}
+            onSourcingModelChange={setSourcingModel}
+          />
+        </section>
+      )}
+
       <section className="sheet__section">
         <h3>{t("submit.photosTitle")}</h3>
         <p className="field__hint">{t("submit.photoNote")}</p>
@@ -391,6 +420,10 @@ export function SubmitPlace() {
               espressoGrinderBrand,
               filterGrinderBrand,
               filterMethods,
+              roastLevels,
+              cuppingScoreMin,
+              cuppingScoreMax,
+              sourcingModel: category === "roastery" ? sourcingModel : undefined,
               coffeePhotoUrl,
               photoUrls,
               note,
